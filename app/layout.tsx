@@ -5,8 +5,11 @@ import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 export const metadata: Metadata = {
   title: "ToppenLS",
   description: "Kliniske verktøy for rask bruk i konsultasjon.",
-  themeColor: "#0f62fe",
   manifest: "/manifest.webmanifest"
+};
+
+export const viewport = {
+  themeColor: "#0f62fe"
 };
 
 export default function RootLayout({
