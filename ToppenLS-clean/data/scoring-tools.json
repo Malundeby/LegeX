@@ -1,0 +1,583 @@
+[
+  {
+    "id": "madrs",
+    "name": "🧠 MADRS (depresjon)",
+    "description": "Montgomery-Åsberg Depression Rating Scale. 10 spørsmål om depresjon.",
+    "pdfUrl": "/pdfs/MADRS.pdf",
+    "questions": [
+      {
+        "id": "madrs-1",
+        "text": "Synlig tristhet",
+        "options": [
+          { "label": "0 – Ingen tristhet", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Ser trist og nedstemt ut", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ser konstant ulykkelig ut", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Ekstrem og vedvarende tristhet", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-2",
+        "text": "Rapportert tristhet",
+        "options": [
+          { "label": "0 – Sporadisk tristhet", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Trist eller nedfor", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Gjennomgående nedstemthet", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Konstant og uutholdelig tristhet", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-3",
+        "text": "Indre spenning",
+        "options": [
+          { "label": "0 – Rolig", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Periodisk indre uro", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Vedvarende indre spenning", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Uutholdelig angst eller panikk", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-4",
+        "text": "Redusert nattesoevn",
+        "options": [
+          { "label": "0 – Sover som vanlig", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Lette innsovningsvansker eller lett redusert søvn", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Søvn redusert med minst 2 timer", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Mindre enn 2-3 timer søvn", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-5",
+        "text": "Svekket appetitt",
+        "options": [
+          { "label": "0 – Normal eller økt appetitt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Svekket appetitt", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ingen matlyst, maten smaker ikke", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Må overtales til å spise", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-6",
+        "text": "Konsentrasjonsvansker",
+        "options": [
+          { "label": "0 – Ingen vansker", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Noe vanskelig å samle tankene", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Vanskelig å konsentrere seg", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Kan ikke lese eller føre samtale uten vansker", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-7",
+        "text": "Initiativloeshet",
+        "options": [
+          { "label": "0 – Ingen vansker med å komme i gang", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Vansker med å komme i gang", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Vansker med å starte enkle rutineaktiviteter", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Helt uten initiativ, trenger hjelp til alt", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-8",
+        "text": "Svekkede foelser",
+        "options": [
+          { "label": "0 – Normal interesse for omgivelsene", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Redusert evne til å glede seg", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Tap av interesse for omgivelsene", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Følelsesmessig lammelse", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-9",
+        "text": "Pessimistiske tanker",
+        "options": [
+          { "label": "0 – Ingen pessimistiske tanker", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Periodiske tanker om feil og skyld", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Vedvarende selvbebreidelser", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Vrangforestillinger om skyld eller synd", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-10",
+        "text": "Suicidaltanker",
+        "options": [
+          { "label": "0 – Ingen tanker om selvmord", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Føler livet ikke er verdt å leve", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Tanker om selvmord, men ingen konkrete planer", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Eksplisitte planer om selvmord", "score": 6 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "Ingen/minimal depresjon" },
+      { "minScore": 7, "label": "Lett depresjon" },
+      { "minScore": 20, "label": "Moderat depresjon" },
+      { "minScore": 35, "label": "Alvorlig depresjon" }
+    ]
+  },
+  {
+    "id": "gad-7",
+    "name": "🧠 GAD-7 (angst)",
+    "description": "Generalized Anxiety Disorder 7-item scale. Siste 2 uker.",    "pdfUrl": "/pdfs/GAD-7.pdf",    "questions": [
+      {
+        "id": "gad7-1",
+        "text": "Følt deg nervøs, engstelig eller på kanten",
+        "options": [
+          { "label": "Ikke i det hele tatt", "score": 0 },
+          { "label": "Flere dager", "score": 1 },
+          { "label": "Mer enn halvparten av dagene", "score": 2 },
+          { "label": "Nesten hver dag", "score": 3 }
+        ]
+      },
+      {
+        "id": "gad7-2",
+        "text": "Ikke kunnet stoppe eller kontrollere bekymring",
+        "options": [
+          { "label": "Ikke i det hele tatt", "score": 0 },
+          { "label": "Flere dager", "score": 1 },
+          { "label": "Mer enn halvparten av dagene", "score": 2 },
+          { "label": "Nesten hver dag", "score": 3 }
+        ]
+      },
+      {
+        "id": "gad7-3",
+        "text": "Bekymret deg for mye om ulike ting",
+        "options": [
+          { "label": "Ikke i det hele tatt", "score": 0 },
+          { "label": "Flere dager", "score": 1 },
+          { "label": "Mer enn halvparten av dagene", "score": 2 },
+          { "label": "Nesten hver dag", "score": 3 }
+        ]
+      },
+      {
+        "id": "gad7-4",
+        "text": "Hatt vansker med å slappe av",
+        "options": [
+          { "label": "Ikke i det hele tatt", "score": 0 },
+          { "label": "Flere dager", "score": 1 },
+          { "label": "Mer enn halvparten av dagene", "score": 2 },
+          { "label": "Nesten hver dag", "score": 3 }
+        ]
+      },
+      {
+        "id": "gad7-5",
+        "text": "Vært så rastløs at det er vanskelig å sitte stille",
+        "options": [
+          { "label": "Ikke i det hele tatt", "score": 0 },
+          { "label": "Flere dager", "score": 1 },
+          { "label": "Mer enn halvparten av dagene", "score": 2 },
+          { "label": "Nesten hver dag", "score": 3 }
+        ]
+      },
+      {
+        "id": "gad7-6",
+        "text": "Blitt lett irritert eller ergret",
+        "options": [
+          { "label": "Ikke i det hele tatt", "score": 0 },
+          { "label": "Flere dager", "score": 1 },
+          { "label": "Mer enn halvparten av dagene", "score": 2 },
+          { "label": "Nesten hver dag", "score": 3 }
+        ]
+      },
+      {
+        "id": "gad7-7",
+        "text": "Følt deg redd, som om noe forferdelig kunne skje",
+        "options": [
+          { "label": "Ikke i det hele tatt", "score": 0 },
+          { "label": "Flere dager", "score": 1 },
+          { "label": "Mer enn halvparten av dagene", "score": 2 },
+          { "label": "Nesten hver dag", "score": 3 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "Minimal angst" },
+      { "minScore": 5, "label": "Lett angst" },
+      { "minScore": 10, "label": "Moderat angst" },
+      { "minScore": 15, "label": "Alvorlig angst" }
+    ]
+  },
+  {
+    "id": "asrs",
+    "name": "🧠 ASRS v1.1 (ADHD)",
+    "description": "Adult ADHD Self-Report Scale. 18 spørsmål – Del A (screening) + Del B (symptomer).",
+    "pdfUrl": "/pdfs/ASRS pdf.pdf",
+    "layout": "horizontal",
+    "parts": [
+      { "id": "a", "title": "Del A (Screening)", "startQuestion": 1, "endQuestion": 6 },
+      { "id": "b", "title": "Del B (Tilleggssymptomer)", "startQuestion": 7, "endQuestion": 18 }
+    ],
+    "questions": [
+      {
+        "id": "asrs-1",
+        "part": "a",
+        "text": "Hvor ofte har du problemer med å fullføre de siste detaljene i et prosjekt, etter at de utfordrende delene er unnagjort?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 1 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-2",
+        "part": "a",
+        "text": "Hvor ofte har du problemer med å få orden på ting når du skal gjøre en oppgave som krever organisering?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 1 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-3",
+        "part": "a",
+        "text": "Hvor ofte har du problemer med å huske avtaler eller forpliktelser?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 1 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-4",
+        "part": "a",
+        "text": "Når du har en oppgave som krever mye tankearbeid, hvor ofte unngår eller utsetter du å begynne på den?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-5",
+        "part": "a",
+        "text": "Hvor ofte fikler du med eller vrir på hender eller føtter når du må sitte lenge?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-6",
+        "part": "a",
+        "text": "Hvor ofte føler du deg overaktiv eller tvunget til å gjøre ting, som om du var drevet av en motor?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-7",
+        "part": "b",
+        "text": "Hvor ofte gjør du uforsiktige feil når du jobber med et kjedelig eller vanskelig prosjekt?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-8",
+        "part": "b",
+        "text": "Hvor ofte har du vansker med å holde oppmerksomheten når du gjør kjedelig eller repetitivt arbeid?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-9",
+        "part": "b",
+        "text": "Hvor ofte har du vansker med å konsentrere deg om hva folk sier til deg, selv når de snakker direkte til deg?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 1 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-10",
+        "part": "b",
+        "text": "Hvor ofte legger du ting fra deg feil eller har vansker med å finne ting hjemme eller på jobb?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-11",
+        "part": "b",
+        "text": "Hvor ofte blir du distrahert av aktivitet eller støy rundt deg?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-12",
+        "part": "b",
+        "text": "Hvor ofte forlater du plassen din i møter eller andre situasjoner der du forventes å bli sittende?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 1 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-13",
+        "part": "b",
+        "text": "Hvor ofte føler du deg rastløs eller urolig?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-14",
+        "part": "b",
+        "text": "Hvor ofte har du vansker med å slappe av når du har tid til det?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-15",
+        "part": "b",
+        "text": "Hvor ofte snakker du for mye i sosiale situasjoner?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-16",
+        "part": "b",
+        "text": "Hvor ofte fullfører du setningene til folk du snakker med, før de får gjort det selv?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 1 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-17",
+        "part": "b",
+        "text": "Hvor ofte har du vansker med å vente på tur i situasjoner der tur-taking er påkrevd?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 0 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      },
+      {
+        "id": "asrs-18",
+        "part": "b",
+        "text": "Hvor ofte avbryter du andre når de er opptatt?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjelden", "score": 0 },
+          { "label": "Noen ganger", "score": 1 },
+          { "label": "Ofte", "score": 1 },
+          { "label": "Svært ofte", "score": 1 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "ADHD lite sannsynlig" },
+      { "minScore": 4, "label": "ADHD mulig – videre utredning anbefales" }
+    ],
+    "partAThresholds": [
+      { "minScore": 0, "label": "Ikke forhøyet screening" },
+      { "minScore": 4, "label": "Forhøyet screening – videre utredning anbefales" }
+    ]
+  },
+  {
+    "id": "audit",
+    "name": "🧠 AUDIT (alkohol)",
+    "description": "Alcohol Use Disorders Identification Test. 10 spørsmål om alkoholbruk.",    "pdfUrl": "/pdfs/AUDIT.pdf",    "questions": [
+      {
+        "id": "audit-1",
+        "text": "Hvor ofte drikker du alkohol?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Månedlig eller sjeldnere", "score": 1 },
+          { "label": "2-4 ganger i måneden", "score": 2 },
+          { "label": "2-3 ganger i uken", "score": 3 },
+          { "label": "4 ganger i uken eller oftere", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-2",
+        "text": "Hvor mange enheter alkohol drikker du på en typisk dag når du drikker?",
+        "options": [
+          { "label": "1-2", "score": 0 },
+          { "label": "3-4", "score": 1 },
+          { "label": "5-6", "score": 2 },
+          { "label": "7-9", "score": 3 },
+          { "label": "10 eller flere", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-3",
+        "text": "Hvor ofte drikker du 6 eller flere enheter ved én anledning?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjeldnere enn månedlig", "score": 1 },
+          { "label": "Månedlig", "score": 2 },
+          { "label": "Ukentlig", "score": 3 },
+          { "label": "Daglig eller nesten daglig", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-4",
+        "text": "Hvor ofte i løpet av siste år har du ikke klart å stoppe å drikke når du først hadde begynt?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjeldnere enn månedlig", "score": 1 },
+          { "label": "Månedlig", "score": 2 },
+          { "label": "Ukentlig", "score": 3 },
+          { "label": "Daglig eller nesten daglig", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-5",
+        "text": "Hvor ofte i løpet av siste år har du på grunn av drikking unnlatt å gjøre det som normalt forventes av deg?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjeldnere enn månedlig", "score": 1 },
+          { "label": "Månedlig", "score": 2 },
+          { "label": "Ukentlig", "score": 3 },
+          { "label": "Daglig eller nesten daglig", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-6",
+        "text": "Hvor ofte i løpet av siste år har du trengt en drink om morgenen for å komme i gang etter en kveld med mye drikking?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjeldnere enn månedlig", "score": 1 },
+          { "label": "Månedlig", "score": 2 },
+          { "label": "Ukentlig", "score": 3 },
+          { "label": "Daglig eller nesten daglig", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-7",
+        "text": "Hvor ofte i løpet av siste år har du hatt skyldfølelse eller dårlig samvittighet på grunn av drikking?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjeldnere enn månedlig", "score": 1 },
+          { "label": "Månedlig", "score": 2 },
+          { "label": "Ukentlig", "score": 3 },
+          { "label": "Daglig eller nesten daglig", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-8",
+        "text": "Hvor ofte i løpet av siste år har du ikke husket hva som skjedde kvelden før på grunn av drikking?",
+        "options": [
+          { "label": "Aldri", "score": 0 },
+          { "label": "Sjeldnere enn månedlig", "score": 1 },
+          { "label": "Månedlig", "score": 2 },
+          { "label": "Ukentlig", "score": 3 },
+          { "label": "Daglig eller nesten daglig", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-9",
+        "text": "Har du eller noen andre blitt skadet som følge av drikkingen din?",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja, men ikke i løpet av siste år", "score": 2 },
+          { "label": "Ja, i løpet av siste år", "score": 4 }
+        ]
+      },
+      {
+        "id": "audit-10",
+        "text": "Har en slektning, venn, lege eller annen helsearbeider vært bekymret for drikkingen din eller foreslått at du bør redusere?",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja, men ikke i løpet av siste år", "score": 2 },
+          { "label": "Ja, i løpet av siste år", "score": 4 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "Lav risiko" },
+      { "minScore": 8, "label": "Risikofylt alkoholbruk" },
+      { "minScore": 16, "label": "Høyt risikofylt/skadelig bruk" },
+      { "minScore": 20, "label": "Mulig avhengighet – vurder henvisning" }
+    ]
+  }
+]

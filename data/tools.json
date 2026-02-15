@@ -1,0 +1,313 @@
+[
+  {
+    "id": "bmi",
+    "name": "BMI-kalkulator",
+    "description": "Beregn kroppsmasseindeks (BMI).",
+    "type": "calculator",
+    "level": "somatikk",
+    "fields": [
+      { "id": "height", "label": "Høyde (cm)", "type": "select", "options": ["140", "141", "142", "143", "144", "145", "146", "147", "148", "149", "150", "151", "152", "153", "154", "155", "156", "157", "158", "159", "160", "161", "162", "163", "164", "165", "166", "167", "168", "169", "170", "171", "172", "173", "174", "175", "176", "177", "178", "179", "180", "181", "182", "183", "184", "185", "186", "187", "188", "189", "190", "191", "192", "193", "194", "195", "196", "197", "198", "199", "200", "201", "202", "203", "204", "205", "206", "207", "208", "209", "210"] },
+      { "id": "weight", "label": "Vekt (kg)", "type": "select", "options": ["40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141", "142", "143", "144", "145", "146", "147", "148", "149", "150", "151", "152", "153", "154", "155", "156", "157", "158", "159", "160", "161", "162", "163", "164", "165", "166", "167", "168", "169", "170", "171", "172", "173", "174", "175", "176", "177", "178", "179", "180"] }
+    ],
+    "thresholds": [
+      { "max": 18.4, "label": "Undervekt", "color": "#2196f3" },
+      { "max": 24.9, "label": "Normalvekt", "color": "#4caf50" },
+      { "max": 29.9, "label": "Overvekt", "color": "#ff9800" },
+      { "max": 34.9, "label": "Fedme grad I", "color": "#f44336" },
+      { "max": 39.9, "label": "Fedme grad II", "color": "#d32f2f" },
+      { "max": 999, "label": "Fedme grad III", "color": "#b71c1c" }
+    ]
+  },
+  {
+    "id": "fib4",
+    "name": "FIB-4",
+    "description": "Leverfibrose-indeks. Vurdering av fibrose ved leversykdom.",
+    "type": "calculator",
+    "level": "somatikk",
+    "fields": [
+      { "id": "age", "label": "Alder (år)", "type": "select", "options": ["18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95"] },
+      { "id": "ast", "label": "ASAT (U/L)", "type": "number", "min": 1, "max": 1000 },
+      { "id": "alt", "label": "ALAT (U/L)", "type": "number", "min": 1, "max": 1000 },
+      { "id": "platelets", "label": "Trombocytter (10⁹/L)", "type": "number", "min": 10, "max": 1000 }
+    ],
+    "thresholds": [
+      { "max": 1.3, "label": "Lav risiko for avansert fibrose", "color": "#4caf50" },
+      { "max": 2.67, "label": "Ubestemt – vurder videre utredning", "color": "#ff9800" },
+      { "max": 999, "label": "Høy risiko for avansert fibrose", "color": "#f44336" }
+    ]
+  },
+  {
+    "id": "wells-dvt",
+    "name": "Wells DVT",
+    "description": "Klinisk sannsynlighet for dyp venetrombose (DVT).",
+    "type": "calculator",
+    "level": "somatikk",
+    "fields": [
+      { "id": "activeCancer", "label": "Aktiv kreft (behandling siste 6 mnd)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "paralysis", "label": "Paralyse/parese/gips i underekstremitet", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "bedridden", "label": "Sengeleie >3 dager eller kirurgi siste 12 uker", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "tenderness", "label": "Ømhet langs dype venesystem", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "legSwelling", "label": "Hevelse i hele benet", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "calfSwelling", "label": "Leggomkrets >3 cm større enn asymptomatisk side", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "pittingEdema", "label": "Pittingødem (kun symptomatisk ben)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "collateralVeins", "label": "Kollaterale overflatiske vener (ikke varicer)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "previousDVT", "label": "Tidligere DVT dokumentert", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "alternativeDiagnosis", "label": "Alternativ diagnose minst like sannsynlig", "type": "select", "options": ["Nei", "Ja"] }
+    ],
+    "thresholds": [
+      { "max": 0, "label": "Lav sannsynlighet", "color": "#4caf50" },
+      { "max": 2, "label": "Moderat sannsynlighet", "color": "#ff9800" },
+      { "max": 999, "label": "Høy sannsynlighet", "color": "#f44336" }
+    ]
+  },
+  {
+    "id": "wells-pe",
+    "name": "Wells Lungeemboli",
+    "description": "Klinisk sannsynlighet for lungeemboli (LE).",
+    "type": "calculator",
+    "level": "somatikk",
+    "fields": [
+      { "id": "dvtSymptoms", "label": "Kliniske tegn/symptomer på DVT", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "peMoreLikely", "label": "LE er mest sannsynlige diagnose", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "heartRate", "label": "Hjertefrekvens >100/min", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "immobilization", "label": "Immobilisering/kirurgi siste 4 uker", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "previousVTE", "label": "Tidligere DVT eller LE", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "hemoptysis", "label": "Hemoptyse", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "malignancy", "label": "Aktiv kreftsykdom (behandling siste 6 mnd)", "type": "select", "options": ["Nei", "Ja"] }
+    ],
+    "thresholds": [
+      { "max": 1, "label": "Lav sannsynlighet", "color": "#4caf50" },
+      { "max": 4, "label": "Moderat sannsynlighet", "color": "#ff9800" },
+      { "max": 999, "label": "Høy sannsynlighet", "color": "#f44336" }
+    ]
+  },
+  {
+    "id": "chadsvasc",
+    "name": "CHA₂DS₂-VASc",
+    "description": "Slagrisiko ved atrieflimmer. Vurdering av antikoagulasjonsindikasjon.",
+    "type": "calculator",
+    "level": "somatikk",
+    "fields": [
+      { "id": "chf", "label": "Hjertesvikt / LV dysfunksjon", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "hypertension", "label": "Hypertensjon", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "age75", "label": "Alder ≥75 år", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "diabetes", "label": "Diabetes mellitus", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "stroke", "label": "Tidligere slag/TIA/tromboembolisme", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "vascular", "label": "Vaskulær sykdom (tidligere MI, PAD, aortaplakk)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "age65", "label": "Alder 65-74 år", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "female", "label": "Kvinne", "type": "select", "options": ["Nei", "Ja"] }
+    ],
+    "thresholds": [
+      { "max": 0, "label": "Lav risiko – antikoagulasjon vanligvis ikke indisert", "color": "#4caf50" },
+      { "max": 1, "label": "Lav-moderat risiko – vurder antikoagulasjon", "color": "#ff9800" },
+      { "max": 999, "label": "Moderat-høy risiko – antikoagulasjon anbefalt", "color": "#f44336" }
+    ]
+  },
+  {
+    "id": "hasbled",
+    "name": "HAS-BLED",
+    "description": "Blødningsrisiko ved antikoagulasjon. Brukes ved atrieflimmer.",
+    "type": "calculator",
+    "level": "somatikk",
+    "fields": [
+      { "id": "hypertension", "label": "Hypertensjon (systolisk >160 mmHg)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "renal", "label": "Nedsatt nyrefunksjon (dialyse, transplantasjon, kreatinin >200)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "liver", "label": "Nedsatt leverfunksjon (cirrhose, bilirubin >2x, AST/ALT >3x)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "stroke", "label": "Tidligere slag", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "bleeding", "label": "Tidligere større blødning eller blødningstendens", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "labile", "label": "Labil INR (tid i terapeutisk område <60%)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "elderly", "label": "Alder >65 år", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "drugs", "label": "Legemidler som øker blødningsrisiko (ASA, NSAIDs)", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "alcohol", "label": "Alkoholmisbruk", "type": "select", "options": ["Nei", "Ja"] }
+    ],
+    "thresholds": [
+      { "max": 0, "label": "Lav blødningsrisiko", "color": "#4caf50" },
+      { "max": 2, "label": "Moderat blødningsrisiko", "color": "#ff9800" },
+      { "max": 999, "label": "Høy blødningsrisiko – vurder tiltak", "color": "#f44336" }
+    ]
+  },
+  {
+    "id": "ipss",
+    "name": "IPSS (prostata)",
+    "description": "International Prostate Symptom Score. Vannlatingsplager ved BPH.",
+    "type": "calculator",
+    "level": "urologi",
+    "layout": "horizontal",
+    "fields": [
+      { "id": "q1", "label": "Ufullstendig tømming", "type": "select", "options": ["0 – Ikke i det hele tatt", "1 – Mindre enn 1 av 5 ganger", "2 – Mindre enn halvparten", "3 – Omtrent halvparten", "4 – Mer enn halvparten", "5 – Nesten alltid"] },
+      { "id": "q2", "label": "Hyppig vannlating (<2t)", "type": "select", "options": ["0 – Ikke i det hele tatt", "1 – Mindre enn 1 av 5 ganger", "2 – Mindre enn halvparten", "3 – Omtrent halvparten", "4 – Mer enn halvparten", "5 – Nesten alltid"] },
+      { "id": "q3", "label": "Avbrutt vannlating", "type": "select", "options": ["0 – Ikke i det hele tatt", "1 – Mindre enn 1 av 5 ganger", "2 – Mindre enn halvparten", "3 – Omtrent halvparten", "4 – Mer enn halvparten", "5 – Nesten alltid"] },
+      { "id": "q4", "label": "Vannlatingstrang", "type": "select", "options": ["0 – Ikke i det hele tatt", "1 – Mindre enn 1 av 5 ganger", "2 – Mindre enn halvparten", "3 – Omtrent halvparten", "4 – Mer enn halvparten", "5 – Nesten alltid"] },
+      { "id": "q5", "label": "Svak stråle", "type": "select", "options": ["0 – Ikke i det hele tatt", "1 – Mindre enn 1 av 5 ganger", "2 – Mindre enn halvparten", "3 – Omtrent halvparten", "4 – Mer enn halvparten", "5 – Nesten alltid"] },
+      { "id": "q6", "label": "Må presse for å starte", "type": "select", "options": ["0 – Ikke i det hele tatt", "1 – Mindre enn 1 av 5 ganger", "2 – Mindre enn halvparten", "3 – Omtrent halvparten", "4 – Mer enn halvparten", "5 – Nesten alltid"] },
+      { "id": "q7", "label": "Nocturi (ganger per natt)", "type": "select", "options": ["0 – Ingen", "1 – 1 gang", "2 – 2 ganger", "3 – 3 ganger", "4 – 4 ganger", "5 – 5 eller flere"] }
+    ],
+    "thresholds": [
+      { "max": 7, "label": "Milde symptomer", "color": "#4caf50" },
+      { "max": 19, "label": "Moderate symptomer", "color": "#ff9800" },
+      { "max": 35, "label": "Alvorlige symptomer", "color": "#f44336" }
+    ]
+  },
+  {
+    "id": "ccs",
+    "name": "CCS Angina",
+    "description": "Canadian Cardiovascular Society angina klassifikasjon.",
+    "type": "calculator",
+    "level": "somatikk",
+    "layout": "vertical-select",
+    "fields": [
+      { "id": "class", "label": "Angina-grad", "type": "select", "options": ["Klasse I – Angina kun ved kraftig anstrengelse", "Klasse II – Lett begrensning, angina ved rask gange/trapper", "Klasse III – Betydelig begrensning, angina ved lett aktivitet", "Klasse IV – Angina ved minimal aktivitet eller i hvile"] }
+    ],
+    "thresholds": [
+      { "max": 1, "label": "Klasse I", "color": "#4caf50" },
+      { "max": 2, "label": "Klasse II", "color": "#ff9800" },
+      { "max": 3, "label": "Klasse III", "color": "#f44336" },
+      { "max": 4, "label": "Klasse IV", "color": "#b71c1c" }
+    ]
+  },
+  {
+    "id": "nyha",
+    "name": "NYHA (hjertesvikt)",
+    "description": "New York Heart Association funksjonell klassifikasjon.",
+    "type": "calculator",
+    "level": "somatikk",
+    "layout": "vertical-select",
+    "fields": [
+      { "id": "class", "label": "Funksjonsklasse", "type": "select", "options": ["Klasse I – Ingen begrensning, vanlig fysisk aktivitet gir ingen symptomer", "Klasse II – Lett begrensning, komfortabel i hvile, vanlig aktivitet gir symptomer", "Klasse III – Betydelig begrensning, komfortabel i hvile, mindre enn vanlig aktivitet gir symptomer", "Klasse IV – Symptomer i hvile, enhver fysisk aktivitet forverrer symptomer"] }
+    ],
+    "thresholds": [
+      { "max": 1, "label": "NYHA I", "color": "#4caf50" },
+      { "max": 2, "label": "NYHA II", "color": "#ff9800" },
+      { "max": 3, "label": "NYHA III", "color": "#f44336" },
+      { "max": 4, "label": "NYHA IV", "color": "#b71c1c" }
+    ]
+  },
+  {
+    "id": "act",
+    "name": "ACT (astma)",
+    "description": "Asthma Control Test. Astmakontroll siste 4 uker.",
+    "type": "calculator",
+    "level": "somatikk",
+    "layout": "horizontal",
+    "fields": [
+      { "id": "q1", "label": "Hindret arbeid/skole/hjem pga astma", "type": "select", "options": ["1 – Hele tiden", "2 – Mesteparten av tiden", "3 – Noe av tiden", "4 – Litt av tiden", "5 – Ikke i det hele tatt"] },
+      { "id": "q2", "label": "Tungpustethet", "type": "select", "options": ["1 – Mer enn 1 gang daglig", "2 – 1 gang daglig", "3 – 3-6 ganger i uken", "4 – 1-2 ganger i uken", "5 – Ikke i det hele tatt"] },
+      { "id": "q3", "label": "Nattlige symptomer", "type": "select", "options": ["1 – 4+ netter i uken", "2 – 2-3 netter i uken", "3 – 1 natt i uken", "4 – 1-2 ganger totalt", "5 – Ikke i det hele tatt"] },
+      { "id": "q4", "label": "Bruk av anfallsmedisin", "type": "select", "options": ["1 – 3+ ganger daglig", "2 – 1-2 ganger daglig", "3 – 2-3 ganger i uken", "4 – 1 gang i uken eller sjeldnere", "5 – Ikke i det hele tatt"] },
+      { "id": "q5", "label": "Egen vurdering av astmakontroll", "type": "select", "options": ["1 – Ikke kontrollert i det hele tatt", "2 – Dårlig kontrollert", "3 – Noe kontrollert", "4 – Godt kontrollert", "5 – Fullstendig kontrollert"] }
+    ],
+    "thresholds": [
+      { "max": 19, "label": "Ikke velkontrollert astma", "color": "#f44336" },
+      { "max": 24, "label": "Delvis kontrollert astma", "color": "#ff9800" },
+      { "max": 25, "label": "Godt kontrollert astma", "color": "#4caf50" }
+    ]
+  },
+  {
+    "id": "cat",
+    "name": "CAT (KOLS)",
+    "description": "COPD Assessment Test. KOLS-symptombelastning.",
+    "type": "calculator",
+    "level": "somatikk",
+    "layout": "horizontal",
+    "fields": [
+      { "id": "q1", "label": "Hoste", "type": "select", "options": ["0 – Jeg hoster aldri", "1", "2", "3", "4", "5 – Jeg hoster hele tiden"] },
+      { "id": "q2", "label": "Slim", "type": "select", "options": ["0 – Ikke slim i brystet i det hele tatt", "1", "2", "3", "4", "5 – Brystet er helt fullt av slim"] },
+      { "id": "q3", "label": "Trykk i brystet", "type": "select", "options": ["0 – Ingen trykk i brystet", "1", "2", "3", "4", "5 – Veldig stramt i brystet"] },
+      { "id": "q4", "label": "Tungpust ved trapper", "type": "select", "options": ["0 – Ikke tungpusten ved trapper", "1", "2", "3", "4", "5 – Svært tungpusten ved trapper"] },
+      { "id": "q5", "label": "Aktivitetsbegrensning", "type": "select", "options": ["0 – Ingen begrensning hjemme", "1", "2", "3", "4", "5 – Svært begrenset hjemme"] },
+      { "id": "q6", "label": "Trygghet ved å gå ut", "type": "select", "options": ["0 – Trygg ved å gå ut", "1", "2", "3", "4", "5 – Ikke trygg ved å gå ut pga lungesykdom"] },
+      { "id": "q7", "label": "Søvnkvalitet", "type": "select", "options": ["0 – Sover godt", "1", "2", "3", "4", "5 – Sover ikke godt pga lungesykdom"] },
+      { "id": "q8", "label": "Energinivå", "type": "select", "options": ["0 – Mye energi", "1", "2", "3", "4", "5 – Ingen energi i det hele tatt"] }
+    ],
+    "thresholds": [
+      { "max": 9, "label": "Lav symptombelastning", "color": "#4caf50" },
+      { "max": 20, "label": "Moderat symptombelastning", "color": "#ff9800" },
+      { "max": 30, "label": "Høy symptombelastning", "color": "#f44336" },
+      { "max": 40, "label": "Svært høy symptombelastning", "color": "#b71c1c" }
+    ]
+  },
+  {
+    "id": "mmrc",
+    "name": "mMRC (KOLS)",
+    "description": "Modified Medical Research Council dyspnøskala.",
+    "type": "calculator",
+    "level": "somatikk",
+    "layout": "vertical-select",
+    "fields": [
+      { "id": "grade", "label": "Grad av tungpust", "type": "select", "options": ["Grad 0 – Tungpusten kun ved kraftig anstrengelse", "Grad 1 – Tungpusten ved rask gange/oppoverbakke", "Grad 2 – Må gå saktere enn jevnaldrende eller stoppe pga tungpust", "Grad 3 – Stopper etter ~100m eller noen minutter på flatt underlag", "Grad 4 – For tungpusten til å forlate huset, eller tungpusten ved påkledning"] }
+    ],
+    "thresholds": [
+      { "max": 0, "label": "Grad 0", "color": "#4caf50" },
+      { "max": 1, "label": "Grad 1", "color": "#8bc34a" },
+      { "max": 2, "label": "Grad 2", "color": "#ff9800" },
+      { "max": 3, "label": "Grad 3", "color": "#f44336" },
+      { "max": 4, "label": "Grad 4", "color": "#b71c1c" }
+    ]
+  },
+  {
+    "id": "crb65",
+    "name": "CRB-65",
+    "description": "Alvorlighetsgrad ved samfunnservervet pneumoni. Uten blodprøver.",
+    "type": "calculator",
+    "level": "somatikk",
+    "fields": [
+      { "id": "confusion", "label": "Nyoppstått forvirring", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "respRate", "label": "Respirasjonsfrekvens ≥30/min", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "bloodPressure", "label": "BT systolisk <90 eller diastolisk ≤60 mmHg", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "age65", "label": "Alder ≥65 år", "type": "select", "options": ["Nei", "Ja"] }
+    ],
+    "thresholds": [
+      { "max": 0, "label": "Lav risiko – vurder hjemmebehandling", "color": "#4caf50" },
+      { "max": 2, "label": "Moderat risiko – vurder sykehusinnleggelse", "color": "#ff9800" },
+      { "max": 4, "label": "Høy risiko – hasteinnleggelse", "color": "#f44336" }
+    ]
+  },
+  {
+    "id": "madrs",
+    "name": "MADRS (depresjon)",
+    "description": "Montgomery-Åsberg Depression Rating Scale. 10 spørsmål om depresjon.",
+    "type": "scoring",
+    "level": "psykiatri",
+    "questions": [
+      {
+        "id": "madrs-1",
+        "text": "Synlig tristhet",
+        "options": [
+          { "label": "0 – Ingen tristhet", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Ser trist og nedstemt ut", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ser konstant ulykkelig ut", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Ekstrem og vedvarende tristhet", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-2",
+        "text": "Rapportert tristhet",
+        "options": [
+          { "label": "0 – Sporadisk tristhet", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Trist eller nedfor", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Gjennomgående nedstemthet", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Konstant og uutholdelig tristhet", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-3",
+        "text": "Indre spenning",
+        "options": [
+          { "label": "0 – Rolig", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2 – Periodisk indre uro", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Vedvarende indre spenning", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6 – Uutholdelig angst eller panikk", "score": 6 }
+        ]
+      },
+      {
+        "id": "madrs-4",
+    "content":"(truncated for brevity)"}
