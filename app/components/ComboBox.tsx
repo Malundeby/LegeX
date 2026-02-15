@@ -63,10 +63,12 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
     inputRef.current?.blur();
   };
 
-  const handleInputFocus = () => {
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setFilteredOptions(options);
     setIsOpen(true);
     setHighlightedIndex(-1);
+    e.currentTarget.style.borderColor = '#0891b2';
+    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(8, 145, 178, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1)';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -151,10 +153,6 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
             fontWeight: 500,
             boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
             cursor: 'text'
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = '#0891b2';
-            e.currentTarget.style.boxShadow = '0 0 0 4px rgba(8, 145, 178, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1)';
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = '#e5e7eb';
