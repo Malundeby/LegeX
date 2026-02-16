@@ -6,6 +6,14 @@ import scoringTools from "@/data/scoring-tools.json";
 import calculators from "@/data/calculators.json";
 import ComboBox from "./ComboBox";
 import ChatGPTPrompt from "./ChatGPTPrompt";
+import DatePickerField from "./DatePickerField";
+import {
+  addOffset,
+  formatNorwegianDate,
+  isoWeekNumber,
+  parseOneLineOffset,
+  weekdayName
+} from "@/app/utils/dateCalculator";
 
 interface ToolOption { label: string; score: number; }
 interface ToolQuestion { id: string; text: string; options: ToolOption[]; part?: string; }
@@ -18,7 +26,7 @@ interface LinkItem { id: string; label: string; url: string; }
 interface LinkBox { id: string; title: string; items: LinkItem[]; }
 
 type TabKey = "tools" | "chatgpt" | "guides" | "patientinfo" | "medications" | "calendar";
-const tabs: Record<TabKey, string> = { tools: "Verktøy", chatgpt: "KI-assistent", guides: "Lenker og PDFer", patientinfo: "Pasientinformasjon", medications: "Legemidler", calendar: "Kalender" };
+const tabs: Record<TabKey, string> = { tools: "Verktøy", chatgpt: "KI-assistent", guides: "Lenker og PDFer", patientinfo: "Pasientinformasjon", medications: "Legemidler", calendar: "Fastlegekalkulatoren" };
 
 export default function ToolHub(
   {
@@ -33,6 +41,33 @@ export default function ToolHub(
     noSectionBackground?: boolean;
   } = {}
 ) {
+  const getTodayIso = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const parseIsoDate = (value: string) => {
+    if (!value) return null;
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(Date.UTC(year, month - 1, day));
+  };
+
+  const parseLocaleNumber = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const normalized = trimmed.replace(",", ".");
+    const parsed = Number(normalized);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const daysBetweenUtc = (start: Date, end: Date) => (
+    Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))
+  );
+
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? "tools");
   const [activeToolId, setActiveToolId] = useState(initialTool ?? "");
   const [activeCalcId, setActiveCalcId] = useState(initialTool ? "" : (initialCalc ?? ""));
@@ -54,15 +89,16 @@ export default function ToolHub(
   const [draggedItem, setDraggedItem] = useState<{ boxId: string; itemId: string } | null>(null);
   const [draggedPostitBox, setDraggedPostitBox] = useState<string | null>(null);
   const [showIndication, setShowIndication] = useState(false);
-  const [calendarBaseYear, setCalendarBaseYear] = useState(() => String(new Date().getFullYear()));
-  const [calendarBaseMonth, setCalendarBaseMonth] = useState(() => String(new Date().getMonth() + 1));
-  const [calendarBaseDay, setCalendarBaseDay] = useState(() => String(new Date().getDate()));
-  const [calendarYears, setCalendarYears] = useState<string>("0");
-  const [calendarMonths, setCalendarMonths] = useState<string>("0");
-  const [calendarWeeks, setCalendarWeeks] = useState<string>("0");
-  const [calendarDays, setCalendarDays] = useState<string>("0");
-  const [calendarResult, setCalendarResult] = useState<string>("");
-  const [calendarAction, setCalendarAction] = useState<string>("");
+  const [dateCalcStart, setDateCalcStart] = useState(() => getTodayIso());
+  const [dateCalcDirection, setDateCalcDirection] = useState<"forward" | "backward">("forward");
+  const [dateCalcInline, setDateCalcInline] = useState("");
+  const [medStartDate, setMedStartDate] = useState(() => getTodayIso());
+  const [medUnits, setMedUnits] = useState("0");
+  const [medDosePerDay, setMedDosePerDay] = useState("1");
+  const [avgPrevDate, setAvgPrevDate] = useState(() => getTodayIso());
+  const [avgPrevUnits, setAvgPrevUnits] = useState("0");
+  const [avgNextDate, setAvgNextDate] = useState(() => getTodayIso());
+  const [calcTab, setCalcTab] = useState<"date" | "med">("date");
 
   const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
   const [customItemOrder, setCustomItemOrder] = useState<Record<string, string[]>>({});
@@ -119,69 +155,73 @@ export default function ToolHub(
 
   const cleanName = (name: string) => name.replace(/\s*\([^)]*\)\s*/g, '').trim();
 
-  const parseBaseDate = () => {
-    const year = Number(calendarBaseYear);
-    const month = Number(calendarBaseMonth);
-    const day = Number(calendarBaseDay);
-    if (!year || !month || !day) return null;
-    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-    if (day > lastDay) return null;
-    return { year, month, day };
-  };
-
-  const formatDateYmd = (year: number, month: number, day: number) => (
-    `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-  );
-
-  const addDays = (year: number, month: number, day: number, days: number) => {
-    const date = new Date(Date.UTC(year, month - 1, day));
-    date.setUTCDate(date.getUTCDate() + days);
-    return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() };
-  };
-
-  const addMonths = (year: number, month: number, day: number, months: number) => {
-    const totalMonths = year * 12 + (month - 1) + months;
-    const targetYear = Math.floor(totalMonths / 12);
-    const targetMonth = totalMonths % 12;
-    const lastDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
-    const clampedDay = Math.min(day, lastDay);
-    return { year: targetYear, month: targetMonth + 1, day: clampedDay };
-  };
-
-  const yearOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: 21 }, (_, i) => String(currentYear - 10 + i));
-  }, []);
-  const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => String(i + 1)), []);
-  const dayOptions = useMemo(() => Array.from({ length: 31 }, (_, i) => String(i + 1)), []);
-  const deltaYearOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => String(i)), []);
-  const deltaMonthOptions = useMemo(() => Array.from({ length: 25 }, (_, i) => String(i)), []);
-  const deltaWeekOptions = useMemo(() => Array.from({ length: 53 }, (_, i) => String(i)), []);
-  const deltaDayOptions = useMemo(() => Array.from({ length: 32 }, (_, i) => String(i)), []);
-
-  const applyCalendarShift = (direction: "add" | "subtract") => {
-    const parsed = parseBaseDate();
-    if (!parsed) {
-      setCalendarResult("");
-      setCalendarAction("");
-      return;
+  const dateCalcInlineParsed = useMemo(() => parseOneLineOffset(dateCalcInline), [dateCalcInline]);
+  const dateCalcOffset = useMemo(() => {
+    if (dateCalcInline.trim()) {
+      if (!dateCalcInlineParsed) return null;
+      const hasExplicitSign = /^[+-]/.test(dateCalcInline.trim());
+      const sign = hasExplicitSign ? dateCalcInlineParsed.sign : (dateCalcDirection === "forward" ? 1 : -1);
+      return { ...dateCalcInlineParsed, sign };
     }
 
-    const years = Number(calendarYears) || 0;
-    const months = Number(calendarMonths) || 0;
-    const weeks = Number(calendarWeeks) || 0;
-    const days = Number(calendarDays) || 0;
+    return null;
+  }, [dateCalcInline, dateCalcInlineParsed, dateCalcDirection]);
 
-    const sign = direction === "add" ? 1 : -1;
-    const monthDelta = sign * (years * 12 + months);
-    const dayDelta = sign * (weeks * 7 + days);
+  const dateCalcResult = useMemo(() => {
+    const baseDate = parseIsoDate(dateCalcStart);
+    if (!baseDate || !dateCalcOffset) return null;
 
-    const afterMonths = addMonths(parsed.year, parsed.month, parsed.day, monthDelta);
-    const afterDays = addDays(afterMonths.year, afterMonths.month, afterMonths.day, dayDelta);
+    const resultDate = addOffset(baseDate, dateCalcOffset);
+    return {
+      date: resultDate,
+      dateText: formatNorwegianDate(resultDate),
+      weekday: weekdayName(resultDate),
+      weekNumber: isoWeekNumber(resultDate),
+      dayDiff: daysBetweenUtc(baseDate, resultDate)
+    };
+  }, [dateCalcStart, dateCalcOffset]);
 
-    setCalendarResult(formatDateYmd(afterDays.year, afterDays.month, afterDays.day));
-    setCalendarAction(`${direction === "add" ? "Legg til" : "Trekk fra"} ${years} år, ${months} mnd, ${weeks} uker, ${days} dager`);
-  };
+  const medDurationResult = useMemo(() => {
+    const startDate = parseIsoDate(medStartDate);
+    if (!startDate) return null;
+
+    const unitValue = parseLocaleNumber(medUnits);
+    const doseValue = parseLocaleNumber(medDosePerDay);
+    if (unitValue === null || doseValue === null || doseValue <= 0) return null;
+
+    const totalUnits = Math.round(unitValue);
+    if (totalUnits <= 0) return null;
+
+    const durationDays = Math.ceil(totalUnits / doseValue);
+    const endDate = addOffset(startDate, { sign: 1, value: durationDays - 1, unit: "day" });
+
+    return {
+      durationDays,
+      endDate,
+      endDateText: formatNorwegianDate(endDate)
+    };
+  }, [medStartDate, medUnits, medDosePerDay]);
+
+  const avgUsageResult = useMemo(() => {
+    const prevDate = parseIsoDate(avgPrevDate);
+    const nextDate = parseIsoDate(avgNextDate);
+    if (!prevDate || !nextDate) return null;
+
+    const units = parseLocaleNumber(avgPrevUnits);
+    if (units === null) return null;
+
+    const daySpan = daysBetweenUtc(prevDate, nextDate);
+    if (daySpan <= 0) {
+      return { error: "Neste dato må være etter forrige dato." };
+    }
+
+    const daily = units / daySpan;
+    return {
+      daySpan,
+      daily,
+      per30: daily * 30
+    };
+  }, [avgPrevDate, avgNextDate, avgPrevUnits]);
 
   const baseLinkBoxes: LinkBox[] = [
     {
@@ -995,22 +1035,10 @@ export default function ToolHub(
   };
 
   return (
-    <section className={noSectionBackground ? undefined : "section"}>
-      <div className="row" style={{ gap: 8, marginBottom: 12 }}>
+    <section className={`tool-section ${noSectionBackground ? "" : "section"}`}>
+      <div className="row tool-actions">
         <button
-          style={{
-            padding: '8px 16px',
-            borderRadius: 6,
-            border: '1px solid rgba(0,0,0,0.1)',
-            background: 'white',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            fontSize: 14,
-            fontWeight: 500,
-            transition: 'all 0.2s ease'
-          }}
+          className="tool-action"
           onClick={handleHomeClick}
           type="button"
           title="Tilbake til forsiden"
@@ -1019,19 +1047,7 @@ export default function ToolHub(
           <span>Hjem</span>
         </button>
         <button
-          style={{
-            padding: '8px 16px',
-            borderRadius: 6,
-            border: '1px solid rgba(0,0,0,0.1)',
-            background: showSearch ? '#f0f0f0' : 'white',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            fontSize: 14,
-            fontWeight: 500,
-            transition: 'all 0.2s ease'
-          }}
+          className={`tool-action ${showSearch ? "active" : ""}`}
           onClick={() => setShowSearch(!showSearch)}
           type="button"
           title="Søk"
@@ -1041,19 +1057,13 @@ export default function ToolHub(
         </button>
       </div>
       {showSearch && (
-        <div style={{ marginBottom: 12 }}>
+        <div className="tool-search">
           <input
+            className="tool-search-input"
             type="text"
             placeholder="Søk etter verktøy..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: 6,
-              border: '1px solid rgba(0,0,0,0.2)',
-              fontSize: 14
-            }}
             autoFocus
           />
         </div>
@@ -1067,17 +1077,9 @@ export default function ToolHub(
         <span className="badge">MVP · Offline-støtte</span>
       </div>
       {activeTab === "tools" && (
-        <div style={{ marginTop: 12 }}>
+        <div className="tool-view-toggle">
           <button
-            style={{
-              padding: '6px 12px',
-              borderRadius: 6,
-              border: '1px solid rgba(0,0,0,0.2)',
-              background: 'white',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500
-            }}
+            className={`tool-view-button ${viewMode === "category" ? "active" : ""}`}
             onClick={() => {
               setViewMode("category");
               setActiveToolId("");
@@ -1092,15 +1094,7 @@ export default function ToolHub(
             📂 Kategorivisning
           </button>
           <button
-            style={{
-              padding: '8px 16px',
-              borderRadius: 6,
-              border: '1px solid rgba(0,0,0,0.2)',
-              background: viewMode === "postit" ? '#f0f0f0' : 'white',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500
-            }}
+            className={`tool-view-button ${viewMode === "postit" ? "active" : ""}`}
             onClick={() => {
               setViewMode("postit");
               setActiveToolId("");
@@ -1294,8 +1288,7 @@ export default function ToolHub(
           }}>
             {viewMode === "category" && (<>
             <button 
-              className="section" 
-              style={{ padding: 8, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}
+              className="tool-category-toggle" 
               onClick={() => setSomatikkExpanded(!somatikkExpanded)}
               type="button"
             >
@@ -1309,8 +1302,7 @@ export default function ToolHub(
               </button>
             ))}
             <button 
-              className="section" 
-              style={{ padding: 8, marginTop: 12, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}
+              className="tool-category-toggle" 
               onClick={() => setPsykiatriExpanded(!psykiatriExpanded)}
               type="button"
             >
@@ -2299,169 +2291,313 @@ export default function ToolHub(
       )}
 
       {activeTab === "calendar" && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 20,
-            borderRadius: 16,
-            border: "1px solid #e6e2d6",
-            background: "linear-gradient(135deg, #fff7e6 0%, #f0f7ff 100%)",
-            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div className="calc-hub">
+          <div className="calc-header">
             <div>
-              <h2 style={{ marginBottom: 6, fontSize: 22 }}>Kalender</h2>
-              <p style={{ marginBottom: 0, color: "#5b6472", fontSize: 14 }}>
-                Legg til eller trekk fra i en mer fleksibel datobygger.
-              </p>
+              <h2>Fastlegekalkulatoren</h2>
+              <p>Kliniske kalkulatorer – klare til bruk.</p>
             </div>
-            <div style={{
-              padding: "6px 12px",
-              borderRadius: 999,
-              background: "#0f172a",
-              color: "#f8fafc",
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: 0.4
-            }}>
-              DATO-VERKTOY
-            </div>
+            <div className="calc-pill">KALKULATORER</div>
           </div>
 
-          <div style={{ display: "grid", gap: 16, marginTop: 16, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-            <div style={{
-              padding: 16,
-              borderRadius: 14,
-              background: "#ffffff",
-              border: "1px solid rgba(15, 23, 42, 0.08)",
-              boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "#9a3412" }}>
-                  Startdato
+          <div className="calc-toggle" style={{ marginTop: 16 }}>
+            <button
+              type="button"
+              className={`calc-toggle-button ${calcTab === "date" ? "active" : ""}`}
+              onClick={() => setCalcTab("date")}
+            >
+              Datokalkulator
+            </button>
+            <button
+              type="button"
+              className={`calc-toggle-button ${calcTab === "med" ? "active" : ""}`}
+              onClick={() => setCalcTab("med")}
+            >
+              Legemiddelberegner
+            </button>
+          </div>
+
+          <div className={`calc-grid ${calcTab === "date" || calcTab === "med" ? "calc-grid-single" : ""}`}>
+            {calcTab === "date" && (
+            <section className="calc-card">
+              <div className="calc-card-header">
+                <h3>Datokalkulator</h3>
+                <p>Regn ut datoer frem eller tilbake i tid.</p>
+              </div>
+
+              <div className="calc-form">
+                <div className="calc-field">
+                  <label>Startdato</label>
+                  <div className="calc-field-stack">
+                    <DatePickerField
+                      value={dateCalcStart}
+                      onChange={setDateCalcStart}
+                      ariaLabel="Velg startdato"
+                    />
+                    <button type="button" className="button calc-inline-button" onClick={() => setDateCalcStart(getTodayIso())}>
+                      I dag
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const now = new Date();
-                    setCalendarBaseYear(String(now.getFullYear()));
-                    setCalendarBaseMonth(String(now.getMonth() + 1));
-                    setCalendarBaseDay(String(now.getDate()));
-                  }}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 999,
-                    border: "1px solid rgba(15, 23, 42, 0.12)",
-                    background: "#fff4de",
-                    color: "#9a3412",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer"
-                  }}
-                >
-                  I dag
-                </button>
-              </div>
-              <div style={{ marginTop: 10, display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))" }}>
-                <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
-                  År
-                  <ComboBox value={calendarBaseYear} options={yearOptions} onChange={setCalendarBaseYear} placeholder="År" />
-                </label>
-                <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
-                  Måned
-                  <ComboBox value={calendarBaseMonth} options={monthOptions} onChange={setCalendarBaseMonth} placeholder="Måned" />
-                </label>
-                <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
-                  Dag
-                  <ComboBox value={calendarBaseDay} options={dayOptions} onChange={setCalendarBaseDay} placeholder="Dag" />
-                </label>
-              </div>
-            </div>
 
-            <div style={{
-              padding: 16,
-              borderRadius: 14,
-              background: "#0f172a",
-              color: "#e2e8f0",
-              border: "1px solid rgba(15, 23, 42, 0.2)",
-              boxShadow: "0 8px 20px rgba(15, 23, 42, 0.18)"
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "#fbbf24" }}>
-                Legg til / trekk fra
-              </div>
-              <div style={{ marginTop: 10, display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))" }}>
-                <label style={{ display: "grid", gap: 6, fontSize: 13, color: "#e2e8f0" }}>
-                  År
-                  <ComboBox value={calendarYears} options={deltaYearOptions} onChange={setCalendarYears} placeholder="0" />
-                </label>
-                <label style={{ display: "grid", gap: 6, fontSize: 13, color: "#e2e8f0" }}>
-                  Mnd
-                  <ComboBox value={calendarMonths} options={deltaMonthOptions} onChange={setCalendarMonths} placeholder="0" />
-                </label>
-                <label style={{ display: "grid", gap: 6, fontSize: 13, color: "#e2e8f0" }}>
-                  Uker
-                  <ComboBox value={calendarWeeks} options={deltaWeekOptions} onChange={setCalendarWeeks} placeholder="0" />
-                </label>
-                <label style={{ display: "grid", gap: 6, fontSize: 13, color: "#e2e8f0" }}>
-                  Dager
-                  <ComboBox value={calendarDays} options={deltaDayOptions} onChange={setCalendarDays} placeholder="0" />
-                </label>
+                <div className="calc-field">
+                  <label>Retning</label>
+                  <div className="calc-toggle">
+                    <button
+                      type="button"
+                      className={`calc-toggle-button ${dateCalcDirection === "forward" ? "active" : ""}`}
+                      onClick={() => setDateCalcDirection("forward")}
+                    >
+                      Frem
+                    </button>
+                    <button
+                      type="button"
+                      className={`calc-toggle-button ${dateCalcDirection === "backward" ? "active" : ""}`}
+                      onClick={() => setDateCalcDirection("backward")}
+                    >
+                      Tilbake
+                    </button>
+                  </div>
+                </div>
+
+                <div className="calc-field">
+                  <label>Hurtigvalg</label>
+                  <div className="calc-quick">
+                    {[
+                      { label: "1u", value: 1, unit: "week" },
+                      { label: "2u", value: 2, unit: "week" },
+                      { label: "3u", value: 3, unit: "week" },
+                      { label: "4u", value: 4, unit: "week" },
+                      { label: "6u", value: 6, unit: "week" },
+                      { label: "8u", value: 8, unit: "week" },
+                      { label: "3m", value: 3, unit: "month" }
+                    ].map((quick) => (
+                      <button
+                        key={quick.label}
+                        type="button"
+                        className="calc-quick-button"
+                        onClick={() => {
+                          const unitCode = quick.unit === "week" ? "u" : "m";
+                          setDateCalcInline(`${quick.value}${unitCode}`);
+                        }}
+                      >
+                        {quick.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="calc-field">
+                  <label>En-linje</label>
+                  <input
+                    type="text"
+                    className="calc-input"
+                    placeholder="14d, 6u, 3m, 1år"
+                    value={dateCalcInline}
+                    onChange={(event) => setDateCalcInline(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        setDateCalcInline(event.currentTarget.value);
+                      }
+                    }}
+                  />
+                  <div className="calc-help">Skriv: 14d, 6u, 3m, 1år – eller kombiner som 1m 5d. Bruk +/− for retning.</div>
+                  {dateCalcInline.trim() && !dateCalcInlineParsed && (
+                    <div className="calc-error">Ugyldig uttrykk. Bruk f.eks. 14d, +3m eller -1år.</div>
+                  )}
+                  <button
+                    type="button"
+                    className="button calc-inline-button"
+                    onClick={() => {
+                      setDateCalcInline("");
+                      setDateCalcStart(getTodayIso());
+                    }}
+                  >
+                    Nullstill
+                  </button>
+                </div>
               </div>
 
-              <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={() => applyCalendarShift("add")}
-                  style={{
-                    padding: "10px 16px",
-                    borderRadius: 999,
-                    border: "none",
-                    background: "#f59e0b",
-                    color: "#1f2937",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    boxShadow: "0 6px 16px rgba(245, 158, 11, 0.35)"
-                  }}
-                >
-                  Legg til
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyCalendarShift("subtract")}
-                  style={{
-                    padding: "10px 16px",
-                    borderRadius: 999,
-                    border: "1px solid rgba(248, 250, 252, 0.3)",
-                    background: "transparent",
-                    color: "#e2e8f0",
-                    fontWeight: 700,
-                    cursor: "pointer"
-                  }}
-                >
-                  Trekk fra
-                </button>
+              <div className="calc-output">
+                <div className="calc-output-title">Resultat</div>
+                <div className="calc-output-main">
+                  {dateCalcResult ? dateCalcResult.dateText : "Angi verdier for å se resultat."}
+                </div>
+                {dateCalcResult && (
+                  <div className="calc-output-meta">
+                    <span>{dateCalcResult.weekday}</span>
+                    <span>Uke {dateCalcResult.weekNumber}</span>
+                    <span>{`${dateCalcResult.dayDiff >= 0 ? "+" : ""}${dateCalcResult.dayDiff} dager`}</span>
+                  </div>
+                )}
+                <div className="calc-output-actions">
+                  <button
+                    type="button"
+                    className="button primary"
+                    disabled={!dateCalcResult}
+                    onClick={() => {
+                      if (!dateCalcResult) return;
+                      const diffText = `${dateCalcResult.dayDiff >= 0 ? "+" : ""}${dateCalcResult.dayDiff} dager`;
+                      handleCopy(
+                        `Resultat: ${dateCalcResult.dateText} (${dateCalcResult.weekday}, uke ${dateCalcResult.weekNumber}) (${diffText})`
+                      );
+                    }}
+                  >
+                    Kopier
+                  </button>
+                  <span className="badge">{copyState || "Klar til kopiering"}</span>
+                </div>
               </div>
-            </div>
-          </div>
+            </section>
+            )}
 
-          <div style={{
-            marginTop: 18,
-            padding: 16,
-            borderRadius: 14,
-            background: "#ffffff",
-            border: "1px solid rgba(15, 23, 42, 0.08)",
-            display: "grid",
-            gap: 6
-          }}>
-            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 0.8, color: "#64748b" }}>Resultat</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
-              {calendarResult || "Velg en handling"}
-            </div>
-            {calendarAction && (
-              <div style={{ fontSize: 13, color: "#6b7280" }}>{calendarAction}</div>
+            {calcTab === "med" && (
+            <section className="calc-card">
+              <div className="calc-card-header">
+                <h3>Legemiddelberegner</h3>
+                <p>Varighet og snittforbruk mellom uthentinger.</p>
+              </div>
+
+              <div className="calc-subgrid">
+                <div className="calc-subcard">
+                  <div className="calc-subtitle">Varighetskalkulator</div>
+                  <div className="calc-form">
+                    <div className="calc-field">
+                      <label>Utleveringsdato</label>
+                      <div className="calc-field-stack">
+                        <DatePickerField
+                          value={medStartDate}
+                          onChange={setMedStartDate}
+                          ariaLabel="Velg dato utlevert"
+                        />
+                        <button type="button" className="button calc-inline-button" onClick={() => setMedStartDate(getTodayIso())}>
+                          I dag
+                        </button>
+                      </div>
+                    </div>
+                    <div className="calc-field">
+                      <label>Antall tabletter</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className="calc-input"
+                        value={medUnits}
+                        onChange={(event) => setMedUnits(event.target.value)}
+                      />
+                    </div>
+                    <div className="calc-field">
+                      <label>Dosering (antall tabletter per dag)</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        className="calc-input"
+                        value={medDosePerDay}
+                        onChange={(event) => setMedDosePerDay(event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="calc-output">
+                    <div className="calc-output-title">Resultat</div>
+                    <div className="calc-output-main">
+                      {medDurationResult ? `Skal minst vare til: ${medDurationResult.endDateText} (Uke ${isoWeekNumber(medDurationResult.endDate)} ${medDurationResult.endDate.getUTCFullYear()})` : "Angi verdier for å se resultat."}
+                    </div>
+                    {medDurationResult && (
+                      <div className="calc-output-meta">
+                        <span>Varighet: {medDurationResult.durationDays} dager</span>
+                      </div>
+                    )}
+                    <div className="calc-output-actions">
+                      <button
+                        type="button"
+                        className="button primary"
+                        disabled={!medDurationResult}
+                        onClick={() => {
+                          if (!medDurationResult) return;
+                          handleCopy(`Skal minst vare til: ${medDurationResult.endDateText} (Uke ${isoWeekNumber(medDurationResult.endDate)} ${medDurationResult.endDate.getUTCFullYear()}). Varighet: ${medDurationResult.durationDays} dager.`);
+                        }}
+                      >
+                        Kopier
+                      </button>
+                      <span className="badge">{copyState || "Klar til kopiering"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="calc-subcard">
+                  <div className="calc-subtitle">Gjennomsnittsforbruk</div>
+                  <div className="calc-form">
+                    <div className="calc-field">
+                      <label>Dato</label>
+                      <div className="calc-field-stack">
+                        <DatePickerField
+                          value={avgPrevDate}
+                          onChange={setAvgPrevDate}
+                          ariaLabel="Velg forrige uthentingsdato"
+                        />
+                      </div>
+                    </div>
+                    <div className="calc-field">
+                      <label>Antall tabletter</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className="calc-input"
+                        value={avgPrevUnits}
+                        onChange={(event) => setAvgPrevUnits(event.target.value)}
+                        placeholder="Antall tabletter"
+                      />
+                    </div>
+                    <div className="calc-field">
+                      <label>Neste uthenting</label>
+                      <DatePickerField
+                        value={avgNextDate}
+                        onChange={setAvgNextDate}
+                        ariaLabel="Velg neste uthentingsdato"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="calc-output">
+                    <div className="calc-output-title">Resultat</div>
+                    {avgUsageResult && "error" in avgUsageResult ? (
+                      <div className="calc-error">{avgUsageResult.error}</div>
+                    ) : (
+                      <>
+                        <div className="calc-output-main">
+                          {avgUsageResult ? `Snittforbruk: ${avgUsageResult.daily.toFixed(1)} enheter/dag` : "Angi verdier for å se resultat."}
+                        </div>
+                        {avgUsageResult && (
+                          <div className="calc-output-meta">
+                            <span>Tilsvarer ca: {avgUsageResult.per30.toFixed(1)} enheter per 30 dager</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    <div className="calc-output-actions">
+                      <button
+                        type="button"
+                        className="button primary"
+                        disabled={!avgUsageResult || "error" in avgUsageResult}
+                        onClick={() => {
+                          if (!avgUsageResult || "error" in avgUsageResult) return;
+                          handleCopy(
+                            `Snittforbruk: ${avgUsageResult.daily.toFixed(1)} enheter/dag. Tilsvarer ca: ${avgUsageResult.per30.toFixed(1)} enheter per 30 dager.`
+                          );
+                        }}
+                      >
+                        Kopier
+                      </button>
+                      <span className="badge">{copyState || "Klar til kopiering"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
             )}
           </div>
+
+          <p className="calc-footer-note">Beslutningsstøtte – kontroller ved behov</p>
         </div>
       )}
 

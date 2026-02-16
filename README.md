@@ -1,4 +1,4 @@
-# ToppenLS
+# Legeassistent
 
 En enkel PWA for kliniske verktøy (MVP). Bygget med Next.js og React.
 

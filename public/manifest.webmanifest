@@ -1,6 +1,6 @@
 {
-  "name": "ToppenLS",
-  "short_name": "ToppenLS",
+  "name": "Legeassistent",
+  "short_name": "Legeassistent",
   "description": "Kliniske verktøy for rask bruk i konsultasjon.",
   "start_url": "/",
   "display": "standalone",

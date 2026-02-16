@@ -4,8 +4,9 @@ export default function HomePage() {
   return (
     <main>
       <header>
-        <h1>Nyttige fastlegeverktøy</h1>
-        <p>Rask tilgang til skåringsverktøy og PDF-er – uten ekstra klikk.</p>
+        <h1>Legeverktøy</h1>
+        <p>Designet for en enklere klinisk hverdag.</p>
+        <p className="header-tagline">Av leger, for leger.</p>
       </header>
       <ToolHub />
       <p className="footer-note">

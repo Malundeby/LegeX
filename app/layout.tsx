@@ -3,7 +3,7 @@ import "./globals.css";
 import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
-  title: "ToppenLS",
+  title: "Legeassistent",
   description: "Kliniske verktøy for rask bruk i konsultasjon.",
   manifest: "/manifest.webmanifest"
 };
@@ -20,10 +20,10 @@ export default function RootLayout({
   return (
     <html lang="no">
       <head>
-        <meta name="application-name" content="ToppenLS" />
+        <meta name="application-name" content="Legeassistent" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="ToppenLS" />
+        <meta name="apple-mobile-web-app-title" content="Legeassistent" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
