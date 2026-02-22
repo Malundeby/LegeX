@@ -1,0 +1,378 @@
+/* TodoListWidget.css - Styling for TodoListWidget component */
+
+.todo-widget {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(221, 227, 238, 0.9);
+  width: 340px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  cursor: move;
+}
+
+.todo-widget:hover {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+}
+
+.todo-widget.is-dragging {
+  opacity: 0.6;
+  transform: scale(0.98);
+  cursor: grabbing;
+}
+
+.todo-widget-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Header */
+.todo-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
+  gap: 8px;
+}
+
+.todo-widget-title {
+  border: none;
+  background: transparent;
+  font-size: 17px;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  color: var(--text);
+}
+
+.todo-widget-title:hover {
+  background: rgba(15, 118, 110, 0.05);
+}
+
+.todo-widget-title:focus {
+  outline: none;
+  background: var(--primary-bg);
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2);
+}
+
+/* Action buttons */
+.todo-widget-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.todo-action-btn {
+  border: 1px solid var(--border);
+  background: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.todo-action-btn:hover {
+  background: var(--bg);
+  transform: translateY(-1px);
+}
+
+.todo-clear-btn {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.todo-clear-btn:hover {
+  background: #f0fdf4;
+}
+
+.todo-delete-btn {
+  color: var(--muted);
+  padding: 6px 8px;
+}
+
+.todo-delete-btn:hover {
+  background: #fee;
+  color: #c00;
+  border-color: #c00;
+}
+
+/* Progress indicator */
+.todo-progress {
+  padding: 12px 16px 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.todo-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.todo-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.todo-progress-text {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Add section */
+.todo-add-section {
+  display: flex;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.todo-add-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: white;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.todo-add-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+.todo-add-input::placeholder {
+  color: var(--muted);
+}
+
+.todo-add-btn {
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.2);
+}
+
+.todo-add-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  transform: translateY(-1px);
+}
+
+.todo-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Items list */
+.todo-items-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+  padding: 8px 16px;
+}
+
+.todo-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.todo-empty-state p {
+  margin: 0 0 8px;
+}
+
+.todo-empty-hint {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* Individual todo item */
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  background: white;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.todo-item:hover {
+  background: var(--bg);
+  border-color: var(--border);
+}
+
+.todo-item.is-completed {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+.todo-item.is-completed .todo-item-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* Custom checkbox */
+.todo-checkbox-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.todo-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.todo-checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.todo-checkbox-container:hover .todo-checkmark {
+  border-color: var(--primary);
+}
+
+.todo-checkbox:checked ~ .todo-checkmark {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-color: var(--primary);
+}
+
+.todo-checkbox:checked ~ .todo-checkmark::after {
+  content: "✓";
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Item text */
+.todo-item-text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+  cursor: text;
+}
+
+/* Edit input */
+.todo-edit-input {
+  flex: 1;
+  border: 1px solid var(--primary);
+  background: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+.todo-edit-input:focus {
+  outline: none;
+}
+
+/* Delete button */
+.todo-item-delete {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.todo-item:hover .todo-item-delete {
+  opacity: 1;
+}
+
+.todo-item-delete:hover {
+  background: #fee;
+  color: #c00;
+}
+
+/* Footer hint */
+.todo-footer-hint {
+  padding: 10px 16px;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
+}
+
+/* Scrollbar styling */
+.todo-items-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.todo-items-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.todo-items-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.todo-items-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .todo-widget {
+    width: 100%;
+  }
+}

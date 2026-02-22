@@ -41,7 +41,7 @@ header {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 24px;
-  padding: 32px 36px;
+  padding: 22px 40px;
   background: linear-gradient(135deg, #0f766e 0%, #14b8a6 55%, #0ea5e9 100%);
   border-radius: 20px;
   color: white;
@@ -183,7 +183,8 @@ header p {
 
 .tool-actions {
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  align-items: center;
 }
 
 .tool-action {
@@ -275,6 +276,13 @@ header p {
 .tool-category-toggle:hover {
   border-color: rgba(15, 118, 110, 0.45);
   transform: translateY(-1px);
+}
+
+.postit-title {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
 .calc-hub {
@@ -423,6 +431,31 @@ header p {
   box-shadow: 0 6px 14px rgba(15, 118, 110, 0.25);
 }
 
+.calc-toggle-radio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.calc-toggle-radio-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pregnancy-mode-toggle {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  border-radius: 14px;
+  padding: 6px;
+}
+
+.pregnancy-mode-toggle .calc-toggle-button {
+  text-align: left;
+}
+
 .calc-quick {
   display: flex;
   flex-wrap: wrap;
@@ -551,6 +584,20 @@ header p {
   font-weight: 600;
 }
 
+.rdp-dropdowns {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.rdp-dropdown {
+  border: 1px solid rgba(221, 227, 238, 0.9);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 13px;
+}
+
 .calc-help {
   font-size: 12px;
   color: var(--muted);
@@ -620,6 +667,77 @@ header p {
 .calc-subtitle {
   font-weight: 700;
   font-size: 14px;
+}
+
+.calc-subdescription {
+  margin-top: -6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pregnancy-referral-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pregnancy-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.pregnancy-risk-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pregnancy-risk-details {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.pregnancy-risk-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.pregnancy-risk-content {
+  margin-top: 10px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.pregnancy-risk-content p {
+  margin: 0;
+}
+
+.pregnancy-risk-content a {
+  margin-top: 10px;
+  color: #0f766e;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pregnancy-referral-preview {
+  margin: 0;
+  font-family: inherit;
+  font-size: 14px;
+  white-space: pre-wrap;
+  color: #0f172a;
+}
+
+.pregnancy-textarea {
+  min-height: 42px;
+  resize: vertical;
 }
 
 .calc-footer-note {

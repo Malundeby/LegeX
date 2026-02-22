@@ -8,9 +8,18 @@ interface ComboBoxProps {
   onChange: (value: string) => void;
   placeholder?: string;
   label?: string;
+  maxWidth?: string;
+  initialHighlightValue?: string;
 }
 
-export default function ComboBox({ value, options, onChange, placeholder = "Velg eller skriv...", label }: ComboBoxProps) {
+export default function ComboBox({
+  value,
+  options,
+  onChange,
+  placeholder = 'Velg eller skriv...',
+  maxWidth = '200px',
+  initialHighlightValue
+}: ComboBoxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value?.toString() || '');
   const [filteredOptions, setFilteredOptions] = useState(options);
@@ -35,24 +44,38 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setInputValue(val);
-    onChange(val);
+  const getInitialHighlightIndex = (optionList: string[]) => {
+    if (!inputValue && initialHighlightValue) {
+      const index = optionList.findIndex((option) => option === initialHighlightValue);
+      if (index >= 0) return index;
+    }
 
-    // Filter options based on input
-    if (val) {
-      const filtered = options.filter(opt => 
-        opt.toLowerCase().includes(val.toLowerCase())
+    if (inputValue) {
+      const selectedIndex = optionList.findIndex((option) => option === inputValue);
+      if (selectedIndex >= 0) return selectedIndex;
+    }
+
+    return -1;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextValue = e.target.value;
+    setInputValue(nextValue);
+    onChange(nextValue);
+
+    if (nextValue) {
+      const filtered = options.filter((option) =>
+        option.toLowerCase().includes(nextValue.toLowerCase())
       );
       setFilteredOptions(filtered);
       setIsOpen(filtered.length > 0);
       setHighlightedIndex(-1);
-    } else {
-      setFilteredOptions(options);
-      setIsOpen(true);
-      setHighlightedIndex(-1);
+      return;
     }
+
+    setFilteredOptions(options);
+    setIsOpen(true);
+    setHighlightedIndex(getInitialHighlightIndex(options));
   };
 
   const handleOptionClick = (option: string) => {
@@ -66,7 +89,7 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setFilteredOptions(options);
     setIsOpen(true);
-    setHighlightedIndex(-1);
+    setHighlightedIndex(getInitialHighlightIndex(options));
     e.currentTarget.style.borderColor = '#0891b2';
     e.currentTarget.style.boxShadow = '0 0 0 4px rgba(8, 145, 178, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1)';
   };
@@ -76,6 +99,7 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
       if (e.key === 'ArrowDown' || e.key === 'Enter') {
         setIsOpen(true);
         setFilteredOptions(options);
+        setHighlightedIndex(getInitialHighlightIndex(options));
       }
       return;
     }
@@ -83,13 +107,11 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev < filteredOptions.length - 1 ? prev + 1 : prev
-        );
+        setHighlightedIndex((prev) => (prev < filteredOptions.length - 1 ? prev + 1 : prev));
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
         break;
       case 'Enter':
         e.preventDefault();
@@ -110,19 +132,20 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
     if (highlightedIndex >= 0 && listRef.current) {
       const highlightedElement = listRef.current.children[highlightedIndex] as HTMLElement;
       if (highlightedElement) {
-        highlightedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        highlightedElement.scrollIntoView({ block: 'center', behavior: 'auto' });
       }
     }
   }, [highlightedIndex]);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', maxWidth: '200px' }}>
-      <div 
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', maxWidth }}>
+      <div
         style={{ position: 'relative', cursor: 'text' }}
         onClick={() => {
           if (!isOpen) {
             setIsOpen(true);
             setFilteredOptions(options);
+            setHighlightedIndex(getInitialHighlightIndex(options));
           }
           inputRef.current?.focus();
         }}
@@ -163,13 +186,18 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            setIsOpen(!isOpen);
-            if (!isOpen) {
-              inputRef.current?.focus();
-            }
+            setIsOpen((prev) => {
+              const nextOpen = !prev;
+              if (nextOpen) {
+                setFilteredOptions(options);
+                setHighlightedIndex(getInitialHighlightIndex(options));
+                inputRef.current?.focus();
+              }
+              return nextOpen;
+            });
           }}
           tabIndex={-1}
-          aria-label={isOpen ? "Lukk liste" : "Åpne liste"}
+          aria-label={isOpen ? 'Lukk liste' : 'Åpne liste'}
           style={{
             position: 'absolute',
             right: '10px',
@@ -197,17 +225,21 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
             e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 20 20" 
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
             fill="currentColor"
             style={{
               transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
           </svg>
         </button>
       </div>
@@ -284,14 +316,18 @@ export default function ComboBox({ value, options, onChange, placeholder = "Velg
               >
                 <span>{option}</span>
                 {isSelected && (
-                  <svg 
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 20 20" 
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 20 20"
                     fill="currentColor"
                     style={{ flexShrink: 0, marginLeft: '8px' }}
                   >
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 )}
               </div>

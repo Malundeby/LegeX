@@ -81,6 +81,9 @@ export default function DatePickerField({
           <DayPicker
             mode="single"
             weekStartsOn={1}
+            captionLayout="dropdown"
+            startMonth={new Date(1950, 0)}
+            endMonth={new Date(2100, 11)}
             selected={selectedDate}
             onSelect={(date) => {
               if (!date) return;

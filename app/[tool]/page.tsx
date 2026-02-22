@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import ToolHub from "../components/ToolHub";
 import scoringTools from "@/data/scoring-tools.json";
 import calculators from "@/data/calculators.json";
+import calculatorsNew from "@/data/calculators-new.json";
 
 // Map URL slugs to tool IDs
 const toolAliases: Record<string, { id: string; type: "score" | "calc" }> = {
@@ -20,14 +21,17 @@ const toolAliases: Record<string, { id: string; type: "score" | "calc" }> = {
   // Calculators
   bmi: { id: "bmi", type: "calc" },
   ccs: { id: "ccs", type: "calc" },
+  "ccs-angina": { id: "ccs-angina", type: "calc" },
   nyha: { id: "nyha", type: "calc" },
   chadsvasc: { id: "chadsvasc", type: "calc" },
   "cha2ds2-vasc": { id: "chadsvasc", type: "calc" },
   hasbled: { id: "hasbled", type: "calc" },
   mmrc: { id: "mmrc", type: "calc" },
+  "cat-copd": { id: "cat-copd", type: "calc" },
   cat: { id: "cat", type: "calc" },
   crb65: { id: "crb65", type: "calc" },
   act: { id: "act", type: "calc" },
+  "act-asthma": { id: "act-asthma", type: "calc" },
   "act-voksne": { id: "act", type: "calc" },
   "act-barn": { id: "act-child", type: "calc" },
   "act-child": { id: "act-child", type: "calc" },
@@ -44,6 +48,11 @@ const toolAliases: Record<string, { id: string; type: "score" | "calc" }> = {
 };
 
 export default function ToolPage() {
+    const allCalculators = useMemo(
+      () => [...calculators, ...calculatorsNew],
+      []
+    );
+
   const params = useParams();
   const toolSlug = (params.tool as string)?.toLowerCase();
 
@@ -58,8 +67,8 @@ export default function ToolPage() {
     if (toolInfo.type === "score") {
       return scoringTools.some((t) => t.id === toolInfo.id);
     }
-    return calculators.some((c) => c.id === toolInfo.id);
-  }, [toolInfo]);
+    return allCalculators.some((c) => c.id === toolInfo.id);
+  }, [toolInfo, allCalculators]);
 
   if (!toolInfo || !toolExists) {
     notFound();

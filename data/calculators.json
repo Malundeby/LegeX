@@ -1433,19 +1433,9 @@
         "type": "select",
         "options": [
           "Apixaban (Eliquis)",
-          "Rivaroxaban (Xarelto)",
+          "Dabigatran (Pradaxa)",
           "Edoxaban (Lixiana)",
-          "Dabigatran (Pradaxa)"
-        ]
-      },
-      {
-        "id": "indication",
-        "label": "Indikasjon",
-        "type": "select",
-        "options": [
-          "Atrieflimmer",
-          "DVT/LE behandling",
-          "DVT/LE profylakse"
+          "Rivaroxaban (Xarelto)"
         ]
       },
       {

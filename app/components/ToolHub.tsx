@@ -4,9 +4,11 @@
 import { useMemo, useState, useEffect } from "react";
 import scoringTools from "@/data/scoring-tools.json";
 import calculators from "@/data/calculators.json";
+import calculatorsNew from "@/data/calculators-new.json";
 import ComboBox from "./ComboBox";
 import ChatGPTPrompt from "./ChatGPTPrompt";
 import DatePickerField from "./DatePickerField";
+import ModernWidgetDashboard from "./ModernWidgetDashboard";
 import {
   addOffset,
   formatNorwegianDate,
@@ -23,10 +25,11 @@ interface CalcField { id: string; label: string; type: "number" | "select"; min?
 interface CalcThreshold { max: number; label: string; color: string; }
 interface Calculator { id: string; name: string; description: string; fields: CalcField[]; thresholds: CalcThreshold[]; layout?: "horizontal" | "vertical-select"; pdfUrl?: string; }
 interface LinkItem { id: string; label: string; url: string; }
-interface LinkBox { id: string; title: string; items: LinkItem[]; }
+interface LinkBox { id: string; title: string; items: LinkItem[]; description?: string; }
 
 type TabKey = "tools" | "chatgpt" | "guides" | "patientinfo" | "medications" | "calendar";
-const tabs: Record<TabKey, string> = { tools: "Verktøy", chatgpt: "KI-assistent", guides: "Lenker og PDFer", patientinfo: "Pasientinformasjon", medications: "Legemidler", calendar: "Fastlegekalkulatoren" };
+const tabs: Record<TabKey, string> = { tools: "Verktøy", chatgpt: "KI-assistent", guides: "Lenker", patientinfo: "Pasientinformasjon", medications: "Legemidler", calendar: "Fastlegekalkulator" };
+const tabOrder: TabKey[] = ["guides", "chatgpt", "calendar", "tools", "patientinfo", "medications"];
 
 export default function ToolHub(
   {
@@ -68,7 +71,7 @@ export default function ToolHub(
     Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))
   );
 
-  const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? "tools");
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? "guides");
   const [activeToolId, setActiveToolId] = useState(initialTool ?? "");
   const [activeCalcId, setActiveCalcId] = useState(initialTool ? "" : (initialCalc ?? ""));
   const [answers, setAnswers] = useState<Record<string, { score: number; optionIndex: number }>>({});
@@ -78,27 +81,40 @@ export default function ToolHub(
   const [somatikkExpanded, setSomatikkExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [viewMode, setViewMode] = useState<"category" | "postit">("category");
-  const [pdfVersion, setPdfVersion] = useState<"a" | "b">("a");
+  const [viewMode, setViewMode] = useState<"category" | "postit">("postit");
   const [collapsedBoxes, setCollapsedBoxes] = useState<Record<string, boolean>>({});
   const [editingLink, setEditingLink] = useState<{ boxId: string; itemId: string } | null>(null);
   const [editLabelValue, setEditLabelValue] = useState("");
   const [linkBoxOrder, setLinkBoxOrder] = useState<string[]>([]);
   const [draggedBox, setDraggedBox] = useState<string | null>(null);
-  const [postitBoxOrder, setPostitBoxOrder] = useState<string[]>(['generelle', 'psykiatri', 'kardiologi', 'lungemedisin', 'hematologi', 'gastromedisin', 'urologi', 'revmatologi']);
+  const [postitBoxOrder, setPostitBoxOrder] = useState<string[]>(['generelle', 'psykiatri', 'kardiologi', 'lungemedisin', 'hematologi', 'gastromedisin', 'endokrinologi', 'urologi', 'svangerskap', 'pediatri', 'revmatologi']);
   const [draggedItem, setDraggedItem] = useState<{ boxId: string; itemId: string } | null>(null);
   const [draggedPostitBox, setDraggedPostitBox] = useState<string | null>(null);
   const [showIndication, setShowIndication] = useState(false);
+  const [showClinicalTip, setShowClinicalTip] = useState(false);
   const [dateCalcStart, setDateCalcStart] = useState(() => getTodayIso());
   const [dateCalcDirection, setDateCalcDirection] = useState<"forward" | "backward">("forward");
   const [dateCalcInline, setDateCalcInline] = useState("");
   const [medStartDate, setMedStartDate] = useState(() => getTodayIso());
   const [medUnits, setMedUnits] = useState("0");
+  const [showMedUnitsPicker, setShowMedUnitsPicker] = useState(false);
   const [medDosePerDay, setMedDosePerDay] = useState("1");
+  const [copyToJournal, setCopyToJournal] = useState(true);
+  const [generatePatientMessage, setGeneratePatientMessage] = useState(false);
   const [avgPrevDate, setAvgPrevDate] = useState(() => getTodayIso());
   const [avgPrevUnits, setAvgPrevUnits] = useState("0");
+  const [showAvgUnitsPicker, setShowAvgUnitsPicker] = useState(false);
   const [avgNextDate, setAvgNextDate] = useState(() => getTodayIso());
-  const [calcTab, setCalcTab] = useState<"date" | "med">("date");
+  const [calcTab, setCalcTab] = useState<"date" | "med" | "pregnancy" | "tapering">("date");
+  const [pregnancyDate, setPregnancyDate] = useState("");
+  const [pregnancyPara, setPregnancyPara] = useState("");
+  const [pregnancyWeightKg, setPregnancyWeightKg] = useState("");
+  const [pregnancyHeightCm, setPregnancyHeightCm] = useState("");
+  const [pregnancyOtherConditions, setPregnancyOtherConditions] = useState("");
+  const [pregnancyMedicalHistory, setPregnancyMedicalHistory] = useState("");
+  const [pregnancyMedications, setPregnancyMedications] = useState("");
+  const [pregnancyMentalHealth, setPregnancyMentalHealth] = useState("");
+  const [pregnancyRiskPregnancy, setPregnancyRiskPregnancy] = useState(false);
 
   const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
   const [customItemOrder, setCustomItemOrder] = useState<Record<string, string[]>>({});
@@ -108,10 +124,138 @@ export default function ToolHub(
     []
   );
   
-  const sortedCalcs = useMemo(() => 
-    [...(calculators as Calculator[])],
-    []
-  );
+  const sortedCalcs = useMemo(() => {
+    const merged = [...(calculators as Calculator[]), ...(calculatorsNew as Calculator[])];
+    const byId = new Map<string, Calculator>();
+    merged.forEach((calc) => {
+      if (!byId.has(calc.id)) {
+        byId.set(calc.id, calc);
+      }
+    });
+    return [...byId.values()];
+  }, []);
+
+  const cleanName = (name: string) => name.replace(/\s*\([^)]*\)\s*/g, '').trim();
+
+  const postitTitles: Record<string, string> = {
+    generelle: "Generelle",
+    psykiatri: "Psykiatri",
+    kardiologi: "Kardiologi",
+    lungemedisin: "Lungemedisin",
+    hematologi: "Hematologi",
+    gastromedisin: "Gastromedisin",
+    endokrinologi: "Endokrinologi",
+    urologi: "Urologi",
+    svangerskap: "Svangerskap",
+    pediatri: "Pediatri",
+    revmatologi: "Revmatologi"
+  };
+
+  const calcPostitMap: Record<string, { boxId: string; label?: string }> = {
+    bmi: { boxId: "generelle", label: "BMI" },
+    nyha: { boxId: "kardiologi", label: "NYHA" },
+    ccs: { boxId: "kardiologi", label: "CCS" },
+    "ccs-angina": { boxId: "kardiologi", label: "CCS" },
+    chadsvasc: { boxId: "kardiologi", label: "CHA₂DS₂-VA" },
+    hasbled: { boxId: "kardiologi", label: "HAS-BLED" },
+    act: { boxId: "lungemedisin", label: "ACT voksne" },
+    "act-asthma": { boxId: "lungemedisin", label: "ACT voksne" },
+    "act-child": { boxId: "lungemedisin", label: "ACT barn" },
+    mmrc: { boxId: "lungemedisin", label: "mMRC" },
+    cat: { boxId: "lungemedisin", label: "CAT" },
+    "cat-copd": { boxId: "lungemedisin", label: "CAT" },
+    crb65: { boxId: "lungemedisin", label: "CRB-65" },
+    "doak-dosing": { boxId: "hematologi", label: "DOAK-dosering" },
+    "anemia-assessment": { boxId: "hematologi", label: "Anemivurdering" },
+    "wells-dvt": { boxId: "hematologi", label: "Wells DVT" },
+    "wells-pe": { boxId: "hematologi", label: "Wells Lungeemboli" },
+    fib4: { boxId: "gastromedisin", label: "FIB-4" },
+    "psa-age-adjusted": { boxId: "urologi", label: "Aldersjustert PSA" },
+    ipss: { boxId: "urologi", label: "IPSS-8" }
+  };
+
+  const toolPostitMap: Record<string, { boxId: string; label?: string }> = {
+    madrs: { boxId: "psykiatri", label: "MADRS" },
+    "gad-7": { boxId: "psykiatri", label: "GAD-7" },
+    asrs: { boxId: "psykiatri", label: "ASRS v1.1" },
+    audit: { boxId: "psykiatri", label: "AUDIT" },
+    "eular-ra-2010": { boxId: "revmatologi", label: "EULAR 2010 Revmatoid Artritt" },
+    "eular-pmr-2012": { boxId: "revmatologi", label: "EULAR 2012 Polymyalgia Rheumatica" }
+  };
+
+  type PostitItem = { id: string; label: string; itemType: "calc" | "tool" | "link"; url?: string };
+
+  const externalPostitItemsByBox: Record<string, Array<{ id: string; label: string; url: string }>> = {
+    psykiatri: [
+      { id: "psy-ciwa-alcohol", label: "CIWA-alkohol", url: "https://www.mdcalc.com/search?query=CIWA-Ar" },
+      { id: "psy-ciwa-benzo", label: "CIWA-benzodiazepiner", url: "https://www.mdcalc.com/search?query=CIWA-B" }
+    ],
+    gastromedisin: [
+      { id: "gastro-alvarado", label: "Alvarado-score", url: "https://www.mdcalc.com/calc/617/alvarado-score-acute-appendicitis" }
+    ],
+    endokrinologi: [
+      { id: "endo-homa", label: "HOMA-IR", url: "https://dosepilot.com/calc/homa-ir-calculator/" },
+      { id: "endo-cpep", label: "C-peptid til glukose", url: "https://www.mdcalc.com/calc/10529/c-peptide-glucose-ratio" }
+    ],
+    svangerskap: [
+      { id: "obs-sukk-s", label: "SUKK-S skår", url: "https://www.google.com/search?q=SUKK-S+sk%C3%A5r" }
+    ],
+    pediatri: [
+      { id: "ped-anafylaksi", label: "6.1 Anafylaksi - Helsebiblioteket", url: "https://www.helsebiblioteket.no/innhold/retningslinjer/pediatri/akuttveileder-i-pediatri/6.allergi-og-anafylaksi/6.1-anafylaksi" }
+    ]
+  };
+
+  const postitSections = useMemo(() => {
+    const buckets = new Map<string, PostitItem[]>();
+    postitBoxOrder.forEach((boxId) => buckets.set(boxId, []));
+
+    sortedCalcs.forEach((calc) => {
+      const mapped = calcPostitMap[calc.id];
+      const boxId = mapped?.boxId ?? "generelle";
+      const label = mapped?.label ?? cleanName(calc.name);
+      if (!buckets.has(boxId)) {
+        buckets.set(boxId, []);
+      }
+      buckets.get(boxId)!.push({ id: calc.id, label, itemType: "calc" });
+    });
+
+    sortedTools.forEach((tool) => {
+      const mapped = toolPostitMap[tool.id];
+      const boxId = mapped?.boxId ?? "psykiatri";
+      const label = mapped?.label ?? cleanName(tool.name);
+      if (!buckets.has(boxId)) {
+        buckets.set(boxId, []);
+      }
+      buckets.get(boxId)!.push({ id: tool.id, label, itemType: "tool" });
+    });
+
+    Object.entries(externalPostitItemsByBox).forEach(([boxId, items]) => {
+      if (!buckets.has(boxId)) {
+        buckets.set(boxId, []);
+      }
+      items.forEach((item) => {
+        buckets.get(boxId)!.push({ id: item.id, label: item.label, itemType: "link", url: item.url });
+      });
+    });
+
+    return postitBoxOrder.map((boxId) => {
+      const items = buckets.get(boxId) ?? [];
+      const seenCalcLabels = new Set<string>();
+      const dedupedItems = items.filter((item) => {
+        if (item.itemType !== "calc") return true;
+        const key = item.label.trim().toLowerCase();
+        if (seenCalcLabels.has(key)) return false;
+        seenCalcLabels.add(key);
+        return true;
+      });
+
+      return {
+        boxId,
+        title: postitTitles[boxId] ?? boxId,
+        items: dedupedItems
+      };
+    });
+  }, [postitBoxOrder, sortedCalcs, sortedTools]);
 
   const filteredTools = useMemo(() => {
     if (!searchQuery.trim()) return sortedTools;
@@ -152,8 +296,6 @@ export default function ToolHub(
       c.description.toLowerCase().includes(q)
     );
   }, [sortedCalcs, searchQuery]);
-
-  const cleanName = (name: string) => name.replace(/\s*\([^)]*\)\s*/g, '').trim();
 
   const dateCalcInlineParsed = useMemo(() => parseOneLineOffset(dateCalcInline), [dateCalcInline]);
   const dateCalcOffset = useMemo(() => {
@@ -202,6 +344,43 @@ export default function ToolHub(
     };
   }, [medStartDate, medUnits, medDosePerDay]);
 
+  const medPatientMessage = useMemo(() => {
+    if (!medDurationResult) return "";
+
+    const prescribedDate = parseIsoDate(medStartDate);
+    const prescribedDateText = prescribedDate ? formatNorwegianDate(prescribedDate) : medStartDate;
+    const tabletsText = String(Math.round(parseLocaleNumber(medUnits) ?? 0));
+    const doseInput = medDosePerDay.trim() || "0";
+
+    return `Det er ${prescribedDateText} skrevet resept på ${tabletsText} tabletter. Basert på et forbruk av ${doseInput} tabletter om dagen, skal dette vare til minst ${medDurationResult.endDateText}.`;
+  }, [medDurationResult, medStartDate, medUnits, medDosePerDay]);
+
+  const medJournalMessage = useMemo(() => {
+    if (!medDurationResult) return "";
+    const tabletsText = String(Math.round(parseLocaleNumber(medUnits) ?? 0));
+    const doseText = medDosePerDay.trim() || "0";
+    return `Resept på ${tabletsText} tabletter. Dosert ${doseText} om dagen. Skal minst vare til: ${medDurationResult.endDateText} (Uke ${isoWeekNumber(medDurationResult.endDate)} ${medDurationResult.endDate.getUTCFullYear()}). Varighet: ${medDurationResult.durationDays} dager.`;
+  }, [medDurationResult, medUnits, medDosePerDay]);
+
+  useEffect(() => {
+    if (!showMedUnitsPicker && !showAvgUnitsPicker) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+
+      if (showMedUnitsPicker && !target?.closest('[data-med-units-picker="true"]')) {
+        setShowMedUnitsPicker(false);
+      }
+
+      if (showAvgUnitsPicker && !target?.closest('[data-avg-units-picker="true"]')) {
+        setShowAvgUnitsPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [showMedUnitsPicker, showAvgUnitsPicker]);
+
   const avgUsageResult = useMemo(() => {
     const prevDate = parseIsoDate(avgPrevDate);
     const nextDate = parseIsoDate(avgNextDate);
@@ -218,10 +397,117 @@ export default function ToolHub(
     const daily = units / daySpan;
     return {
       daySpan,
-      daily,
-      per30: daily * 30
+      daily
     };
   }, [avgPrevDate, avgNextDate, avgPrevUnits]);
+
+  const pregnancyResult = useMemo(() => {
+    const lmpDate = parseIsoDate(pregnancyDate);
+    if (!lmpDate) return null;
+
+    const pregnancyLengthDays = 283;
+    const conceptionOffsetDays = 14;
+
+    const today = parseIsoDate(getTodayIso());
+    if (!today) return null;
+
+    const eddDate = addOffset(lmpDate, { sign: 1, value: pregnancyLengthDays, unit: "day" });
+
+    const conceptionDate = addOffset(lmpDate, { sign: 1, value: conceptionOffsetDays, unit: "day" });
+
+    const gestationalAgeDays = daysBetweenUtc(lmpDate, today);
+    const gestationalWeeks = Math.floor(Math.abs(gestationalAgeDays) / 7);
+    const gestationalDaysRemainder = Math.abs(gestationalAgeDays) % 7;
+
+    const daysToDueDate = daysBetweenUtc(today, eddDate);
+    const weeksToDueDate = Math.floor(Math.abs(daysToDueDate) / 7);
+    const daysToDueDateRemainder = Math.abs(daysToDueDate) % 7;
+
+    return {
+      eddDate,
+      lmpDate,
+      conceptionDate,
+      eddText: `${formatNorwegianDate(eddDate)} (${weekdayName(eddDate)})`,
+      conceptionText: `${formatNorwegianDate(conceptionDate)} (${weekdayName(conceptionDate)})`,
+      gestationalAgeText: `${gestationalWeeks} Uker, ${gestationalDaysRemainder} Dager (${gestationalAgeDays} Dager)`,
+      timeToDueDateText: `${weeksToDueDate} Uker, ${daysToDueDateRemainder} Dager (${daysToDueDate} Dager)`
+    };
+  }, [pregnancyDate]);
+
+  const pregnancyBmi = useMemo(() => {
+    const weight = parseLocaleNumber(pregnancyWeightKg);
+    const height = parseLocaleNumber(pregnancyHeightCm);
+    if (weight === null || height === null || weight <= 0 || height <= 0) return null;
+
+    const heightMeters = height / 100;
+    const bmi = weight / (heightMeters * heightMeters);
+    if (!Number.isFinite(bmi) || bmi <= 0) return null;
+    return bmi;
+  }, [pregnancyWeightKg, pregnancyHeightCm]);
+
+  const pregnancyReferralText = useMemo(() => {
+    const lines: string[] = [];
+
+    const patientInfoLines: string[] = [];
+    const trimmedPara = pregnancyPara.trim();
+    if (trimmedPara) {
+      patientInfoLines.push(`Para: ${trimmedPara}`);
+    }
+    if (pregnancyResult) {
+      patientInfoLines.push(`LMP: ${formatNorwegianDate(pregnancyResult.lmpDate)}`);
+      patientInfoLines.push(`Termin beregnet fra LMP: ${formatNorwegianDate(pregnancyResult.eddDate)}`);
+    }
+    if (patientInfoLines.length > 0) {
+      if (lines.length > 0) {
+        lines.push("");
+      }
+      lines.push("Informasjon om den gravide:", ...patientInfoLines);
+    }
+
+    const bodyMeasurementsLines: string[] = [];
+    const trimmedWeight = pregnancyWeightKg.trim();
+    const trimmedHeight = pregnancyHeightCm.trim();
+    if (trimmedWeight) {
+      bodyMeasurementsLines.push(`Vekt (kg): ${trimmedWeight}`);
+    }
+    if (trimmedHeight) {
+      bodyMeasurementsLines.push(`Høyde (cm): ${trimmedHeight}`);
+    }
+    if (pregnancyBmi !== null) {
+      bodyMeasurementsLines.push(`BMI: ${pregnancyBmi.toFixed(1)}`);
+    }
+    if (bodyMeasurementsLines.length > 0) {
+      lines.push("", "Kroppsmål:", ...bodyMeasurementsLines);
+    }
+
+    const trimmedMedicalHistory = pregnancyMedicalHistory.trim();
+    if (trimmedMedicalHistory) {
+      lines.push("", "Sykehistorie:", trimmedMedicalHistory);
+    }
+
+    const trimmedMentalHealth = pregnancyMentalHealth.trim();
+    if (trimmedMentalHealth) {
+      lines.push("", `Psykisk: ${trimmedMentalHealth}`);
+    }
+
+    const trimmedMedications = pregnancyMedications.trim();
+    if (trimmedMedications) {
+      lines.push("", `Medisiner: ${trimmedMedications}`);
+    }
+
+    const trimmedOtherConditions = pregnancyOtherConditions.trim();
+    if (trimmedOtherConditions) {
+      lines.push("", "Andre forhold:", trimmedOtherConditions);
+    }
+
+    if (pregnancyRiskPregnancy) {
+      lines.push("", "Risikosvangerskap: Ja");
+    }
+
+    lines.push("", "V/T", "Henvises for tidlig ultralyd (11+0-13+6) og rutine ultralyd (17-19).",);
+
+    return lines.join("\n");
+  }, [pregnancyPara, pregnancyResult, pregnancyWeightKg, pregnancyHeightCm, pregnancyBmi, pregnancyOtherConditions, pregnancyMedicalHistory, pregnancyMedications, pregnancyMentalHealth, pregnancyRiskPregnancy]);
 
   const baseLinkBoxes: LinkBox[] = [
     {
@@ -277,7 +563,18 @@ export default function ToolHub(
         { id: "fk-2", label: "Egenerklæring", url: "https://www.vegvesen.no/globalassets/forerkort/ta-forerkort/soknad-om-forerkort-og-kompetansebevis-egenerklaering-om-helse.pdf" },
         { id: "div-1", label: "Legemidler førerkort", url: "https://legehandboka.no/handboken/skjema-kalkulatorer/kalkulatorer/diverse/legemiddelkalkulator" }
       ]
-    }
+    },
+    {
+      id: "helsedirektoratet-veiledere",
+      title: "Helsedirektoratets veiledere",
+      items: [
+        { id: "hdir-1", label: "Diabetes", url: "https://www.helsedirektoratet.no/retningslinjer/diabetes" },
+        { id: "hdir-2", label: "Hjerte og kar", url: "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom" },
+        { id: "hdir-3", label: "Hypertensjon", url: "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom/kartlegging-av-hypertensjon-ved-forebygging-av-hjerte-og-karsykdom#utredning-av-hoyt-blodtrykk-ved-forebygging-av-hjerte-og-karsydom-praktisk-informasjon" },
+        { id: "hdir-4", label: "Hyperkolesterolemi", url: "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom/utredning-av-lipidverdiene-ved-primaer-og-sekundaerforebygging-av-hjerte-og-karsykdom#utredning-av-lipidverdiene-ved-primaer-og-sekundaerforebygging-av-hjerte-og-karsykdom" },
+        { id: "hdir-5", label: "Svangerskap", url: "https://www.helsedirektoratet.no/retningslinjer/svangerskapsomsorgen" }
+      ]
+    },
   ];
 
   // Initialize linkBoxOrder if empty
@@ -396,128 +693,75 @@ export default function ToolHub(
     // DOAK dosing calculator
     if (activeCalc.id === "doak-dosing") {
       const doakType = String(calcInputs["doak-type"]);
-      const indication = String(calcInputs["indication"]);
       const age80 = calcInputs["age"] === "Ja";
       const weight60 = calcInputs["weight"] === "Ja";
       const creat133 = calcInputs["creatinine"] === "Ja";
       const gfr = String(calcInputs["gfr"]);
       
-      if (!doakType || !indication || !gfr) return null;
+      if (!doakType || !gfr) return null;
       
       let dosing = "";
       let guideText = "";
       
       // Apixaban (Eliquis)
       if (doakType.includes("Apixaban")) {
-        if (indication === "Atrieflimmer") {
-          // Standard: 5 mg x 2, redusert hvis 2 av 3: alder ≥80, vekt ≤60, kreatinin ≥133
-          const reducedCriteria = [age80, weight60, creat133].filter(Boolean).length;
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else if (reducedCriteria >= 2) {
-            dosing = "2,5 mg x 2";
-          } else {
-            dosing = "5 mg x 2";
-          }
-          guideText = "Atrieflimmer:\n• Standard: 5 mg x 2\n• Redusert (2,5 mg x 2) hvis minst 2 av:\n  - Alder ≥80 år\n  - Vekt ≤60 kg\n  - S-kreatinin ≥133 µmol/L\n• Kontraindisert ved GFR <15";
-        } else if (indication === "DVT/LE behandling") {
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else {
-            dosing = "10 mg x 2 i 7 dager, deretter 5 mg x 2";
-          }
-          guideText = "DVT/LE behandling:\n• 10 mg x 2 i 7 dager\n• Deretter 5 mg x 2\n• Kontraindisert ved GFR <15";
+        // Standard: 5 mg x 2, redusert hvis 2 av 3: alder ≥80, vekt ≤60, kreatinin ≥133
+        const reducedCriteria = [age80, weight60, creat133].filter(Boolean).length;
+        if (gfr === "<15") {
+          dosing = "Kontraindisert ved GFR <15";
+        } else if (gfr === "15-30") {
+          dosing = "Reduser dose: 2,5 mg x 2";
+        } else if (reducedCriteria >= 2) {
+          dosing = "Reduser dose: 2,5 mg x 2";
         } else {
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else {
-            dosing = "2,5 mg x 2";
-          }
-          guideText = "DVT/LE profylakse:\n• 2,5 mg x 2\n• Kontraindisert ved GFR <15";
+          dosing = "5 mg x 2";
         }
+        guideText = "Atrieflimmer:\n• Standard: 5 mg x 2\n• Reduser dose: 2,5 mg x 2 hvis minst 2 av:\n  - Alder ≥80 år\n  - Vekt ≤60 kg\n  - S-kreatinin ≥133 µmol/L\n• Reduser dose: 2,5 mg x 2 ved GFR 15-30\n• Kontraindisert ved GFR <15";
       }
       
       // Rivaroxaban (Xarelto)
       else if (doakType.includes("Rivaroxaban")) {
-        if (indication === "Atrieflimmer") {
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else if (gfr === "15-30") {
-            dosing = "15 mg x 1 (til mat)";
-          } else {
-            dosing = "20 mg x 1 (til mat)";
-          }
-          guideText = "Atrieflimmer:\n• GFR >50: 20 mg x 1 (til mat)\n• GFR 15-50: 15 mg x 1 (til mat)\n• Kontraindisert ved GFR <15";
-        } else if (indication === "DVT/LE behandling") {
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else if (gfr === "15-30") {
-            dosing = "15 mg x 2 i 21 dager (til mat), deretter 15 mg x 1";
-          } else {
-            dosing = "15 mg x 2 i 21 dager (til mat), deretter 20 mg x 1";
-          }
-          guideText = "DVT/LE behandling:\n• GFR >30: 15 mg x 2 i 21 dager (til mat), deretter 20 mg x 1\n• GFR 15-30: 15 mg x 2 i 21 dager, deretter 15 mg x 1\n• Kontraindisert ved GFR <15";
+        if (gfr === "<15") {
+          dosing = "Kontraindisert ved GFR <15";
+        } else if (gfr === "15-30" || gfr === "30-50") {
+          dosing = "Reduser dose: 15 mg x 1 (til mat)";
         } else {
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else {
-            dosing = "10 mg x 1";
-          }
-          guideText = "DVT/LE profylakse:\n• 10 mg x 1\n• Kontraindisert ved GFR <15";
+          dosing = "20 mg x 1 (til mat)";
         }
+        guideText = "Atrieflimmer:\n• Standard: 20 mg x 1 (til mat) ved GFR >50\n• Reduser dose: 15 mg x 1 (til mat) ved GFR 15-49\n• Kontraindisert ved GFR <15";
       }
       
       // Edoxaban (Lixiana)
       else if (doakType.includes("Edoxaban")) {
-        if (indication === "Atrieflimmer") {
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else if (weight60 || gfr === "15-30") {
-            dosing = "30 mg x 1";
-          } else {
-            dosing = "60 mg x 1";
-          }
-          guideText = "Atrieflimmer:\n• Standard: 60 mg x 1\n• Redusert (30 mg x 1) hvis:\n  - Vekt ≤60 kg, eller\n  - GFR 15-50\n• Kontraindisert ved GFR <15";
+        if (gfr === "<15") {
+          dosing = "Kontraindisert ved GFR <15";
+        } else if (weight60 || gfr === "15-30" || gfr === "30-50") {
+          dosing = "Reduser dose: 30 mg x 1";
         } else {
-          if (gfr === "<15") {
-            dosing = "Kontraindisert ved GFR <15";
-          } else if (weight60 || gfr === "15-30") {
-            dosing = "30 mg x 1 (etter 5-10 dager parenteral behandling)";
-          } else {
-            dosing = "60 mg x 1 (etter 5-10 dager parenteral behandling)";
-          }
-          guideText = "DVT/LE:\n• Start etter 5-10 dager parenteral behandling\n• Standard: 60 mg x 1\n• Redusert (30 mg x 1) hvis vekt ≤60 kg eller GFR 15-50\n• Kontraindisert ved GFR <15";
+          dosing = "60 mg x 1";
         }
+        guideText = "Atrieflimmer:\n• Standard: 60 mg x 1\n• Reduser dose: 30 mg x 1 hvis:\n  - Vekt ≤60 kg, eller\n  - GFR 15-50\n• Kontraindisert ved GFR <15";
       }
       
       // Dabigatran (Pradaxa)
       else if (doakType.includes("Dabigatran")) {
-        if (indication === "Atrieflimmer") {
-          if (gfr === "<30") {
-            dosing = "Kontraindisert ved GFR <30";
-          } else if (gfr === "30-50" || age80) {
-            dosing = "110 mg x 2 (150 mg x 2 kan vurderes hvis lav blødningsrisiko)";
-          } else {
-            dosing = "150 mg x 2";
-          }
-          guideText = "Atrieflimmer:\n• Standard: 150 mg x 2\n• Redusert (110 mg x 2) hvis:\n  - Alder ≥80 år, eller\n  - GFR 30-50, eller\n  - Økt blødningsrisiko\n• Kontraindisert ved GFR <30";
+        if (gfr === "<15" || gfr === "15-30") {
+          dosing = "Kontraindisert ved GFR <30";
+        } else if (gfr === "30-50" || age80) {
+          dosing = "Reduser dose: 110 mg x 2 (150 mg x 2 kan vurderes hvis lav blødningsrisiko)";
         } else {
-          if (gfr === "<30") {
-            dosing = "Kontraindisert ved GFR <30";
-          } else {
-            dosing = "150 mg x 2 (etter 5-10 dager parenteral behandling)";
-          }
-          guideText = "DVT/LE:\n• Start etter 5-10 dager parenteral behandling\n• 150 mg x 2\n• Kontraindisert ved GFR <30";
+          dosing = "150 mg x 2";
         }
+        guideText = "Atrieflimmer:\n• Standard: 150 mg x 2\n• Reduser dose: 110 mg x 2 hvis:\n  - Alder ≥80 år, eller\n  - GFR 30-50, eller\n  - Økt blødningsrisiko\n• Kontraindisert ved GFR <30";
       }
       
-      const detailedText = `DOAK-dosering\nPreparat: ${doakType}\nIndikasjon: ${indication}\nGFR: ${gfr} ml/min\n\nAnbefalt dosering:\n${dosing}`;
+      const detailedText = `DOAK-dosering\nPreparat: ${doakType}\nGFR: ${gfr} ml/min\n\nAnbefalt dosering:\n${dosing}`;
       
       return {
         value: dosing || "Velg alle parametere",
-        label: indication,
+        label: "Atrieflimmer",
         color: "#0891b2",
-        text: `${doakType} for ${indication}: ${dosing}`,
+        text: `${doakType} (atrieflimmer): ${dosing}`,
         score: 0,
         maxScore: 1,
         detailedText: detailedText,
@@ -842,10 +1086,11 @@ export default function ToolHub(
   }, [activeCalc, calcInputs]);
 
   const handleAnswerChange = (qid: string, score: number, idx: number) => setAnswers(p => ({ ...p, [qid]: { score, optionIndex: idx } }));
-  const handleToolChange = (id: string) => { setActiveToolId(id); setActiveCalcId(""); setAnswers({}); };
+  const handleToolChange = (id: string) => { setActiveToolId(id); setActiveCalcId(""); setAnswers({}); setShowClinicalTip(false); };
   const handleCalcChange = (id: string) => { 
     setActiveCalcId(id); 
     setActiveToolId(""); 
+    setShowClinicalTip(false);
     // Initialize inputs with default values for select fields
     const calc = sortedCalcs.find(c => c.id === id);
     if (calc) {
@@ -1005,7 +1250,7 @@ export default function ToolHub(
 
   const handleTabChange = (tab: TabKey) => {
     if (tab === "tools") {
-      // When clicking on "Verktøy" tab, reset like home button
+      // Reset verktøyvisning når fanen velges
       setActiveToolId("");
       setActiveCalcId("");
       setAnswers({});
@@ -1021,40 +1266,26 @@ export default function ToolHub(
     setActiveTab(tab);
   };
 
-  const handleHomeClick = () => {
-    setActiveTab("tools");
-    setActiveToolId("");
-    setActiveCalcId("");
-    setAnswers({});
-    setCalcInputs({});
-    setSearchQuery("");
-    setShowSearch(false);
-    setPsykiatriExpanded(false);
-    setSomatikkExpanded(false);
-    setViewMode("category");
-  };
-
   return (
     <section className={`tool-section ${noSectionBackground ? "" : "section"}`}>
-      <div className="row tool-actions">
-        <button
-          className="tool-action"
-          onClick={handleHomeClick}
-          type="button"
-          title="Tilbake til forsiden"
-        >
-          <span>🏠</span>
-          <span>Hjem</span>
-        </button>
-        <button
-          className={`tool-action ${showSearch ? "active" : ""}`}
-          onClick={() => setShowSearch(!showSearch)}
-          type="button"
-          title="Søk"
-        >
-          <span>🔍</span>
-          <span>Søk</span>
-        </button>
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <div className="row tool-actions">
+          <button
+            className={`tool-action ${showSearch ? "active" : ""}`}
+            onClick={() => setShowSearch(!showSearch)}
+            type="button"
+            title="Søk"
+          >
+            <span>🔍</span>
+            <span>Søk</span>
+          </button>
+          <div className="tabbar" role="tablist">
+            {tabOrder.map((tabKey) => (
+              <button key={tabKey} type="button" className={`tab ${activeTab === tabKey ? "active" : ""}`} onClick={() => handleTabChange(tabKey)} role="tab" aria-selected={activeTab === tabKey}>{tabs[tabKey]}</button>
+            ))}
+          </div>
+        </div>
+        <span className="badge">MVP · Offline-støtte</span>
       </div>
       {showSearch && (
         <div className="tool-search">
@@ -1068,210 +1299,45 @@ export default function ToolHub(
           />
         </div>
       )}
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <div className="tabbar" role="tablist">
-          {Object.entries(tabs).map(([k, l]) => (
-            <button key={k} type="button" className={`tab ${activeTab === k ? "active" : ""}`} onClick={() => handleTabChange(k as TabKey)} role="tab" aria-selected={activeTab === k}>{l}</button>
-          ))}
-        </div>
-        <span className="badge">MVP · Offline-støtte</span>
-      </div>
-      {activeTab === "tools" && (
-        <div className="tool-view-toggle">
-          <button
-            className={`tool-view-button ${viewMode === "category" ? "active" : ""}`}
-            onClick={() => {
-              setViewMode("category");
-              setActiveToolId("");
-              setActiveCalcId("");
-              setAnswers({});
-              setCalcInputs({});
-              setPsykiatriExpanded(false);
-              setSomatikkExpanded(false);
-            }}
-            type="button"
-          >
-            📂 Kategorivisning
-          </button>
-          <button
-            className={`tool-view-button ${viewMode === "postit" ? "active" : ""}`}
-            onClick={() => {
-              setViewMode("postit");
-              setActiveToolId("");
-              setActiveCalcId("");
-              setAnswers({});
-              setCalcInputs({});
-            }}
-            type="button"
-          >
-            📋 Fagfeltvisning
-          </button>
-        </div>
-      )}
 
       {activeTab === "tools" && viewMode === "postit" && !activeToolId && !activeCalcId && (
         <div className="grid" style={{ marginTop: 20, gridTemplateColumns: '1fr' }}>
           <div style={{ marginTop: 20 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-              {postitBoxOrder.map((id) => {
-                if (id === 'generelle') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#fffacd', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Generelle</h3>
-                    <button className="button" onClick={() => handleCalcChange('bmi')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>BMI</div>
+              {postitSections.map((section) => (
+                <div
+                  key={section.boxId}
+                  draggable
+                  onDragStart={() => handlePostitDragStart(section.boxId)}
+                  onDragOver={(e) => handlePostitDragOver(e, section.boxId)}
+                  onDragEnd={handlePostitDragEnd}
+                  style={{ background: '#f8fafc', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === section.boxId ? 0.5 : 1 }}
+                >
+                  <h3 className="postit-title">{section.title}</h3>
+                  {section.items.map((item) => (
+                    <button
+                      key={item.id}
+                      className="button"
+                      onClick={() => {
+                        if (item.itemType === "calc") {
+                          handleCalcChange(item.id);
+                          return;
+                        }
+                        if (item.itemType === "tool") {
+                          handleToolChange(item.id);
+                          return;
+                        }
+                        if (item.url) {
+                          window.open(item.url, "_blank", "noopener,noreferrer");
+                        }
+                      }}
+                      style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{item.label}</div>
                     </button>
-                  </div>
-                );
-                if (id === 'psykiatri') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#e6f3ff', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Psykiatri</h3>
-                    <button className="button" onClick={() => handleToolChange('madrs')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>MADRS</div>
-                    </button>
-                    <button className="button" onClick={() => handleToolChange('gad-7')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>GAD-7</div>
-                    </button>
-                    <button className="button" onClick={() => handleToolChange('asrs')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>ASRS v1.1</div>
-                    </button>
-                    <button className="button" onClick={() => handleToolChange('audit')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>AUDIT</div>
-                    </button>
-                  </div>
-                );
-                if (id === 'kardiologi') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#ffe6e6', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Kardiologi</h3>
-                    <button className="button" onClick={() => handleCalcChange('nyha')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>NYHA</div>
-                    </button>
-                    <button className="button" onClick={() => handleCalcChange('ccs')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>CCS</div>
-                    </button>
-                    <button className="button" onClick={() => handleCalcChange('chadsvasc')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>CHA₂DS₂-VA</div>
-                    </button>
-                    <button className="button" onClick={() => handleCalcChange('hasbled')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>HAS-BLED</div>
-                    </button>
-                  </div>
-                );
-                if (id === 'lungemedisin') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#e6fff2', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Lungemedisin</h3>
-                    <button className="button" onClick={() => handleCalcChange('act')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>ACT voksne</div>
-                    </button>
-                    <button className="button" onClick={() => handleCalcChange('act-child')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>ACT barn</div>
-                    </button>
-                    <button className="button" onClick={() => handleCalcChange('mmrc')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>mMRC</div>
-                    </button>
-                    <button className="button" onClick={() => handleCalcChange('cat')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>CAT</div>
-                    </button>
-                    <button className="button" onClick={() => handleCalcChange('crb65')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>CRB-65</div>
-                    </button>
-                  </div>
-                );
-                if (id === 'hematologi') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#fff0f5', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Hematologi</h3>
-                      <button className="button" onClick={() => handleCalcChange('doak-dosing')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>DOAK-dosering</div>
-                      </button>
-                      <button className="button" onClick={() => handleCalcChange('anemia-assessment')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>Anemivurdering</div>
-                      </button>
-                  </div>
-                );
-                if (id === 'gastromedisin') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#fff8e6', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Gastromedisin</h3>
-                    <button className="button" onClick={() => handleCalcChange('fib4')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>FIB-4</div>
-                    </button>
-                  </div>
-                );
-                if (id === 'urologi') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#f0e6ff', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Urologi</h3>
-                      <button className="button" onClick={() => handleCalcChange('psa-age-adjusted')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>Aldersjustert PSA</div>
-                      </button>
-                  </div>
-                );
-                if (id === 'revmatologi') return (
-                  <div
-                    key={id}
-                    draggable
-                    onDragStart={() => handlePostitDragStart(id)}
-                    onDragOver={(e) => handlePostitDragOver(e, id)}
-                    onDragEnd={handlePostitDragEnd}
-                    style={{ background: '#e9f7ef', padding: 16, borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'move', opacity: draggedPostitBox === id ? 0.5 : 1 }}
-                  >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 700 }}>Revmatologi</h3>
-                    <button className="button" onClick={() => handleToolChange('eular-ra-2010')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>EULAR 2010 Revmatoid Artritt</div>
-                    </button>
-                    <button className="button" onClick={() => handleToolChange('eular-pmr-2012')} style={{ marginBottom: 8, width: '100%', textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>EULAR 2012 Polymyalgia Rheumatica</div>
-                    </button>
-                  </div>
-                );
-                return null;
-              })}
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -1347,31 +1413,12 @@ export default function ToolHub(
                       ℹ️ Indikasjon
                     </button>
                   </div>
-                  {(activeTool.pdfUrl || activeTool) && (
-                    <select
-                      value={pdfVersion}
-                      onChange={(e) => setPdfVersion(e.target.value as "a" | "b")}
-                      style={{
-                        padding: '6px 12px',
-                        border: '1px solid #d0d0d0',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        background: 'white',
-                        color: '#374151'
-                      }}
-                    >
-                      <option value="a">Versjon A</option>
-                      <option value="b">Versjon B</option>
-                    </select>
-                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   {activeTool.pdfUrl && (
                     <>
                       <a
-                        href={pdfVersion === "a" ? activeTool.pdfUrl : "#"}
+                        href={activeTool.pdfUrl}
                         target="_blank"
                         rel="noreferrer"
                         style={{
@@ -1498,8 +1545,9 @@ export default function ToolHub(
                 )}
                 
                 {scoreSummary && activeTool && (
-                  <div className="summary" style={{ marginTop: 12 }}>
-                    <div style={{ fontWeight: 700 }}>Oppsummering</div>
+                  <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 12 }}>
+                    <div className="summary" style={{ marginTop: 0 }}>
+                      <div style={{ fontWeight: 700 }}>Oppsummering</div>
                     
                     {/* Visual score indicator */}
                     <div style={{ margin: '16px 0', display: 'none' }}>
@@ -1544,12 +1592,27 @@ export default function ToolHub(
                       </div>
                     </div>
 
-                    <p>{summaryText}</p>
-                    <div className="row" style={{ marginTop: 12 }}>
-                      <button type="button" className="button primary" onClick={() => handleCopy(summaryText)}>Kopier totalskår</button>
-                      <button type="button" className="button primary" onClick={() => handleCopy(detailedSummaryText)}>Kopier svar og totalskår</button>
+                      <p>{summaryText}</p>
+                      <div className="row" style={{ marginTop: 12 }}>
+                        <button type="button" className="button primary" onClick={() => handleCopy(summaryText)}>Kopier totalskår</button>
+                        <button type="button" className="button primary" onClick={() => handleCopy(detailedSummaryText)}>Kopier svar og totalskår</button>
+                      </div>
+                      <span className="badge" style={{ marginTop: 8 }}>{copyState || "Klar til kopiering"}</span>
                     </div>
-                    <span className="badge" style={{ marginTop: 8 }}>{copyState || "Klar til kopiering"}</span>
+
+                    <div
+                      className="summary"
+                      style={{
+                        marginTop: 0,
+                        borderColor: "#dc2626",
+                        background: "#fef2f2"
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, color: "#b91c1c" }}>Videre råd</div>
+                      <p style={{ marginTop: 10, color: "#b91c1c", fontWeight: 600 }}>
+                        🔴 Medisinsk assistent (foreløpig)
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1579,32 +1642,36 @@ export default function ToolHub(
                     >
                       ℹ️ Indikasjon
                     </button>
+                    {activeCalc.id === "doak-dosing" && (
+                      <button
+                        type="button"
+                        onClick={() => setShowClinicalTip(!showClinicalTip)}
+                        style={{
+                          padding: '6px 12px',
+                          background: showClinicalTip ? '#0f766e' : '#14b8a6',
+                          color: 'white',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        💡 Klinisk tips
+                      </button>
+                    )}
                   </div>
-                  {(activeCalc.pdfUrl || activeCalc) && (
-                    <select
-                      value={pdfVersion}
-                      onChange={(e) => setPdfVersion(e.target.value as "a" | "b")}
-                      style={{
-                        padding: '6px 12px',
-                        border: '1px solid #d0d0d0',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        background: 'white',
-                        color: '#374151'
-                      }}
-                    >
-                      <option value="a">Versjon A</option>
-                      <option value="b">Versjon B</option>
-                    </select>
-                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   {activeCalc.pdfUrl && (
                     <>
                       <a
-                        href={pdfVersion === "a" ? activeCalc.pdfUrl : "#"}
+                        href={activeCalc.pdfUrl}
                         target="_blank"
                         rel="noreferrer"
                         style={{
@@ -1663,6 +1730,19 @@ export default function ToolHub(
                     borderLeft: '3px solid #8b5cf6'
                   }}>
                     <strong>Indikasjon:</strong> {activeCalc.description}
+                  </div>
+                )}
+                {activeCalc.id === "doak-dosing" && showClinicalTip && (
+                  <div style={{
+                    padding: 12,
+                    background: '#e7f7f4',
+                    borderRadius: 6,
+                    marginBottom: 12,
+                    fontSize: 13,
+                    color: '#0f172a',
+                    borderLeft: '3px solid #0f766e'
+                  }}>
+                    <strong>Klinisk tips:</strong> Apixaban og Dabigatran doseres to ganger daglig og har lavere blødningsrisiko enn Edoxaban og Rivaroxaban som doseres en gang daglig.
                   </div>
                 )}
                 <div style={{ maxWidth: activeCalc.layout === "horizontal" ? 1200 : 700, margin: '20px 0' }}>
@@ -1991,206 +2071,7 @@ export default function ToolHub(
         </div>
       )}
 
-      {activeTab === "guides" && (
-        <div style={{ marginTop: 20 }} className="form-section">
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            {linkBoxes.map((box, i) => {
-              const isCollapsed = Boolean(collapsedBoxes[box.id]);
-              const isDragging = draggedBox === box.id;
-              // Color palette for post-it notes
-              const noteColors = [
-                { bg: '#fffbe7', border: '#ffe066', title: '#b08900', text: '#7c6f00' }, // yellow
-                { bg: '#e7f7ff', border: '#66d9ff', title: '#0077b6', text: '#00506b' }, // blue
-                { bg: '#e7ffe7', border: '#66ff99', title: '#008b2f', text: '#006622' }, // green
-                { bg: '#ffe7f7', border: '#ff66c4', title: '#b0006b', text: '#7c004a' }, // pink
-                { bg: '#fff0e7', border: '#ffb366', title: '#b05e00', text: '#7c3f00' }, // orange
-              ];
-              const color = noteColors[i % noteColors.length];
-              return (
-                <div
-                  key={box.id}
-                  draggable
-                  onDragStart={() => handleDragStart(box.id)}
-                  onDragOver={(e) => handleDragOver(e, box.id)}
-                  onDragEnd={handleDragEnd}
-                  style={{
-                    width: 320,
-                    background: color.bg,
-                    border: `1.5px solid ${color.border}`,
-                    borderRadius: 10,
-                    boxShadow: "0 6px 14px rgba(0,0,0,0.08)",
-                    overflow: "hidden",
-                    cursor: "move",
-                    opacity: isDragging ? 0.5 : 1,
-                    transition: "opacity 0.2s ease",
-                    padding: 0,
-                    margin: 0,
-                    height: isCollapsed ? undefined : 'auto',
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setCollapsedBoxes(p => ({ ...p, [box.id]: !p[box.id] }))}
-                    aria-expanded={!isCollapsed}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "12px 14px",
-                      background: color.border + '22',
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: 700,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 8,
-                      color: color.title
-                    }}
-                  >
-                    <span>{box.title}</span>
-                    <span style={{ fontSize: 12 }}>{isCollapsed ? "+" : "–"}</span>
-                  </button>
-                  <div style={{ display: isCollapsed ? 'none' : 'block', padding: isCollapsed ? 0 : "12px 14px", margin: 0 }}>
-                    {!isCollapsed && (
-                      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
-                        {box.items.map(item => {
-                          const isEditing = editingLink?.boxId === box.id && editingLink?.itemId === item.id;
-                          return (
-                            <li key={item.id}>
-                              {isEditing ? (
-                                <div style={{ display: "flex", gap: 4 }}>
-                                  <input
-                                    type="text"
-                                    value={editLabelValue}
-                                    onChange={(e) => setEditLabelValue(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") handleLabelSave(box.id, item.id);
-                                      if (e.key === "Escape") handleLabelCancel();
-                                    }}
-                                    style={{
-                                      flex: 1,
-                                      padding: "4px 6px",
-                                      fontSize: 14,
-                                      border: "1px solid #999",
-                                      borderRadius: 4
-                                    }}
-                                    autoFocus
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleLabelSave(box.id, item.id)}
-                                    style={{
-                                      padding: "4px 8px",
-                                      fontSize: 12,
-                                      background: "#4CAF50",
-                                      color: "white",
-                                      border: "none",
-                                      borderRadius: 4,
-                                      cursor: "pointer"
-                                    }}
-                                  >
-                                    ✓
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={handleLabelCancel}
-                                    style={{
-                                      padding: "4px 8px",
-                                      fontSize: 12,
-                                      background: "#f44336",
-                                      color: "white",
-                                      border: "none",
-                                      borderRadius: 4,
-                                      cursor: "pointer"
-                                    }}
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                              ) : (
-                                <div
-                                  draggable
-                                  onDragStart={(e) => handleItemDragStart(e, box.id, item.id)}
-                                  onDragOver={(e) => handleItemDragOver(e, box.id, item.id)}
-                                  onDrop={(e) => handleItemDrop(e, box.id, item.id)}
-                                  onDragEnd={handleItemDragEnd}
-                                  style={{
-                                    color: "#1a1a1a",
-                                    textDecoration: "none",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    cursor: draggedItem?.boxId === box.id && draggedItem?.itemId === item.id ? "grabbing" : "grab",
-                                    opacity: draggedItem?.boxId === box.id && draggedItem?.itemId === item.id ? 0.5 : 1,
-                                    padding: "4px 0",
-                                  }}
-                                  title={item.url}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleRenameClick(e, box.id, item.id, item.label)}
-                                    style={{
-                                      flex: "0 0 auto",
-                                      background: "none",
-                                      border: "none",
-                                      padding: "2px 4px",
-                                      cursor: "pointer",
-                                      fontSize: 14,
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      borderRadius: 4,
-                                      transition: "background 0.2s ease"
-                                    }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.1)")}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-                                    title="Klikk for å endre navn på lenken"
-                                  >
-                                    📚
-                                  </button>
-                                  <a
-                                    href={item.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                      color: "#1a1a1a",
-                                      textDecoration: "none",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 4,
-                                      flex: 1,
-                                      minWidth: 0,
-                                      fontSize: 13
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {getFaviconUrl(item.url) && (
-                                      <img
-                                        src={getFaviconUrl(item.url)}
-                                        alt=""
-                                        width={14}
-                                        height={14}
-                                        style={{ flex: "0 0 14px" }}
-                                      />
-                                    )}
-                                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                      {item.label}
-                                    </span>
-                                  </a>
-                                </div>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {activeTab === "guides" && <ModernWidgetDashboard />}
 
       {activeTab === "medications" && (
         <div style={{ marginTop: 20, padding: 24 }}>
@@ -2292,14 +2173,6 @@ export default function ToolHub(
 
       {activeTab === "calendar" && (
         <div className="calc-hub">
-          <div className="calc-header">
-            <div>
-              <h2>Fastlegekalkulatoren</h2>
-              <p>Kliniske kalkulatorer – klare til bruk.</p>
-            </div>
-            <div className="calc-pill">KALKULATORER</div>
-          </div>
-
           <div className="calc-toggle" style={{ marginTop: 16 }}>
             <button
               type="button"
@@ -2315,9 +2188,23 @@ export default function ToolHub(
             >
               Legemiddelberegner
             </button>
+            <button
+              type="button"
+              className={`calc-toggle-button ${calcTab === "tapering" ? "active" : ""}`}
+              onClick={() => setCalcTab("tapering")}
+            >
+              Nedtrappingsplan
+            </button>
+            <button
+              type="button"
+              className={`calc-toggle-button ${calcTab === "pregnancy" ? "active" : ""}`}
+              onClick={() => setCalcTab("pregnancy")}
+            >
+              Svangerskap
+            </button>
           </div>
 
-          <div className={`calc-grid ${calcTab === "date" || calcTab === "med" ? "calc-grid-single" : ""}`}>
+          <div className={`calc-grid ${calcTab === "pregnancy" ? "" : "calc-grid-single"}`}>
             {calcTab === "date" && (
             <section className="calc-card">
               <div className="calc-card-header">
@@ -2334,9 +2221,6 @@ export default function ToolHub(
                       onChange={setDateCalcStart}
                       ariaLabel="Velg startdato"
                     />
-                    <button type="button" className="button calc-inline-button" onClick={() => setDateCalcStart(getTodayIso())}>
-                      I dag
-                    </button>
                   </div>
                 </div>
 
@@ -2455,12 +2339,15 @@ export default function ToolHub(
             <section className="calc-card">
               <div className="calc-card-header">
                 <h3>Legemiddelberegner</h3>
-                <p>Varighet og snittforbruk mellom uthentinger.</p>
+                <p>Nyttige utregninger i forbindelse med legemiddelutskrivelse.</p>
               </div>
 
               <div className="calc-subgrid">
                 <div className="calc-subcard">
-                  <div className="calc-subtitle">Varighetskalkulator</div>
+                  <div className="calc-subtitle">Reseptvarighet</div>
+                  <div className="calc-subdescription" style={{ marginTop: -2, marginBottom: 4 }}>
+                    Regn ut hvor lenge resepten varer med anbefalt bruk
+                  </div>
                   <div className="calc-form">
                     <div className="calc-field">
                       <label>Utleveringsdato</label>
@@ -2470,20 +2357,84 @@ export default function ToolHub(
                           onChange={setMedStartDate}
                           ariaLabel="Velg dato utlevert"
                         />
-                        <button type="button" className="button calc-inline-button" onClick={() => setMedStartDate(getTodayIso())}>
-                          I dag
-                        </button>
                       </div>
                     </div>
                     <div className="calc-field">
-                      <label>Antall tabletter</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        className="calc-input"
-                        value={medUnits}
-                        onChange={(event) => setMedUnits(event.target.value)}
-                      />
+                      <label>Antall tabletter foreskrevet</label>
+                      <div data-med-units-picker="true" style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          className="calc-input"
+                          value={medUnits}
+                          onChange={(event) => setMedUnits(event.target.value)}
+                          onFocus={(event) => event.currentTarget.select()}
+                          onClick={(event) => event.currentTarget.select()}
+                          style={{ paddingRight: 40 }}
+                        />
+                        <button
+                          type="button"
+                          aria-label="Vis forslag til antall tabletter"
+                          onClick={() => setShowMedUnitsPicker((prev) => !prev)}
+                          style={{
+                            position: "absolute",
+                            right: 8,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            border: "none",
+                            background: "transparent",
+                            color: "#6b7280",
+                            fontSize: 14,
+                            cursor: "pointer",
+                            padding: "4px 6px",
+                            lineHeight: 1
+                          }}
+                        >
+                          ▾
+                        </button>
+                        {showMedUnitsPicker && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "calc(100% + 6px)",
+                              left: 0,
+                              right: 0,
+                              border: "1px solid rgba(221, 227, 238, 0.9)",
+                              borderRadius: 10,
+                              background: "#ffffff",
+                              boxShadow: "0 10px 20px rgba(15, 23, 42, 0.12)",
+                              padding: 6,
+                              display: "grid",
+                              gap: 4,
+                              zIndex: 15
+                            }}
+                          >
+                            {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
+                              <button
+                                key={option}
+                                type="button"
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => {
+                                  setMedUnits(option);
+                                  setShowMedUnitsPicker(false);
+                                }}
+                                style={{
+                                  border: "none",
+                                  background: medUnits === option ? "#f3f4f6" : "transparent",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  textAlign: "left",
+                                  cursor: "pointer",
+                                  fontSize: 14,
+                                  color: "#111827"
+                                }}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="calc-field">
                       <label>Dosering (antall tabletter per dag)</label>
@@ -2493,6 +2444,8 @@ export default function ToolHub(
                         className="calc-input"
                         value={medDosePerDay}
                         onChange={(event) => setMedDosePerDay(event.target.value)}
+                        onFocus={(event) => event.currentTarget.select()}
+                        onClick={(event) => event.currentTarget.select()}
                       />
                     </div>
                   </div>
@@ -2507,6 +2460,44 @@ export default function ToolHub(
                         <span>Varighet: {medDurationResult.durationDays} dager</span>
                       </div>
                     )}
+                    <div className="calc-field">
+                      <label className="pregnancy-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={copyToJournal}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            setCopyToJournal(checked);
+                            if (checked) setGeneratePatientMessage(false);
+                          }}
+                        />
+                        Kopier til journal.
+                      </label>
+                    </div>
+                    <div className="calc-field">
+                      <label className="pregnancy-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={generatePatientMessage}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            setGeneratePatientMessage(checked);
+                            if (checked) setCopyToJournal(false);
+                          }}
+                        />
+                        Generer melding til pasient.
+                      </label>
+                    </div>
+                    {copyToJournal && medDurationResult && (
+                      <div className="calc-output-meta" style={{ display: "grid", gap: 6 }}>
+                        <span>{medJournalMessage}</span>
+                      </div>
+                    )}
+                    {generatePatientMessage && medDurationResult && (
+                      <div className="calc-output-meta" style={{ display: "grid", gap: 6 }}>
+                        <span>{medPatientMessage}</span>
+                      </div>
+                    )}
                     <div className="calc-output-actions">
                       <button
                         type="button"
@@ -2514,7 +2505,11 @@ export default function ToolHub(
                         disabled={!medDurationResult}
                         onClick={() => {
                           if (!medDurationResult) return;
-                          handleCopy(`Skal minst vare til: ${medDurationResult.endDateText} (Uke ${isoWeekNumber(medDurationResult.endDate)} ${medDurationResult.endDate.getUTCFullYear()}). Varighet: ${medDurationResult.durationDays} dager.`);
+                          if (generatePatientMessage) {
+                            handleCopy(medPatientMessage);
+                            return;
+                          }
+                          handleCopy(medJournalMessage);
                         }}
                       >
                         Kopier
@@ -2526,6 +2521,9 @@ export default function ToolHub(
 
                 <div className="calc-subcard">
                   <div className="calc-subtitle">Gjennomsnittsforbruk</div>
+                  <div className="calc-subdescription" style={{ marginTop: -18, marginBottom: 2 }}>
+                    Regn ut gjennomsnittforbruk av legemiddel mellom to datoer
+                  </div>
                   <div className="calc-form">
                     <div className="calc-field">
                       <label>Dato</label>
@@ -2538,15 +2536,82 @@ export default function ToolHub(
                       </div>
                     </div>
                     <div className="calc-field">
-                      <label>Antall tabletter</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        className="calc-input"
-                        value={avgPrevUnits}
-                        onChange={(event) => setAvgPrevUnits(event.target.value)}
-                        placeholder="Antall tabletter"
-                      />
+                      <label>Antall tabletter foreskrevet</label>
+                      <div data-avg-units-picker="true" style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          className="calc-input"
+                          value={avgPrevUnits}
+                          onChange={(event) => setAvgPrevUnits(event.target.value)}
+                          onFocus={(event) => event.currentTarget.select()}
+                          onClick={(event) => event.currentTarget.select()}
+                          placeholder="Antall tabletter"
+                          style={{ paddingRight: 40 }}
+                        />
+                        <button
+                          type="button"
+                          aria-label="Vis forslag til antall tabletter"
+                          onClick={() => setShowAvgUnitsPicker((prev) => !prev)}
+                          style={{
+                            position: "absolute",
+                            right: 8,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            border: "none",
+                            background: "transparent",
+                            color: "#6b7280",
+                            fontSize: 14,
+                            cursor: "pointer",
+                            padding: "4px 6px",
+                            lineHeight: 1
+                          }}
+                        >
+                          ▾
+                        </button>
+                        {showAvgUnitsPicker && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "calc(100% + 6px)",
+                              left: 0,
+                              right: 0,
+                              border: "1px solid rgba(221, 227, 238, 0.9)",
+                              borderRadius: 10,
+                              background: "#ffffff",
+                              boxShadow: "0 10px 20px rgba(15, 23, 42, 0.12)",
+                              padding: 6,
+                              display: "grid",
+                              gap: 4,
+                              zIndex: 15
+                            }}
+                          >
+                            {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
+                              <button
+                                key={option}
+                                type="button"
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => {
+                                  setAvgPrevUnits(option);
+                                  setShowAvgUnitsPicker(false);
+                                }}
+                                style={{
+                                  border: "none",
+                                  background: avgPrevUnits === option ? "#f3f4f6" : "transparent",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  textAlign: "left",
+                                  cursor: "pointer",
+                                  fontSize: 14,
+                                  color: "#111827"
+                                }}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="calc-field">
                       <label>Neste uthenting</label>
@@ -2567,11 +2632,6 @@ export default function ToolHub(
                         <div className="calc-output-main">
                           {avgUsageResult ? `Snittforbruk: ${avgUsageResult.daily.toFixed(1)} enheter/dag` : "Angi verdier for å se resultat."}
                         </div>
-                        {avgUsageResult && (
-                          <div className="calc-output-meta">
-                            <span>Tilsvarer ca: {avgUsageResult.per30.toFixed(1)} enheter per 30 dager</span>
-                          </div>
-                        )}
                       </>
                     )}
                     <div className="calc-output-actions">
@@ -2581,9 +2641,7 @@ export default function ToolHub(
                         disabled={!avgUsageResult || "error" in avgUsageResult}
                         onClick={() => {
                           if (!avgUsageResult || "error" in avgUsageResult) return;
-                          handleCopy(
-                            `Snittforbruk: ${avgUsageResult.daily.toFixed(1)} enheter/dag. Tilsvarer ca: ${avgUsageResult.per30.toFixed(1)} enheter per 30 dager.`
-                          );
+                          handleCopy(`Snittforbruk: ${avgUsageResult.daily.toFixed(1)} enheter/dag.`);
                         }}
                       >
                         Kopier
@@ -2592,6 +2650,236 @@ export default function ToolHub(
                     </div>
                   </div>
                 </div>
+              </div>
+            </section>
+            )}
+
+            {calcTab === "pregnancy" && (
+            <>
+            <section className="calc-card">
+              <div className="calc-card-header">
+                <h3>Svangerskapskalkulator</h3>
+                <p>Enkel beregning av termin, svangerskapsalder og sannsynlig befruktning.</p>
+              </div>
+
+              <div className="calc-form">
+                <div className="calc-field">
+                  <label>Første dag i siste menstruasjon</label>
+                  <div className="calc-field-stack">
+                    <DatePickerField
+                      value={pregnancyDate}
+                      onChange={setPregnancyDate}
+                      ariaLabel="Velg første dag i siste menstruasjon"
+                    />
+                    <button type="button" className="button calc-inline-button" onClick={() => setPregnancyDate(getTodayIso())}>
+                      I dag
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {pregnancyResult && (
+                <div className="calc-output">
+                  <div className="calc-output-title">Resultat</div>
+                  <div className="calc-output-main">Beregnet termindato: {pregnancyResult.eddText}</div>
+                  <div className="calc-output-meta" style={{ display: "grid", gap: 6 }}>
+                    <span>Svangerskapsuke i dag: {pregnancyResult.gestationalAgeText}</span>
+                    <span>Tid igjen til termindato: {pregnancyResult.timeToDueDateText}</span>
+                    <span>Sannsynlig befruktningsdato: {pregnancyResult.conceptionText}</span>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="calc-card">
+              <div className="calc-card-header">
+                <h3>Henvisning ved første svangerskapskonsultasjon</h3>
+              </div>
+
+              <p className="pregnancy-referral-help"><em>Nedenfor er tekstbokser som hjelper deg å skrive en henvisning du enkelt limer inn i journalsystemet. Bokser du ikke fyller ut, blir ikke med på henvisningen.</em></p>
+
+              <div className="calc-form">
+                <div className="calc-field">
+                  <label>Para</label>
+                  <select
+                    className="calc-select"
+                    value={pregnancyPara}
+                    onChange={(event) => setPregnancyPara(event.target.value)}
+                  >
+                    <option value="">Velg para</option>
+                    {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                      <option key={value} value={String(value)}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="calc-field">
+                  <label>LMP</label>
+                  <input
+                    type="text"
+                    className="calc-input"
+                    value={pregnancyResult ? formatNorwegianDate(pregnancyResult.lmpDate) : ""}
+                    readOnly
+                    placeholder="Autofylles fra kalkulator"
+                  />
+                </div>
+
+                <div className="calc-field">
+                  <label>Termin beregnet fra LMP</label>
+                  <input
+                    type="text"
+                    className="calc-input"
+                    value={pregnancyResult ? formatNorwegianDate(pregnancyResult.eddDate) : ""}
+                    readOnly
+                    placeholder="Autofylles fra kalkulator"
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
+                  <div className="calc-field" style={{ margin: 0 }}>
+                    <label>Vekt (kg)</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      className="calc-input"
+                      value={pregnancyWeightKg}
+                      onChange={(event) => setPregnancyWeightKg(event.target.value)}
+                      placeholder="Velg eller skriv vekt"
+                    />
+                  </div>
+
+                  <div className="calc-field" style={{ margin: 0 }}>
+                    <label>Høyde (cm)</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      className="calc-input"
+                      value={pregnancyHeightCm}
+                      onChange={(event) => setPregnancyHeightCm(event.target.value)}
+                      placeholder="Velg eller skriv høyde"
+                    />
+                  </div>
+
+                  <div className="calc-field" style={{ margin: 0 }}>
+                    <label>BMI</label>
+                    <input
+                      type="text"
+                      className="calc-input"
+                      value={pregnancyBmi !== null ? pregnancyBmi.toFixed(1) : ""}
+                      readOnly
+                      placeholder="BMI"
+                    />
+                  </div>
+                </div>
+
+                <div className="calc-field">
+                  <label>Sykehistorie</label>
+                  <textarea
+                    className="calc-input pregnancy-textarea"
+                    rows={1}
+                    value={pregnancyMedicalHistory}
+                    onChange={(event) => setPregnancyMedicalHistory(event.target.value)}
+                    placeholder="Beskriv relevant sykehistorie"
+                  />
+                </div>
+
+                <div className="calc-field">
+                  <label>Psykisk</label>
+                  <textarea
+                    className="calc-input pregnancy-textarea"
+                    rows={1}
+                    value={pregnancyMentalHealth}
+                    onChange={(event) => setPregnancyMentalHealth(event.target.value)}
+                    placeholder="Risiko for psykisk uhelse"
+                  />
+                </div>
+
+                <div className="calc-field">
+                  <label>Medisiner</label>
+                  <textarea
+                    className="calc-input pregnancy-textarea"
+                    rows={1}
+                    value={pregnancyMedications}
+                    onChange={(event) => setPregnancyMedications(event.target.value)}
+                    placeholder="Spesielt relevante medisiner? Medisinliste følger også med EPJ-henvisningen"
+                  />
+                </div>
+
+                <div className="calc-field">
+                  <label>Andre spesielle forhold som bør bemerkes?</label>
+                  <textarea
+                    className="calc-input pregnancy-textarea"
+                    rows={1}
+                    value={pregnancyOtherConditions}
+                    onChange={(event) => setPregnancyOtherConditions(event.target.value)}
+                    placeholder="F.eks tidligere vanskelige fødsler."
+                  />
+                </div>
+
+                <div className="calc-field pregnancy-risk-row">
+                  <label className="pregnancy-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={pregnancyRiskPregnancy}
+                      onChange={(event) => setPregnancyRiskPregnancy(event.target.checked)}
+                    />
+                    Risikosvangerskap?
+                  </label>
+
+                  <details className="pregnancy-risk-details">
+                    <summary>Risikofaktorer for preeklampsi (Helsedirektoratet)</summary>
+                    <div className="pregnancy-risk-content">
+                      <p>Gravide med disse risikofaktorene bør følges nøye for utvikling av preeklampsi</p>
+                      <p>- alder over 40 år</p>
+                      <p>- antifosfolipidsyndromer (positiv lupus antikoagulant og/eller cardiolipin antistoff og klinisk anamnese)</p>
+                      <p>- bindevevssykdommer (spesielt systemisk lupus erythematosis, SLE)</p>
+                      <p>- diabetes mellitus, også svangerskapsdiabetes</p>
+                      <p>- flerlingsvangerskap</p>
+                      <p>- kronisk hypertensjon</p>
+                      <p>- kroppsmasseindeks (KMI) over 35</p>
+                      <p>- nyresykdom</p>
+                      <p>- tidligere gjennomgått preeklampsi (spesielt dersom oppstått mindre enn 34 uker), HELLP-syndrom (H = hemolyse, EL = elevated liver enzymes, LP = low platelets) eller eklampsi</p>
+                      <p>- morkakesvikt (vekstretardert foster)</p>
+                      <p style={{ marginTop: 12 }}>Mindre alvorlig risikofaktorer</p>
+                      <p>- førstegangsfødende</p>
+                      <p>- familiehistorie med mor eller søster som har hatt preeklampsi</p>
+                      <p>- graviditetsintervall mer enn 10 år</p>
+                      <a
+                        href="https://www.helsedirektoratet.no/retningslinjer/svangerskapsomsorgen/preeklampsi#risikofaktorer-for-preeklampsi-hos-gravide-bor-vurderes-pa-forste-svangerskapskonsultasjon-praktisk-informasjon"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Helsedirektoratet: preeklampsi – risikofaktorer
+                      </a>
+                    </div>
+                  </details>
+                </div>
+              </div>
+
+              <div className="calc-output">
+                <div className="calc-output-title">Ferdig henvisningstekst</div>
+                <pre className="pregnancy-referral-preview">{pregnancyReferralText}</pre>
+                <div className="calc-output-actions">
+                  <button
+                    type="button"
+                    className="button primary"
+                    onClick={() => handleCopy(pregnancyReferralText)}
+                  >
+                    Kopier
+                  </button>
+                  <span className="badge">{copyState || "Klar til kopiering"}</span>
+                </div>
+              </div>
+            </section>
+            </>
+            )}
+
+            {calcTab === "tapering" && (
+            <section className="calc-card">
+              <div className="calc-card-header">
+                <h3>Nedtrappingsplan</h3>
               </div>
             </section>
             )}
