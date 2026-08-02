@@ -13,7 +13,7 @@ export default function NotFound() {
           <Link href="/madrs" className="button">MADRS</Link>
           <Link href="/gad7" className="button">GAD-7</Link>
           <Link href="/bmi" className="button">BMI-kalkulator</Link>
-          <Link href="/norrisk2" className="button">NORRISK 2</Link>
+          <Link href="/fib-4" className="button">FIB-4</Link>
         </div>
         <p style={{ marginTop: 20 }}>
           <Link href="/" style={{ color: "var(--primary)" }}>← Tilbake til forsiden</Link>

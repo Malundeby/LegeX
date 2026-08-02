@@ -18,6 +18,7 @@ Fleksibel PDF-generator for ToppenLS som kan generere profesjonelle kliniske dok
 - Gjenbrukbare templates for ulike dokumenttyper
 - Enkelt å legge til nye templates
 - Kan hente data fra JSON-filer, APIs eller andre kilder
+- MADRS-data (tittel, spørsmål, scoring) har én kilde i `pdfTemplates.ts`
 
 ## Bruk
 
@@ -164,6 +165,12 @@ const COLORS = {
 2. Legg til generator-funksjon i `pdfGenerator.ts`
 3. Registrer template i `templateRegistry`
 4. Oppdater `PDFGeneratorButton` for ny template-type
+
+## Arkitekturstatus
+
+- `generateMADRSPatientPDF()` leser nå spørsmål/skåring direkte fra `templateRegistry`.
+- Dobbeltdefinisjoner i `pdfGenerator.ts` er fjernet for MADRS-flyten.
+- Legacy-filen `generateMADRSPDF.ts` finnes fortsatt, men den aktive app-flyten bruker `pdfGenerator.ts`.
 
 ## Eksempel: Komplett MADRS-implementasjon
 

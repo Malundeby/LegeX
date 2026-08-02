@@ -42,9 +42,10 @@ http://localhost:3001/widgets
 
 ### Trinn 3: Legg til widgets
 
-Klikk på knappene i headeren:
-- **"+ Nytt Notat"** - Legg til notat-widget
-- **"+ Ny Huskeliste"** - Legg til huskeliste-widget
+Klikk på **+**-knappen i en ledig celle og velg widgettype:
+- **Notat** - Legg til notat-widget
+- **Huskeliste** - Legg til huskeliste-widget
+- **Bokmerke** - Legg til bokmerke-widget
 
 ---
 
@@ -111,8 +112,10 @@ app/
 │   ├── NotesWidget.css          # Notat-styling
 │   ├── TodoListWidget.tsx       # Huskeliste-komponent
 │   ├── TodoListWidget.css       # Huskeliste-styling
-│   ├── WidgetDashboard.tsx      # Dashboard
-│   └── WidgetDashboard.css      # Dashboard styling
+│   ├── ModernWidgetDashboard.tsx  # Moderne dashboard
+│   └── ModernWidgetDashboard.css  # Dashboard styling
+├── utils/
+│   └── widgetStorage.ts         # Lasting/migrering av widget-data
 ├── widgets/
 │   └── page.tsx                 # Widgets-side
 docs/
@@ -123,11 +126,13 @@ docs/
 
 ## 💾 Data-lagring
 
-Begge widgets bruker localStorage:
+Dashboard og widgets bruker localStorage:
 
 - `legex_notes` - Alle notater med innhold, farge og størrelse
 - `legex_todos` - Alle huskelister med oppgaver
-- `legex_widget_dashboard` - Layout og rekkefølge
+- `legex_modern_widgets_v2` - Moderne dashboard-layout og widgetinnhold
+
+Ved første åpning migreres eldre layout (`legex_widget_dashboard`) automatisk til moderne format.
 
 ### Se lagret data
 
@@ -140,7 +145,8 @@ DevTools → Application → Local Storage → http://localhost:3001
 const data = {
   notes: localStorage.getItem('legex_notes'),
   todos: localStorage.getItem('legex_todos'),
-  dashboard: localStorage.getItem('legex_widget_dashboard')
+  dashboardModern: localStorage.getItem('legex_modern_widgets_v2'),
+  dashboardLegacy: localStorage.getItem('legex_widget_dashboard')
 };
 console.log(JSON.stringify(data, null, 2));
 // Kopier output og lagre som backup
@@ -153,7 +159,8 @@ console.log(JSON.stringify(data, null, 2));
 const backupData = { /* din backup-data */ };
 if (backupData.notes) localStorage.setItem('legex_notes', backupData.notes);
 if (backupData.todos) localStorage.setItem('legex_todos', backupData.todos);
-if (backupData.dashboard) localStorage.setItem('legex_widget_dashboard', backupData.dashboard);
+if (backupData.dashboardModern) localStorage.setItem('legex_modern_widgets_v2', backupData.dashboardModern);
+if (backupData.dashboardLegacy) localStorage.setItem('legex_widget_dashboard', backupData.dashboardLegacy);
 location.reload();
 ```
 
@@ -163,6 +170,7 @@ location.reload();
 // I browser console:
 localStorage.removeItem('legex_notes');
 localStorage.removeItem('legex_todos');
+localStorage.removeItem('legex_modern_widgets_v2');
 localStorage.removeItem('legex_widget_dashboard');
 location.reload();
 ```

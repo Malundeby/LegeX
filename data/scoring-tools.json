@@ -3,7 +3,12 @@
     "id": "madrs",
     "name": "🧠 MADRS (depresjon)",
     "description": "Montgomery-Åsberg Depression Rating Scale. 10 spørsmål om depresjon.",
-    "pdfUrl": "/pdfs/MADRS.pdf",
+    "pdfUrl": "/pdfs/Utredningsskjema-MADRS-klinikerutgave.pdf",
+    "patientPdfUrl": "/pdfs/Utredningsskjema-MADRS-pasientutgave.pdf",
+    "pdfOptions": [
+      { "label": "PDF klinikerutgave", "url": "/pdfs/Utredningsskjema-MADRS-klinikerutgave.pdf" },
+      { "label": "PDF pasientutgave", "url": "/pdfs/Utredningsskjema-MADRS-pasientutgave.pdf", "patientFacing": true }
+    ],
     "questions": [
       {
         "id": "madrs-1",
@@ -146,7 +151,7 @@
   {
     "id": "gad-7",
     "name": "🧠 GAD-7 (angst)",
-    "description": "Generalized Anxiety Disorder 7-item scale. Siste 2 uker.",    "pdfUrl": "/pdfs/GAD-7.pdf",    "questions": [
+    "description": "Generalized Anxiety Disorder 7-item scale. Siste 2 uker.",    "pdfUrl": "/pdfs/TBR-GAD-7-pdf.pdf",    "questions": [
       {
         "id": "gad7-1",
         "text": "Følt deg nervøs, engstelig eller på kanten",
@@ -229,7 +234,7 @@
     "id": "asrs",
     "name": "🧠 ASRS v1.1 (ADHD)",
     "description": "Adult ADHD Self-Report Scale. 18 spørsmål – Del A (screening) + Del B (symptomer).",
-    "pdfUrl": "/pdfs/ASRS pdf.pdf",
+    "pdfUrl": "/pdfs/Utredningsskjema-ASRS.pdf",
     "layout": "vertical",
     "parts": [
       { "id": "a", "title": "Del A (Screening)", "startQuestion": 1, "endQuestion": 6 },
@@ -465,7 +470,7 @@
   {
     "id": "audit",
     "name": "🧠 AUDIT (alkohol)",
-    "description": "Alcohol Use Disorders Identification Test. 10 spørsmål om alkoholbruk.",    "pdfUrl": "/pdfs/AUDIT.pdf",    "questions": [
+    "description": "Alcohol Use Disorders Identification Test. 10 spørsmål om alkoholbruk.",    "pdfUrl": "/pdfs/TBR-AUDIT.pdf",    "questions": [
       {
         "id": "audit-1",
         "text": "Hvor ofte drikker du alkohol?",

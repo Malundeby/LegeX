@@ -589,7 +589,7 @@
     "id": "cat",
     "name": "🫁 CAT (KOLS)",
     "description": "COPD Assessment Test. KOLS-symptombelastning.",
-    "pdfUrl": "/pdfs/CAT.pdf",
+    "pdfUrl": "/pdfs/Utredningsskjema-KOLS-(CAT).pdf",
     "layout": "horizontal",
     "fields": [
       {
@@ -784,7 +784,7 @@
     "id": "act",
     "name": "🫁 Astma kontroll voksne",
     "description": "Asthma Control Test for voksne (12 år+). Astmakontroll siste 4 uker.",
-    "pdfUrl": "/pdfs/ACT voksne.pdf",
+    "pdfUrl": "/pdfs/Utredningsskjema-ACT-voksne.pdf",
     "layout": "horizontal",
     "fields": [
       {
@@ -870,7 +870,7 @@
     "id": "act-child",
     "name": "🫁 Astma kontroll barn",
     "description": "Childhood Asthma Control Test (4-11 år). 4 spørsmål til barnet + 3 til foreldre.",
-    "pdfUrl": "/pdfs/ACT barn.pdf",
+    "pdfUrl": "/pdfs/Utredningsskjema-ACT-barn.pdf",
     "layout": "horizontal",
     "fields": [
       {
@@ -1108,7 +1108,7 @@
     "id": "ipss",
     "name": "💧 IPSS (prostata)",
     "description": "International Prostate Symptom Score. Vannlatingsplager ved BPH.",
-    "pdfUrl": "/pdfs/IPSS-8.pdf",
+    "pdfUrl": "/pdfs/Utredningsskjema-IPSS.pdf",
     "layout": "horizontal",
     "fields": [
       {

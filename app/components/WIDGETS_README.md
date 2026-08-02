@@ -32,22 +32,23 @@ import TodoListWidget from "./TodoListWidget";
 />
 ```
 
-### 3. WidgetDashboard
-**Filer:** `WidgetDashboard.tsx` + `WidgetDashboard.css`
+### 3. ModernWidgetDashboard
+**Filer:** `ModernWidgetDashboard.tsx` + `ModernWidgetDashboard.css`
 
-Dashboard som håndterer begge widget-typer med drag & drop.
+Dashboard som håndterer bokmerker, notater og huskelister med drag & drop.
 
 ```tsx
-import WidgetDashboard from "./WidgetDashboard";
+import ModernWidgetDashboard from "./ModernWidgetDashboard";
 
-<WidgetDashboard />
+<ModernWidgetDashboard />
 ```
 
 ## LocalStorage Keys
 
-- `legex_notes` - Alle notater
-- `legex_todos` - Alle huskelister  
-- `legex_widget_dashboard` - Dashboard layout
+- `legex_modern_widgets_v2` - Moderne dashboardmodell
+- `legex_notes` - Notater brukt av legacy-widgetformat
+- `legex_todos` - Huskelister brukt av legacy-widgetformat
+- `legex_widget_dashboard` - Legacy dashboard-layout (migreres)
 
 ## Dokumentasjon
 
@@ -55,4 +56,4 @@ Se `/docs/WIDGETS_QUICKSTART.md` for quick start guide.
 
 ## Demo
 
-Åpne `/widgets` for å se begge widgets i aksjon.
+Åpne `/widgets` for å se moderne dashboard i aksjon.

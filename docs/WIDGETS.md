@@ -2,7 +2,7 @@
 
 ## Oversikt
 
-Dette er et komplett widget-system for LegeX-dashboard med to komponenter:
+Dette er et komplett widget-system for LegeX-dashboard med moderne dashboard og to hovedkomponenter:
 
 1. **NotesWidget** - Notater med rich text-redigering
 2. **TodoListWidget** - Huskeliste/oppgaveliste
@@ -13,7 +13,9 @@ Begge widgets støtter:
 - ✅ Redigerbar tittel
 - ✅ Slett-funksjonalitet
 - ✅ Responsiv design
-- ✅ Kompatibel med eksisterende drag & drop-system
+- ✅ Kompatibel med moderne dashboard-layout
+
+Dashboardet i produksjon er [app/components/ModernWidgetDashboard.tsx](app/components/ModernWidgetDashboard.tsx), og vises både i ToolHub og på [app/widgets/page.tsx](app/widgets/page.tsx).
 
 ---
 
@@ -175,26 +177,33 @@ import TodoListWidget from "@/app/components/TodoListWidget";
 
 ---
 
-## WidgetDashboard
+## ModernWidgetDashboard
 
-Eksempel-dashboard som viser hvordan begge widgets kan brukes sammen.
+Dashboard som håndterer bokmerker, notater og huskelister med grid/flytende layout, kontekstmeny og localStorage-persistens.
 
 ### Bruk
 
 ```tsx
-import WidgetDashboard from "@/app/components/WidgetDashboard";
+import ModernWidgetDashboard from "@/app/components/ModernWidgetDashboard";
 
 export default function DashboardPage() {
-  return <WidgetDashboard />;
+  return <ModernWidgetDashboard />;
 }
 ```
 
 ### Features
 
-- Legg til nye widgets (notater eller huskelister)
-- Drag & drop for å endre rekkefølge
-- Pin-funksjon for viktige widgets
+- Legg til nye widgets (bokmerker, notater eller huskelister)
+- Drag & drop for å endre plassering
+- Kontekstmeny for navn, farge, pin og slett
 - Persistent layout i localStorage
+
+### LocalStorage nøkler
+
+- `legex_modern_widgets_v2` - Moderne dashboardmodellen
+- `legex_notes` - Legacy note-innhold brukt av eldre komponenter
+- `legex_todos` - Legacy todo-innhold brukt av eldre komponenter
+- `legex_widget_dashboard` - Legacy layout (migreres automatisk)
 
 ---
 
