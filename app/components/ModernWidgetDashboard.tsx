@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import NotesWidget from "./NotesWidget";
-import TodoListWidget from "./TodoListWidget";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import "./ModernWidgetDashboard.css";
+import {
+  loadDashboardWidgets,
+  MODERN_WIDGET_STORAGE_KEY,
+  type DashboardWidget as Widget
+} from "@/app/utils/widgetStorage";
+import { createDefaultBookmarkWidgets } from "@/app/utils/toolHubLinks";
 
 /**
  * ModernWidgetDashboard - Advanced dashboard with grid layout and context menus
@@ -15,37 +19,7 @@ import "./ModernWidgetDashboard.css";
  * - localStorage persistence
  */
 
-interface BaseWidget {
-  id: string;
-  title: string;
-  color: "default" | "red" | "yellow" | "green" | "blue";
-  pinned: boolean;
-  position: number;
-  createdAt: string;
-}
-
-interface BookmarkWidget extends BaseWidget {
-  type: "bookmark";
-  links: Array<{ id: string; label: string; url: string }>;
-}
-
-interface NoteWidget extends BaseWidget {
-  type: "note";
-  content: string;
-  width: number;
-  height: number;
-}
-
-interface TodoWidget extends BaseWidget {
-  type: "todo";
-  items: Array<{
-    id: string;
-    text: string;
-    completed: boolean;
-  }>;
-}
-
-type Widget = BookmarkWidget | NoteWidget | TodoWidget;
+type TodoWidget = Extract<Widget, { type: "todo" }>;
 
 interface ContextMenu {
   x: number;
@@ -53,7 +27,6 @@ interface ContextMenu {
   widgetId: string;
 }
 
-const STORAGE_KEY = "legex_modern_widgets_v2";
 const GRID_COLUMNS = 4;
 
 const COLOR_MAP: Record<string, { bg: string; border: string; hover: string; text: string }> = {
@@ -66,6 +39,7 @@ const COLOR_MAP: Record<string, { bg: string; border: string; hover: string; tex
 
 export default function ModernWidgetDashboard() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
+  const [hasLoadedWidgets, setHasLoadedWidgets] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const [draggedWidgetId, setDraggedWidgetId] = useState<string | null>(null);
   const [renameWidgetId, setRenameWidgetId] = useState<string | null>(null);
@@ -74,123 +48,44 @@ export default function ModernWidgetDashboard() {
   const [dropdownCellIndex, setDropdownCellIndex] = useState<number | null>(null);
   const [minimizedWidgets, setMinimizedWidgets] = useState<Set<string>>(new Set());
   const [layoutMode, setLayoutMode] = useState<"grid" | "masonry">("masonry");
-  const [editingWidgetId, setEditingWidgetId] = useState<string | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dragOverTargetRef = useRef<number | null>(null);
 
   // Load widgets from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const loadedWidgets = JSON.parse(stored) as Widget[];
+    try {
+      const { source, widgets: loadedWidgets } = loadDashboardWidgets(localStorage);
+
+      if (source !== "none") {
         setWidgets(loadedWidgets);
-      } catch (error) {
-        console.error("Failed to load widgets:", error);
+        setHasLoadedWidgets(true);
+        return;
       }
-    } else {
-      // Initialize with default bookmarks from original LinkBoxes
-      const defaultWidgets: Widget[] = [
-        {
-          id: `widget_${Date.now()}_1`,
-          type: "bookmark",
-          title: "Medisin",
-          color: "default",
-          pinned: false,
-          position: 0,
-          createdAt: new Date().toISOString(),
-          links: [
-            { id: "med-1", label: "Felleskatalogen", url: "https://www.felleskatalogen.no/medisin/" },
-            { id: "med-2", label: "Legemiddelhåndboka", url: "https://www.legemiddelhandboka.no/" },
-            { id: "med-3", label: "Interaksjoner", url: "https://interaksjoner.no/" },
-            { id: "med-4", label: "RELIS", url: "https://relis.no/" },
-            { id: "med-5", label: "Koble", url: "https://koble.info/" },
-            { id: "med-6", label: "Trygg Mammamedisin", url: "https://tryggmammamedisin.no/" },
-            { id: "med-7", label: "Antibiotika i primærhelsetjenesten", url: "https://www.helsedirektoratet.no/retningslinjer/antibiotika-i-primaerhelsetjenesten" },
-            { id: "med-8", label: "Knuse-dele-listen", url: "/pdfs/KnuseDeleListen v16.pdf" },
-          ],
-        },
-        {
-          id: `widget_${Date.now()}_2`,
-          type: "bookmark",
-          title: "Legeerklæringer (LE)",
-          color: "default",
-          pinned: false,
-          position: 1,
-          createdAt: new Date().toISOString(),
-          links: [
-            { id: "tt-1", label: "TT-kort (legeerkl.)", url: "https://innlandstrafikk.no/_f/p4/ic40b9736-aeeb-49d8-966c-649e57eff410/legeerklaering.pdf" },
-            { id: "tt-2", label: "TT-kort (pasient)", url: "https://innlandstrafikk.no/_f/p4/i0158ef5d-fe72-4a2a-8c34-9be0f856e66f/tt-kort_innlandet-fylke_innlandstrafikk2022-skrivbar.pdf" },
-            { id: "hc-1", label: "HC-park. (legeerkl.)", url: "https://lillehammer.kommune.no/_f/p1/iebadc1ca-c667-4501-8507-88f040fb0b24/legeerklaring-vedlegg-til-soknad-om-parkeringstillatelse-for-forflytningshemmede.pdf" },
-            { id: "hc-2", label: "HC-park. (pasient)", url: "https://lillehammer.kommune.no/_f/p1/i8aabafbb-a0c7-4da4-b579-d34425f6b02a/soknadsskjema-om-parkeringstillatelse-for-forflytningshemmede.pdf" },
-            { id: "ff-1", label: "Ikrafttredelse fullmakt (legeerkl.)", url: "https://www.statsforvalteren.no/siteassets/fm-oslo-og-viken/vergemal/informasjonsskriv/legeerklaringsskjema-fremtidsfullmakt.pdf" },
-            { id: "ts-1", label: "Tillegsstipend (legeerkl.)", url: "https://lanekassen.no/nb-NO/stipend-og-lan/nedsatt-funksjonsevne/soknad-om-tilleggsstipend-ved-nedsatt-funksjonsevne/#samtykke-banner" },
-          ],
-        },
-        {
-          id: `widget_${Date.now()}_3`,
-          type: "bookmark",
-          title: "Generelle",
-          color: "default",
-          pinned: false,
-          position: 2,
-          createdAt: new Date().toISOString(),
-          links: [
-            { id: "gen-1", label: "Legehandboka", url: "https://legehandboka.no/" },
-            { id: "gen-2", label: "Nevrologi Legehandboka", url: "https://nevrologi.legehandboka.no/" },
-            { id: "gen-3", label: "Metodebok", url: "https://metodebok.no/index.php" },
-          ],
-        },
-        {
-          id: `widget_${Date.now()}_4`,
-          type: "bookmark",
-          title: "Henvisninger",
-          color: "default",
-          pinned: false,
-          position: 3,
-          createdAt: new Date().toISOString(),
-          links: [
-            { id: "henv-1", label: "Avtalespesialistoversikt", url: "https://avtalespesialister.helse-sorost.no/spesialister1.asp" },
-            { id: "henv-2", label: "Skjema for familiær hyperkolesterolemi", url: "https://nktforfh.no/images/uploads/files/Rekvisisjon_for_FH_utfyllbarPDF.pdf" },
-            { id: "henv-3", label: "ADHD henvisningsmal", url: "https://www.diakonhjemmetsykehus.no/4961a8/siteassets/documents/mal--henvisning-adhd-2019.pdf" },
-            { id: "henv-4", label: "Henvisningsskjema rehabilitering", url: "https://www.sunnaas.no/fag-og-forskning/kompetansesentre-og-tjenester/Regional-koordinerende-enhet/henvisning/henvisning-til-rehabilitering-i-spesialisthelsetjenesten/" },
-          ],
-        },
-        {
-          id: `widget_${Date.now()}_5`,
-          type: "bookmark",
-          title: "Førerkort og diverse",
-          color: "default",
-          pinned: false,
-          position: 4,
-          createdAt: new Date().toISOString(),
-          links: [
-            { id: "fk-1", label: "Førerkortveileder", url: "https://www.helsedirektoratet.no/veiledere/forerkortveileder" },
-            { id: "fk-2", label: "Egenerklæring", url: "https://www.vegvesen.no/globalassets/forerkort/ta-forerkort/soknad-om-forerkort-og-kompetansebevis-egenerklaering-om-helse.pdf" },
-            { id: "div-1", label: "Legemidler førerkort", url: "https://legehandboka.no/handboken/skjema-kalkulatorer/kalkulatorer/diverse/legemiddelkalkulator" },
-          ],
-        },
-        {
-          id: `widget_${Date.now()}_6`,
-          type: "bookmark",
-          title: "Helsedirektoratets veiledere",
-          color: "default",
-          pinned: false,
-          position: 5,
-          createdAt: new Date().toISOString(),
-          links: [
-            { id: "hdir-1", label: "Diabetes", url: "https://www.helsedirektoratet.no/retningslinjer/diabetes" },
-            { id: "hdir-2", label: "Hjerte og kar", url: "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom" },
-            { id: "hdir-3", label: "Hypertensjon", url: "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom/kartlegging-av-hypertensjon-ved-forebygging-av-hjerte-og-karsykdom#utredning-av-hoyt-blodtrykk-ved-forebygging-av-hjerte-og-karsydom-praktisk-informasjon" },
-            { id: "hdir-4", label: "Hyperkolesterolemi", url: "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom/utredning-av-lipidverdiene-ved-primaer-og-sekundaerforebygging-av-hjerte-og-karsykdom#utredning-av-lipidverdiene-ved-primaer-og-sekundaerforebygging-av-hjerte-og-karsykdom" },
-            { id: "hdir-5", label: "Svangerskap", url: "https://www.helsedirektoratet.no/retningslinjer/svangerskapsomsorgen" },
-          ],
-        },
-      ];
+
+      const defaultWidgets = createDefaultBookmarkWidgets(Date.now());
       setWidgets(defaultWidgets);
-      saveWidgets(defaultWidgets);
+      setHasLoadedWidgets(true);
+    } catch (error) {
+      console.error("Failed to load widgets:", error);
+      setHasLoadedWidgets(true);
     }
   }, []);
+
+  // Persist widgets with a small debounce to reduce write pressure while editing.
+  useEffect(() => {
+    if (!hasLoadedWidgets) return;
+
+    const timeoutId = window.setTimeout(() => {
+      try {
+        localStorage.setItem(MODERN_WIDGET_STORAGE_KEY, JSON.stringify(widgets));
+      } catch (error) {
+        console.error("Failed to save widgets:", error);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [widgets, hasLoadedWidgets]);
 
   // Close context menu on click outside
   useEffect(() => {
@@ -205,16 +100,6 @@ export default function ModernWidgetDashboard() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Save widgets to localStorage
-  const saveWidgets = (updatedWidgets: Widget[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWidgets));
-      setWidgets(updatedWidgets);
-    } catch (error) {
-      console.error("Failed to save widgets:", error);
-    }
-  };
 
   // Add new widget
   const handleAddWidget = (type: "bookmark" | "note" | "todo", position: number) => {
@@ -253,8 +138,7 @@ export default function ModernWidgetDashboard() {
             createdAt: new Date().toISOString(),
             items: [],
           };
-
-    saveWidgets([...widgets, newWidget]);
+    setWidgets((previousWidgets) => [...previousWidgets, newWidget]);
     setDropdownPos(null);
   };
 
@@ -311,34 +195,32 @@ export default function ModernWidgetDashboard() {
 
   const handleSaveRename = () => {
     if (!renameWidgetId || !renameValue.trim()) return;
-    const updatedWidgets = widgets.map((w) =>
-      w.id === renameWidgetId ? { ...w, title: renameValue.trim() } : w
+    setWidgets((previousWidgets) =>
+      previousWidgets.map((w) =>
+        w.id === renameWidgetId ? { ...w, title: renameValue.trim() } : w
+      )
     );
-    saveWidgets(updatedWidgets);
     setRenameWidgetId(null);
     setRenameValue("");
   };
 
   const handleChangeColor = (widgetId: string, color: Widget["color"]) => {
-    const updatedWidgets = widgets.map((w) =>
-      w.id === widgetId ? { ...w, color } : w
+    setWidgets((previousWidgets) =>
+      previousWidgets.map((w) => (w.id === widgetId ? { ...w, color } : w))
     );
-    saveWidgets(updatedWidgets);
     setContextMenu(null);
   };
 
   const handlePin = (widgetId: string) => {
-    const updatedWidgets = widgets.map((w) =>
-      w.id === widgetId ? { ...w, pinned: !w.pinned } : w
+    setWidgets((previousWidgets) =>
+      previousWidgets.map((w) => (w.id === widgetId ? { ...w, pinned: !w.pinned } : w))
     );
-    saveWidgets(updatedWidgets);
     setContextMenu(null);
   };
 
   const handleDelete = (widgetId: string) => {
     if (!confirm("Slett denne widgeten?")) return;
-    const updatedWidgets = widgets.filter((w) => w.id !== widgetId);
-    saveWidgets(updatedWidgets);
+    setWidgets((previousWidgets) => previousWidgets.filter((w) => w.id !== widgetId));
     setContextMenu(null);
   };
 
@@ -355,32 +237,20 @@ export default function ModernWidgetDashboard() {
 
   // Widget content update handlers
   const handleUpdateNote = (widgetId: string, content: string) => {
-    const updatedWidgets = widgets.map((w) =>
+    setWidgets((previousWidgets) => previousWidgets.map((w) =>
       w.id === widgetId && w.type === "note" ? { ...w, content } : w
-    );
-    saveWidgets(updatedWidgets);
+    ));
   };
 
   const handleUpdateTodo = (widgetId: string, items: TodoWidget["items"]) => {
-    const updatedWidgets = widgets.map((w) =>
+    setWidgets((previousWidgets) => previousWidgets.map((w) =>
       w.id === widgetId && w.type === "todo" ? { ...w, items } : w
-    );
-    saveWidgets(updatedWidgets);
+    ));
   };
 
   // Drag & drop handlers
   const handleDragStart = (widgetId: string) => {
     setDraggedWidgetId(widgetId);
-  };
-
-  // Get icon for bookmark based on URL
-  const getBookmarkIcon = (url: string): string => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname;
-    } catch {
-      return '';
-    }
   };
 
   const getFallbackIcon = (url: string): string => {
@@ -390,49 +260,54 @@ export default function ModernWidgetDashboard() {
     return '📝'; // Default fallback
   };
 
-  const getFaviconUrl = (url: string): string => {
+  const getFaviconUrl = (url: string): string | null => {
+    if (!url?.trim()) return null;
+
     try {
       const urlObj = new URL(url);
       return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=16`;
     } catch {
-      return '';
+      return null;
     }
   };
 
   const handleDragOver = (e: React.DragEvent, targetPosition: number) => {
     e.preventDefault();
     if (!draggedWidgetId) return;
+    if (dragOverTargetRef.current === targetPosition) return;
 
-    const draggedWidget = widgets.find((w) => w.id === draggedWidgetId);
-    if (!draggedWidget) return;
+    setWidgets((previousWidgets) => {
+      const draggedWidget = previousWidgets.find((w) => w.id === draggedWidgetId);
+      if (!draggedWidget) return previousWidgets;
 
-    const updatedWidgets = [...widgets];
-    const currentIndex = updatedWidgets.findIndex((w) => w.id === draggedWidgetId);
-    updatedWidgets.splice(currentIndex, 1);
-    
-    updatedWidgets.splice(targetPosition, 0, draggedWidget);
-    
-    const reorderedWidgets = updatedWidgets.map((w, idx) => ({ ...w, position: idx }));
-    setWidgets(reorderedWidgets);
+      const currentIndex = previousWidgets.findIndex((w) => w.id === draggedWidgetId);
+      if (currentIndex === -1 || currentIndex === targetPosition) return previousWidgets;
+
+      const updatedWidgets = [...previousWidgets];
+      updatedWidgets.splice(currentIndex, 1);
+      updatedWidgets.splice(targetPosition, 0, draggedWidget);
+      dragOverTargetRef.current = targetPosition;
+      return updatedWidgets.map((w, idx) => ({ ...w, position: idx }));
+    });
   };
 
   const handleDragEnd = () => {
-    if (draggedWidgetId) {
-      saveWidgets(widgets);
-    }
+    dragOverTargetRef.current = null;
     setDraggedWidgetId(null);
   };
 
   // Sort widgets: pinned first, then by position
-  const sortedWidgets = [...widgets].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return a.position - b.position;
-  });
+  const sortedWidgets = useMemo(() => {
+    return [...widgets].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return a.position - b.position;
+    });
+  }, [widgets]);
 
   // Calculate grid layout
   const totalCells = Math.ceil((sortedWidgets.length + 1) / GRID_COLUMNS) * GRID_COLUMNS;
-  const gridCells = Array.from({ length: totalCells }, (_, i) => i);
+  const gridCells = useMemo(() => Array.from({ length: totalCells }, (_, i) => i), [totalCells]);
 
   return (
     <div className="modern-widget-dashboard">
@@ -475,6 +350,10 @@ export default function ModernWidgetDashboard() {
           // Widget cell
           const colorStyle = COLOR_MAP[widget.color];
           const isDragging = draggedWidgetId === widget.id;
+          const todoProgress =
+            widget.type === "todo" && widget.items.length > 0
+              ? Math.round((widget.items.filter((item) => item.completed).length / widget.items.length) * 100)
+              : 0;
 
           return (
             <div
@@ -544,29 +423,35 @@ export default function ModernWidgetDashboard() {
                     {widget.links.length === 0 ? (
                       <li className="bookmark-empty">Ingen lenker ennå. Høyreklikk for å administrere.</li>
                     ) : (
-                      widget.links.map((link) => (
-                        <li key={link.id} className="bookmark-item">
-                          <img 
-                            src={getFaviconUrl(link.url)} 
-                            alt="" 
-                            className="bookmark-icon"
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              target.style.display = 'none';
-                              const fallback = target.nextElementSibling as HTMLElement;
-                              if (fallback && fallback.classList.contains('bookmark-fallback-icon')) {
-                                fallback.style.display = 'inline';
-                              }
-                            }}
-                          />
-                          <span className="bookmark-fallback-icon" style={{ display: 'none', fontSize: '14px', flexShrink: 0 }}>
-                            {getFallbackIcon(link.url)}
-                          </span>
-                          <a href={link.url} target="_blank" rel="noreferrer">
-                            {link.label}
-                          </a>
-                        </li>
-                      ))
+                      widget.links.map((link) => {
+                        const faviconUrl = getFaviconUrl(link.url);
+
+                        return (
+                          <li key={link.id} className="bookmark-item">
+                            {faviconUrl && (
+                              <img 
+                                src={faviconUrl} 
+                                alt="" 
+                                className="bookmark-icon"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  target.style.display = 'none';
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback && fallback.classList.contains('bookmark-fallback-icon')) {
+                                    fallback.style.display = 'inline';
+                                  }
+                                }}
+                              />
+                            )}
+                            <span className="bookmark-fallback-icon" style={{ display: faviconUrl ? 'none' : 'inline', fontSize: '14px', flexShrink: 0 }}>
+                              {getFallbackIcon(link.url)}
+                            </span>
+                            <a href={link.url} target="_blank" rel="noreferrer">
+                              {link.label}
+                            </a>
+                          </li>
+                        );
+                      })
                     )}
                   </ul>
                 )}
@@ -602,12 +487,12 @@ export default function ModernWidgetDashboard() {
                           <div 
                             className="todo-progress-fill"
                             style={{
-                              width: `${Math.round((widget.items.filter(i => i.completed).length / widget.items.length) * 100)}%`
+                              width: `${todoProgress}%`
                             }}
                           />
                         </div>
                         <span className="todo-progress-text">
-                          {Math.round((widget.items.filter(i => i.completed).length / widget.items.length) * 100)}%
+                          {todoProgress}%
                         </span>
                       </div>
                     )}

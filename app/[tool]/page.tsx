@@ -3,72 +3,19 @@
 import { useParams, notFound } from "next/navigation";
 import { useMemo } from "react";
 import ToolHub from "../components/ToolHub";
-import scoringTools from "@/data/scoring-tools.json";
-import calculators from "@/data/calculators.json";
-import calculatorsNew from "@/data/calculators-new.json";
-
-// Map URL slugs to tool IDs
-const toolAliases: Record<string, { id: string; type: "score" | "calc" }> = {
-  // Scoring tools
-  madrs: { id: "madrs", type: "score" },
-  "gad-7": { id: "gad-7", type: "score" },
-  gad7: { id: "gad-7", type: "score" },
-  asrs: { id: "asrs", type: "score" },
-  "asrs-v1.1": { id: "asrs", type: "score" },
-  audit: { id: "audit", type: "score" },
-  "eular-ra-2010": { id: "eular-ra-2010", type: "score" },
-  "eular-pmr-2012": { id: "eular-pmr-2012", type: "score" },
-  // Calculators
-  bmi: { id: "bmi", type: "calc" },
-  ccs: { id: "ccs", type: "calc" },
-  "ccs-angina": { id: "ccs-angina", type: "calc" },
-  nyha: { id: "nyha", type: "calc" },
-  chadsvasc: { id: "chadsvasc", type: "calc" },
-  "cha2ds2-vasc": { id: "chadsvasc", type: "calc" },
-  hasbled: { id: "hasbled", type: "calc" },
-  mmrc: { id: "mmrc", type: "calc" },
-  "cat-copd": { id: "cat-copd", type: "calc" },
-  cat: { id: "cat", type: "calc" },
-  crb65: { id: "crb65", type: "calc" },
-  act: { id: "act", type: "calc" },
-  "act-asthma": { id: "act-asthma", type: "calc" },
-  "act-voksne": { id: "act", type: "calc" },
-  "act-barn": { id: "act-child", type: "calc" },
-  "act-child": { id: "act-child", type: "calc" },
-  fib4: { id: "fib4", type: "calc" },
-  "fib-4": { id: "fib4", type: "calc" },
-  ipss: { id: "ipss", type: "calc" },
-  "wells-dvt": { id: "wells-dvt", type: "calc" },
-  "wells-pe": { id: "wells-pe", type: "calc" },
-  "doak-dosing": { id: "doak-dosing", type: "calc" },
-  "psa-age-adjusted": { id: "psa-age-adjusted", type: "calc" },
-  "anemia-assessment": { id: "anemia-assessment", type: "calc" },
-  norrisk2: { id: "norrisk2", type: "calc" },
-  "norrisk-2": { id: "norrisk2", type: "calc" },
-};
+import { resolveToolSlug, toolAliasExists } from "@/app/utils/toolRegistry";
 
 export default function ToolPage() {
-    const allCalculators = useMemo(
-      () => [...calculators, ...calculatorsNew],
-      []
-    );
-
   const params = useParams();
   const toolSlug = (params.tool as string)?.toLowerCase();
 
   const toolInfo = useMemo(() => {
-    if (!toolSlug) return null;
-    return toolAliases[toolSlug] ?? null;
+    return resolveToolSlug(toolSlug);
   }, [toolSlug]);
 
-  // Validate that the tool exists
   const toolExists = useMemo(() => {
-    if (!toolInfo) return false;
-    if (toolInfo.type === "score") {
-      return scoringTools.some((t) => t.id === toolInfo.id);
-    }
-    return allCalculators.some((c) => c.id === toolInfo.id);
-  }, [toolInfo, allCalculators]);
+    return toolInfo ? toolAliasExists(toolInfo) : false;
+  }, [toolInfo]);
 
   if (!toolInfo || !toolExists) {
     notFound();
