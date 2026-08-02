@@ -1012,170 +1012,469 @@ export default function ToolHub(
               </div>
             ) : activeSpecialCalcTab ? (
               <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
-                  <h2 style={{ margin: 0, fontSize: 20 }}>{specialCalcTabTitle[activeSpecialCalcTab]}</h2>
-                  <div className="row" style={{ gap: 8 }}>
-                    {(["date", "med", "tapering", "pregnancy"] as SpecialCalcTab[]).map((tab) => (
-                      <button
-                        key={tab}
-                        type="button"
-                        className={`button ${calcTab === tab ? "primary" : ""}`}
-                        onClick={() => setCalcTab(tab)}
-                        style={{ padding: "8px 10px", fontSize: 12 }}
-                      >
-                        {specialCalcTabTitle[tab]}
-                      </button>
-                    ))}
-                  </div>
+                <div className="calc-toggle" style={{ marginBottom: 20 }}>
+                  {(["date", "med", "tapering", "pregnancy"] as SpecialCalcTab[]).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      className={`calc-toggle-button ${calcTab === tab ? "active" : ""}`}
+                      onClick={() => setCalcTab(tab)}
+                    >
+                      {specialCalcTabTitle[tab]}
+                    </button>
+                  ))}
                 </div>
 
                 {calcTab === "date" && (
-                  <div style={{ display: "grid", gap: 12, maxWidth: 760 }}>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Startdato</label>
-                      <DatePickerField value={dateCalcStart} onChange={setDateCalcStart} ariaLabel="Velg startdato" />
-                    </div>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Retning</label>
-                      <div className="row" style={{ gap: 8 }}>
-                        <button type="button" className={`button ${dateCalcDirection === "forward" ? "primary" : ""}`} onClick={() => setDateCalcDirection("forward")} style={{ padding: "8px 12px", fontSize: 12 }}>Framover</button>
-                        <button type="button" className={`button ${dateCalcDirection === "backward" ? "primary" : ""}`} onClick={() => setDateCalcDirection("backward")} style={{ padding: "8px 12px", fontSize: 12 }}>Bakover</button>
+                  <div className="calc-grid calc-grid-single">
+                    <section className="calc-card">
+                      <div className="calc-card-header">
+                        <h3>Datokalkulator</h3>
+                        <p>Regn ut datoer frem eller tilbake i tid.</p>
                       </div>
-                    </div>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Forskyvning (f.eks. 2u 3d 1m)</label>
-                      <input value={dateCalcInline} onChange={(e) => setDateCalcInline(e.target.value)} placeholder="f.eks. 2u 3d" />
-                    </div>
-                    {dateCalcInline.trim() && !dateCalcInlineParsed && (
-                      <p style={{ color: "#b91c1c", fontSize: 13 }}>Ugyldig format. Bruk eksempelvis `2u 3d` eller `-1m 2u`.</p>
-                    )}
-                    {dateCalcResult && (
-                      <div className="summary" style={{ marginTop: 4 }}>
-                        <p><strong>Resultatdato:</strong> {dateCalcResult.dateText} ({dateCalcResult.weekday})</p>
-                        <p><strong>Ukenummer:</strong> {dateCalcResult.weekNumber}</p>
-                        <p><strong>Dager fra start:</strong> {dateCalcResult.dayDiff}</p>
+                      <div className="calc-form">
+                        <div className="calc-field">
+                          <label>Startdato</label>
+                          <div className="calc-field-stack">
+                            <DatePickerField value={dateCalcStart} onChange={setDateCalcStart} ariaLabel="Velg startdato" />
+                          </div>
+                        </div>
+                        <div className="calc-field">
+                          <label>Retning</label>
+                          <div className="calc-toggle">
+                            <button type="button" className={`calc-toggle-button ${dateCalcDirection === "forward" ? "active" : ""}`} onClick={() => setDateCalcDirection("forward")}>Frem</button>
+                            <button type="button" className={`calc-toggle-button ${dateCalcDirection === "backward" ? "active" : ""}`} onClick={() => setDateCalcDirection("backward")}>Tilbake</button>
+                          </div>
+                        </div>
+                        <div className="calc-field">
+                          <label>Hurtigvalg</label>
+                          <div className="calc-quick">
+                            {[
+                              { label: "1u", value: 1, unit: "week" },
+                              { label: "2u", value: 2, unit: "week" },
+                              { label: "3u", value: 3, unit: "week" },
+                              { label: "4u", value: 4, unit: "week" },
+                              { label: "6u", value: 6, unit: "week" },
+                              { label: "8u", value: 8, unit: "week" },
+                              { label: "3m", value: 3, unit: "month" }
+                            ].map((quick) => (
+                              <button
+                                key={quick.label}
+                                type="button"
+                                className="calc-quick-button"
+                                onClick={() => {
+                                  const unitCode = quick.unit === "week" ? "u" : "m";
+                                  setDateCalcInline(`${quick.value}${unitCode}`);
+                                }}
+                              >
+                                {quick.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="calc-field">
+                          <label>En-linje</label>
+                          <input
+                            type="text"
+                            className="calc-input"
+                            placeholder="14d, 6u, 3m, 1år"
+                            value={dateCalcInline}
+                            onChange={(e) => setDateCalcInline(e.target.value)}
+                          />
+                          <div className="calc-help">Skriv: 14d, 6u, 3m, 1år – eller kombiner som 1m 5d. Bruk +/− for retning.</div>
+                          {dateCalcInline.trim() && !dateCalcInlineParsed && (
+                            <div className="calc-error">Ugyldig uttrykk. Bruk f.eks. 14d, +3m eller -1år.</div>
+                          )}
+                          <button
+                            type="button"
+                            className="button calc-inline-button"
+                            onClick={() => {
+                              setDateCalcInline("");
+                              setDateCalcStart(getTodayIso());
+                            }}
+                          >
+                            Nullstill
+                          </button>
+                        </div>
                       </div>
-                    )}
-                    <div className="row" style={{ gap: 8 }}>
-                      <button type="button" className="button primary" onClick={handleCopySpecialCalculatorText}>Kopier resultat</button>
-                      <span className="badge">{copyState || "Klar til kopiering"}</span>
-                    </div>
+                      <div className="calc-output">
+                        <div className="calc-output-title">Resultat</div>
+                        <div className="calc-output-main">
+                          {dateCalcResult ? dateCalcResult.dateText : "Angi verdier for å se resultat."}
+                        </div>
+                        {dateCalcResult && (
+                          <div className="calc-output-meta">
+                            <span>{dateCalcResult.weekday}</span>
+                            <span>Uke {dateCalcResult.weekNumber}</span>
+                            <span>{`${dateCalcResult.dayDiff >= 0 ? "+" : ""}${dateCalcResult.dayDiff} dager`}</span>
+                          </div>
+                        )}
+                        <div className="calc-output-actions">
+                          <button type="button" className="button primary" disabled={!dateCalcResult} onClick={handleCopySpecialCalculatorText}>Kopier</button>
+                          <span className="badge">{copyState || "Klar til kopiering"}</span>
+                        </div>
+                      </div>
+                    </section>
                   </div>
                 )}
 
                 {calcTab === "med" && (
-                  <div style={{ display: "grid", gap: 12, maxWidth: 760 }}>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Reseptdato</label>
-                      <DatePickerField value={medStartDate} onChange={setMedStartDate} ariaLabel="Velg reseptdato" />
-                    </div>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Antall enheter</label>
-                      <input value={medUnits} onChange={(e) => setMedUnits(e.target.value)} placeholder="f.eks. 100" />
-                    </div>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Dose per dag</label>
-                      <input value={medDosePerDay} onChange={(e) => setMedDosePerDay(e.target.value)} placeholder="f.eks. 1" />
-                    </div>
-                    {medDurationResult && (
-                      <div className="summary" style={{ marginTop: 4 }}>
-                        <p><strong>Varighet:</strong> {medDurationResult.durationDays} dager</p>
-                        <p><strong>Skal vare til minst:</strong> {medDurationResult.endDateText}</p>
+                  <div className="calc-grid calc-grid-single">
+                    <section className="calc-card">
+                      <div className="calc-card-header">
+                        <h3>Legemiddelberegner</h3>
+                        <p>Nyttige utregninger i forbindelse med legemiddelutskrivelse.</p>
                       </div>
-                    )}
-                    <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
-                      <label style={{ fontSize: 13 }}><input type="checkbox" checked={copyToJournal} onChange={(e) => setCopyToJournal(e.target.checked)} /> Inkluder journaltekst</label>
-                      <label style={{ fontSize: 13 }}><input type="checkbox" checked={generatePatientMessage} onChange={(e) => setGeneratePatientMessage(e.target.checked)} /> Inkluder pasienttekst</label>
-                    </div>
-                    <div className="row" style={{ gap: 8 }}>
-                      <button type="button" className="button primary" onClick={handleCopySpecialCalculatorText}>Kopier tekst</button>
-                      <span className="badge">{copyState || "Klar til kopiering"}</span>
-                    </div>
+                      <div className="calc-subgrid">
+                        <div className="calc-subcard">
+                          <div className="calc-subtitle">Reseptvarighet</div>
+                          <div className="calc-subdescription">Regn ut hvor lenge resepten varer med anbefalt bruk</div>
+                          <div className="calc-form">
+                            <div className="calc-field">
+                              <label>Utleveringsdato</label>
+                              <div className="calc-field-stack">
+                                <DatePickerField value={medStartDate} onChange={setMedStartDate} ariaLabel="Velg dato utlevert" />
+                              </div>
+                            </div>
+                            <div className="calc-field">
+                              <label>Antall tabletter foreskrevet</label>
+                              <div data-med-units-picker="true" style={{ position: "relative" }}>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  className="calc-input"
+                                  value={medUnits}
+                                  onChange={(e) => setMedUnits(e.target.value)}
+                                  onFocus={(e) => e.currentTarget.select()}
+                                  onClick={(e) => e.currentTarget.select()}
+                                  style={{ paddingRight: 40 }}
+                                />
+                                <button
+                                  type="button"
+                                  aria-label="Vis forslag til antall tabletter"
+                                  onClick={() => setShowMedUnitsPicker((prev) => !prev)}
+                                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "#6b7280", fontSize: 14, cursor: "pointer", padding: "4px 6px", lineHeight: 1 }}
+                                >
+                                  ▾
+                                </button>
+                                {showMedUnitsPicker && (
+                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "#ffffff", boxShadow: "0 10px 20px rgba(15, 23, 42, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
+                                    {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
+                                      <button
+                                        key={option}
+                                        type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => { setMedUnits(option); setShowMedUnitsPicker(false); }}
+                                        style={{ border: "none", background: medUnits === option ? "#f3f4f6" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "#111827" }}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="calc-field">
+                              <label>Dosering (antall tabletter per dag)</label>
+                              <input type="text" inputMode="decimal" className="calc-input" value={medDosePerDay} onChange={(e) => setMedDosePerDay(e.target.value)} onFocus={(e) => e.currentTarget.select()} onClick={(e) => e.currentTarget.select()} />
+                            </div>
+                          </div>
+                          <div className="calc-output">
+                            <div className="calc-output-title">Resultat</div>
+                            <div className="calc-output-main">
+                              {medDurationResult ? `Skal minst vare til: ${medDurationResult.endDateText} (Uke ${isoWeekNumber(medDurationResult.endDate)} ${medDurationResult.endDate.getUTCFullYear()})` : "Angi verdier for å se resultat."}
+                            </div>
+                            {medDurationResult && (
+                              <div className="calc-output-meta">
+                                <span>Varighet: {medDurationResult.durationDays} dager</span>
+                              </div>
+                            )}
+                            <div className="calc-field">
+                              <label className="pregnancy-checkbox-label">
+                                <input
+                                  type="checkbox"
+                                  checked={copyToJournal}
+                                  onChange={(e) => { const checked = e.target.checked; setCopyToJournal(checked); if (checked) setGeneratePatientMessage(false); }}
+                                />
+                                Kopier til journal.
+                              </label>
+                            </div>
+                            <div className="calc-field">
+                              <label className="pregnancy-checkbox-label">
+                                <input
+                                  type="checkbox"
+                                  checked={generatePatientMessage}
+                                  onChange={(e) => { const checked = e.target.checked; setGeneratePatientMessage(checked); if (checked) setCopyToJournal(false); }}
+                                />
+                                Generer melding til pasient.
+                              </label>
+                            </div>
+                            <div className="calc-output-actions">
+                              <button type="button" className="button primary" disabled={!medDurationResult} onClick={handleCopySpecialCalculatorText}>Kopier</button>
+                              <span className="badge">{copyState || "Klar til kopiering"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="calc-subcard">
+                          <div className="calc-subtitle">Gjennomsnittsforbruk</div>
+                          <div className="calc-subdescription">Regn ut gjennomsnittforbruk av legemiddel mellom to datoer</div>
+                          <div className="calc-form">
+                            <div className="calc-field">
+                              <label>Dato</label>
+                              <div className="calc-field-stack">
+                                <DatePickerField value={avgPrevDate} onChange={setAvgPrevDate} ariaLabel="Velg forrige uthentingsdato" />
+                              </div>
+                            </div>
+                            <div className="calc-field">
+                              <label>Antall tabletter foreskrevet</label>
+                              <div data-avg-units-picker="true" style={{ position: "relative" }}>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  className="calc-input"
+                                  value={avgPrevUnits}
+                                  onChange={(e) => setAvgPrevUnits(e.target.value)}
+                                  onFocus={(e) => e.currentTarget.select()}
+                                  onClick={(e) => e.currentTarget.select()}
+                                  placeholder="Antall tabletter"
+                                  style={{ paddingRight: 40 }}
+                                />
+                                <button
+                                  type="button"
+                                  aria-label="Vis forslag til antall tabletter"
+                                  onClick={() => setShowAvgUnitsPicker((prev) => !prev)}
+                                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "#6b7280", fontSize: 14, cursor: "pointer", padding: "4px 6px", lineHeight: 1 }}
+                                >
+                                  ▾
+                                </button>
+                                {showAvgUnitsPicker && (
+                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "#ffffff", boxShadow: "0 10px 20px rgba(15, 23, 42, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
+                                    {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
+                                      <button
+                                        key={option}
+                                        type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => { setAvgPrevUnits(option); setShowAvgUnitsPicker(false); }}
+                                        style={{ border: "none", background: avgPrevUnits === option ? "#f3f4f6" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "#111827" }}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="calc-field">
+                              <label>Neste uthenting</label>
+                              <div className="calc-field-stack">
+                                <DatePickerField value={avgNextDate} onChange={setAvgNextDate} ariaLabel="Velg neste uthentingsdato" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="calc-output">
+                            <div className="calc-output-title">Resultat</div>
+                            {avgUsageResult && "error" in avgUsageResult ? (
+                              <div className="calc-error">{avgUsageResult.error}</div>
+                            ) : (
+                              <div className="calc-output-main">
+                                {avgUsageResult ? `Snittforbruk: ${avgUsageResult.daily.toFixed(1)} enheter/dag` : "Angi verdier for å se resultat."}
+                              </div>
+                            )}
+                            <div className="calc-output-actions">
+                              <button
+                                type="button"
+                                className="button primary"
+                                disabled={!avgUsageResult || "error" in avgUsageResult}
+                                onClick={() => {
+                                  if (!avgUsageResult || "error" in avgUsageResult) return;
+                                  handleCopy(`Snittforbruk: ${avgUsageResult.daily.toFixed(1)} enheter/dag.`);
+                                }}
+                              >
+                                Kopier
+                              </button>
+                              <span className="badge">{copyState || "Klar til kopiering"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
                   </div>
                 )}
 
                 {calcTab === "tapering" && (
-                  <div style={{ display: "grid", gap: 12, maxWidth: 760 }}>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Forrige uttak</label>
-                      <DatePickerField value={avgPrevDate} onChange={setAvgPrevDate} ariaLabel="Velg dato for forrige uttak" />
-                    </div>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Neste uttak</label>
-                      <DatePickerField value={avgNextDate} onChange={setAvgNextDate} ariaLabel="Velg dato for neste uttak" />
-                    </div>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Forrige antall enheter</label>
-                      <input value={avgPrevUnits} onChange={(e) => setAvgPrevUnits(e.target.value)} placeholder="f.eks. 100" />
-                    </div>
-                    {avgUsageResult && "error" in avgUsageResult && (
-                      <p style={{ color: "#b91c1c", fontSize: 13 }}>{avgUsageResult.error}</p>
-                    )}
-                    {avgUsageResult && !("error" in avgUsageResult) && (
-                      <div className="summary" style={{ marginTop: 4 }}>
-                        <p><strong>Antall dager mellom uttak:</strong> {avgUsageResult.daySpan}</p>
-                        <p><strong>Gjennomsnittlig daglig forbruk:</strong> {avgUsageResult.daily.toFixed(2)}</p>
+                  <div className="calc-grid calc-grid-single">
+                    <section className="calc-card">
+                      <div className="calc-card-header">
+                        <h3>Nedtrappingsplan</h3>
+                        <p>Regn ut gjennomsnittforbruk av legemiddel mellom to uttak.</p>
                       </div>
-                    )}
-                    <div className="row" style={{ gap: 8 }}>
-                      <button type="button" className="button primary" onClick={handleCopySpecialCalculatorText}>Kopier resultat</button>
-                      <span className="badge">{copyState || "Klar til kopiering"}</span>
-                    </div>
+                      <div className="calc-form">
+                        <div className="calc-field">
+                          <label>Forrige uttak</label>
+                          <div className="calc-field-stack">
+                            <DatePickerField value={avgPrevDate} onChange={setAvgPrevDate} ariaLabel="Velg dato for forrige uttak" />
+                          </div>
+                        </div>
+                        <div className="calc-field">
+                          <label>Neste uttak</label>
+                          <div className="calc-field-stack">
+                            <DatePickerField value={avgNextDate} onChange={setAvgNextDate} ariaLabel="Velg dato for neste uttak" />
+                          </div>
+                        </div>
+                        <div className="calc-field">
+                          <label>Forrige antall enheter</label>
+                          <input type="text" inputMode="numeric" className="calc-input" value={avgPrevUnits} onChange={(e) => setAvgPrevUnits(e.target.value)} placeholder="f.eks. 100" />
+                        </div>
+                      </div>
+                      <div className="calc-output">
+                        <div className="calc-output-title">Resultat</div>
+                        {avgUsageResult && "error" in avgUsageResult ? (
+                          <div className="calc-error">{avgUsageResult.error}</div>
+                        ) : (
+                          <div className="calc-output-main">
+                            {avgUsageResult ? `Gjennomsnittlig daglig forbruk: ${avgUsageResult.daily.toFixed(2)}` : "Angi verdier for å se resultat."}
+                          </div>
+                        )}
+                        {avgUsageResult && !("error" in avgUsageResult) && (
+                          <div className="calc-output-meta">
+                            <span>Antall dager mellom uttak: {avgUsageResult.daySpan}</span>
+                          </div>
+                        )}
+                        <div className="calc-output-actions">
+                          <button type="button" className="button primary" disabled={!avgUsageResult || "error" in avgUsageResult} onClick={handleCopySpecialCalculatorText}>Kopier resultat</button>
+                          <span className="badge">{copyState || "Klar til kopiering"}</span>
+                        </div>
+                      </div>
+                    </section>
                   </div>
                 )}
 
                 {calcTab === "pregnancy" && (
-                  <div style={{ display: "grid", gap: 12, maxWidth: 820 }}>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Siste menstruasjon (LMP)</label>
-                      <DatePickerField value={pregnancyDate} onChange={setPregnancyDate} ariaLabel="Velg LMP-dato" />
-                    </div>
-                    <div className="calc-field-row">
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Para</label>
-                      <input value={pregnancyPara} onChange={(e) => setPregnancyPara(e.target.value)} placeholder="f.eks. G2P1" />
-                    </div>
-                    <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
-                      <div className="calc-field-row" style={{ minWidth: 220 }}>
-                        <label style={{ fontWeight: 500, fontSize: 13 }}>Vekt (kg)</label>
-                        <input value={pregnancyWeightKg} onChange={(e) => setPregnancyWeightKg(e.target.value)} placeholder="f.eks. 70" />
+                  <div className="calc-grid">
+                    <section className="calc-card">
+                      <div className="calc-card-header">
+                        <h3>Svangerskapskalkulator</h3>
+                        <p>Enkel beregning av termin, svangerskapsalder og sannsynlig befruktning.</p>
                       </div>
-                      <div className="calc-field-row" style={{ minWidth: 220 }}>
-                        <label style={{ fontWeight: 500, fontSize: 13 }}>Høyde (cm)</label>
-                        <input value={pregnancyHeightCm} onChange={(e) => setPregnancyHeightCm(e.target.value)} placeholder="f.eks. 168" />
+                      <div className="calc-form">
+                        <div className="calc-field">
+                          <label>Første dag i siste menstruasjon</label>
+                          <div className="calc-field-stack">
+                            <DatePickerField value={pregnancyDate} onChange={setPregnancyDate} ariaLabel="Velg første dag i siste menstruasjon" />
+                            <button type="button" className="button calc-inline-button" onClick={() => setPregnancyDate(getTodayIso())}>I dag</button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="calc-field-row" style={{ alignItems: "flex-start" }}>
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Sykehistorie</label>
-                      <textarea value={pregnancyMedicalHistory} onChange={(e) => setPregnancyMedicalHistory(e.target.value)} rows={3} />
-                    </div>
-                    <div className="calc-field-row" style={{ alignItems: "flex-start" }}>
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Psykisk helse</label>
-                      <textarea value={pregnancyMentalHealth} onChange={(e) => setPregnancyMentalHealth(e.target.value)} rows={2} />
-                    </div>
-                    <div className="calc-field-row" style={{ alignItems: "flex-start" }}>
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Medikamenter</label>
-                      <textarea value={pregnancyMedications} onChange={(e) => setPregnancyMedications(e.target.value)} rows={2} />
-                    </div>
-                    <div className="calc-field-row" style={{ alignItems: "flex-start" }}>
-                      <label style={{ fontWeight: 500, fontSize: 13 }}>Andre forhold</label>
-                      <textarea value={pregnancyOtherConditions} onChange={(e) => setPregnancyOtherConditions(e.target.value)} rows={2} />
-                    </div>
-                    <label style={{ fontSize: 13 }}><input type="checkbox" checked={pregnancyRiskPregnancy} onChange={(e) => setPregnancyRiskPregnancy(e.target.checked)} /> Risikosvangerskap</label>
+                      {pregnancyResult && (
+                        <div className="calc-output">
+                          <div className="calc-output-title">Resultat</div>
+                          <div className="calc-output-main">Beregnet termindato: {pregnancyResult.eddText}</div>
+                          <div className="calc-output-meta" style={{ display: "grid", gap: 6 }}>
+                            <span>Svangerskapsuke i dag: {pregnancyResult.gestationalAgeText}</span>
+                            <span>Tid igjen til termindato: {pregnancyResult.timeToDueDateText}</span>
+                            <span>Sannsynlig befruktningsdato: {pregnancyResult.conceptionText}</span>
+                          </div>
+                        </div>
+                      )}
+                    </section>
 
-                    {pregnancyResult && (
-                      <div className="summary" style={{ marginTop: 4 }}>
-                        <p><strong>Termin:</strong> {pregnancyResult.eddText}</p>
-                        <p><strong>Konsepsjonsdato:</strong> {pregnancyResult.conceptionText}</p>
-                        <p><strong>Svangerskapsalder:</strong> {pregnancyResult.gestationalAgeText}</p>
-                        <p><strong>Tid til termin:</strong> {pregnancyResult.timeToDueDateText}</p>
-                        {pregnancyBmi !== null && <p><strong>BMI:</strong> {pregnancyBmi.toFixed(1)}</p>}
+                    <section className="calc-card">
+                      <div className="calc-card-header">
+                        <h3>Henvisning ved første svangerskapskonsultasjon</h3>
                       </div>
-                    )}
-
-                    <div className="row" style={{ gap: 8 }}>
-                      <button type="button" className="button primary" onClick={handleCopySpecialCalculatorText}>Kopier henvisningstekst</button>
-                      <span className="badge">{copyState || "Klar til kopiering"}</span>
-                    </div>
+                      <p className="pregnancy-referral-help"><em>Nedenfor er tekstbokser som hjelper deg å skrive en henvisning du enkelt limer inn i journalsystemet. Bokser du ikke fyller ut, blir ikke med på henvisningen.</em></p>
+                      <div className="calc-form">
+                        <div className="calc-field">
+                          <label>Para</label>
+                          <select className="calc-select" value={pregnancyPara} onChange={(e) => setPregnancyPara(e.target.value)}>
+                            <option value="">Velg para</option>
+                            {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                              <option key={value} value={String(value)}>{value}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="calc-field">
+                          <label>LMP</label>
+                          <input type="text" className="calc-input" value={pregnancyResult ? formatNorwegianDate(pregnancyResult.lmpDate) : ""} readOnly placeholder="Autofylles fra kalkulator" />
+                        </div>
+                        <div className="calc-field">
+                          <label>Termin beregnet fra LMP</label>
+                          <input type="text" className="calc-input" value={pregnancyResult ? formatNorwegianDate(pregnancyResult.eddDate) : ""} readOnly placeholder="Autofylles fra kalkulator" />
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
+                          <div className="calc-field" style={{ margin: 0 }}>
+                            <label>Vekt (kg)</label>
+                            <input type="text" inputMode="decimal" className="calc-input" value={pregnancyWeightKg} onChange={(e) => setPregnancyWeightKg(e.target.value)} placeholder="Velg eller skriv vekt" />
+                          </div>
+                          <div className="calc-field" style={{ margin: 0 }}>
+                            <label>Høyde (cm)</label>
+                            <input type="text" inputMode="decimal" className="calc-input" value={pregnancyHeightCm} onChange={(e) => setPregnancyHeightCm(e.target.value)} placeholder="Velg eller skriv høyde" />
+                          </div>
+                          <div className="calc-field" style={{ margin: 0 }}>
+                            <label>BMI</label>
+                            <input type="text" className="calc-input" value={pregnancyBmi !== null ? pregnancyBmi.toFixed(1) : ""} readOnly placeholder="BMI" />
+                          </div>
+                        </div>
+                        <div className="calc-field">
+                          <label>Sykehistorie</label>
+                          <textarea className="calc-input pregnancy-textarea" rows={1} value={pregnancyMedicalHistory} onChange={(e) => setPregnancyMedicalHistory(e.target.value)} placeholder="Beskriv relevant sykehistorie" />
+                        </div>
+                        <div className="calc-field">
+                          <label>Psykisk</label>
+                          <textarea className="calc-input pregnancy-textarea" rows={1} value={pregnancyMentalHealth} onChange={(e) => setPregnancyMentalHealth(e.target.value)} placeholder="Risiko for psykisk uhelse" />
+                        </div>
+                        <div className="calc-field">
+                          <label>Medisiner</label>
+                          <textarea className="calc-input pregnancy-textarea" rows={1} value={pregnancyMedications} onChange={(e) => setPregnancyMedications(e.target.value)} placeholder="Spesielt relevante medisiner? Medisinliste følger også med EPJ-henvisningen" />
+                        </div>
+                        <div className="calc-field">
+                          <label>Andre spesielle forhold som bør bemerkes?</label>
+                          <textarea className="calc-input pregnancy-textarea" rows={1} value={pregnancyOtherConditions} onChange={(e) => setPregnancyOtherConditions(e.target.value)} placeholder="F.eks tidligere vanskelige fødsler." />
+                        </div>
+                        <div className="calc-field pregnancy-risk-row">
+                          <label className="pregnancy-checkbox-label">
+                            <input type="checkbox" checked={pregnancyRiskPregnancy} onChange={(e) => setPregnancyRiskPregnancy(e.target.checked)} />
+                            Risikosvangerskap?
+                          </label>
+                          <details className="pregnancy-risk-details">
+                            <summary>Risikofaktorer for preeklampsi (Helsedirektoratet)</summary>
+                            <div className="pregnancy-risk-content">
+                              <p>Gravide med disse risikofaktorene bør følges nøye for utvikling av preeklampsi</p>
+                              <p>- alder over 40 år</p>
+                              <p>- antifosfolipidsyndromer (positiv lupus antikoagulant og/eller cardiolipin antistoff og klinisk anamnese)</p>
+                              <p>- bindevevssykdommer (spesielt systemisk lupus erythematosis, SLE)</p>
+                              <p>- diabetes mellitus, også svangerskapsdiabetes</p>
+                              <p>- flerlingsvangerskap</p>
+                              <p>- kronisk hypertensjon</p>
+                              <p>- kroppsmasseindeks (KMI) over 35</p>
+                              <p>- nyresykdom</p>
+                              <p>- tidligere gjennomgått preeklampsi (spesielt dersom oppstått mindre enn 34 uker), HELLP-syndrom (H = hemolyse, EL = elevated liver enzymes, LP = low platelets) eller eklampsi</p>
+                              <p>- morkakesvikt (vekstretardert foster)</p>
+                              <p style={{ marginTop: 12 }}>Mindre alvorlig risikofaktorer</p>
+                              <p>- førstegangsfødende</p>
+                              <p>- familiehistorie med mor eller søster som har hatt preeklampsi</p>
+                              <p>- graviditetsintervall mer enn 10 år</p>
+                              <a
+                                href="https://www.helsedirektoratet.no/retningslinjer/svangerskapsomsorgen/preeklampsi#risikofaktorer-for-preeklampsi-hos-gravide-bor-vurderes-pa-forste-svangerskapskonsultasjon-praktisk-informasjon"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Helsedirektoratet: preeklampsi – risikofaktorer
+                              </a>
+                            </div>
+                          </details>
+                        </div>
+                      </div>
+                      <div className="calc-output">
+                        <div className="calc-output-title">Ferdig henvisningstekst</div>
+                        <pre className="pregnancy-referral-preview">{pregnancyReferralText}</pre>
+                        <div className="calc-output-actions">
+                          <button type="button" className="button primary" onClick={handleCopySpecialCalculatorText}>Kopier</button>
+                          <span className="badge">{copyState || "Klar til kopiering"}</span>
+                        </div>
+                      </div>
+                    </section>
                   </div>
                 )}
               </div>
