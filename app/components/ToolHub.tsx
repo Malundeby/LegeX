@@ -305,6 +305,11 @@ export default function ToolHub(
             title: "Søvndagbok",
             description: "Registrering av søvnmønster",
             url: "/pdfs/Skjema-Øvrig-Søvndagbok.pdf"
+          },
+          {
+            title: "Canada-kriteriene for ME",
+            description: "Diagnostiske kriterier for ME/CFS",
+            url: "/pdfs/Skjema-ME-Canada-kriteriene.pdf"
           }
         ]
       },
@@ -318,7 +323,12 @@ export default function ToolHub(
           }
         ]
       }
-    ], []);
+    ]
+      .map((subcategory) => ({
+        ...subcategory,
+        items: [...subcategory.items].sort((a, b) => a.title.localeCompare(b.title, "nb"))
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title, "nb")), []);
 
   const resourceCategories = useMemo<ResourceCategory[]>(() => {
     const categories: ResourceCategory[] = [
@@ -328,22 +338,22 @@ export default function ToolHub(
           {
             title: "Apotekkort",
             description: "Håndkort for apotekrelatert oppfølging.",
-            url: "/pdfs/Håndkort-Apotekkort-ToppenLS.pdf"
+            url: "/pdfs/Håndkort-Apotekkort-ToppenLS.pdf"
           },
           {
             title: "Henvisningskort",
             description: "Håndkort for rask henvisningsstøtte.",
-            url: "/pdfs/Håndkort-Henvisningskort-ToppenLS.pdf"
+            url: "/pdfs/Håndkort-Henvisningskort-ToppenLS.pdf"
           },
           {
             title: "Sykedagskort",
             description: "Håndkort for strukturert sykedagsvurdering.",
-            url: "/pdfs/Håndkort-Sykedagskort.pdf"
+            url: "/pdfs/Håndkort-Sykedagskort.pdf"
           },
           {
             title: "Videre plan",
             description: "Håndkort for planlegging av videre forløp.",
-            url: "/pdfs/Håndkort-Videre%20plan-ToppenLS.pdf"
+            url: "/pdfs/Håndkort-Videre%20plan-ToppenLS.pdf"
           }
         ]
       },
@@ -396,23 +406,53 @@ export default function ToolHub(
     [resourceCategories]
   );
 
-  const patientInfoItems = useMemo<ResourceCard[]>(() => [
+  const patientInfoCategories = useMemo<ResourceCategory[]>(() => [
     {
-      title: "Sure oppstøt (GERD)",
-      description: "Pasientinformasjon om sure oppstøt og gastroøsofageal reflukssykdom",
-      url: "/pdfs/Pasinfo-GERD.pdf"
+      title: "Pasientinformasjon",
+      items: [
+        {
+          title: "Sure oppstøt (GERD)",
+          description: "Pasientinformasjon om sure oppstøt og gastroøsofageal reflukssykdom",
+          url: "/pdfs/Pasinfo-GERD.pdf"
+        },
+        {
+          title: "Eksembehandling",
+          description: "Pasientinformasjon om behandling av eksem",
+          url: "/pdfs/Pasinfo-Derma-Eksembehandling.pdf"
+        },
+        {
+          title: "Føflekksjekk egenbehandling",
+          description: "Pasientinformasjon om egensjekk av føflekker",
+          url: "/pdfs/Pasinfo-Derma-Føflekker-Egensjekk.pdf"
+        },
+        {
+          title: "Hjemmemåling BT",
+          description: "Pasientinformasjon om hjemmemåling av blodtrykk",
+          url: "/pdfs/Pasinfo-Hjemmemåling%20BT.pdf"
+        }
+      ]
     },
     {
-      title: "Eksembehandling",
-      description: "Pasientinformasjon om behandling av eksem",
-      url: "/pdfs/Pasinfo-Derma-Eksembehandling.pdf"
-    },
-    {
-      title: "Føflekksjekk egenbehandling",
-      description: "Pasientinformasjon om egensjekk av føflekker",
-      url: "/pdfs/Pasinfo-Derma-Føflekker-Egensjekk.pdf"
+      title: "Fysioterapi",
+      items: [
+        {
+          title: "Start-øvelser",
+          description: "Øvelsesprogram for ulike kroppsdeler (ExorLive)",
+          url: "https://www.exorlive.com/no/start-ovelser"
+        },
+        {
+          title: "Øvelser ved ryggsmerter",
+          description: "Fysioterapiøvelser ved ryggsmerter",
+          url: "/pdfs/Fysio-Øvelser-ryggsmerter.pdf"
+        }
+      ]
     }
-  ], []);
+  ]
+    .map((category) => ({
+      ...category,
+      items: [...category.items].sort((a, b) => a.title.localeCompare(b.title, "nb"))
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title, "nb")), []);
 
   const clearPreviewHoverTimeout = () => {
     if (previewHoverTimeoutRef.current !== null) {
@@ -2362,26 +2402,28 @@ export default function ToolHub(
           <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Pasientinformasjon</h2>
           <p style={{ marginBottom: 22, color: '#475569' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
 
-          <section className="resource-chapter">
-            <h3 className="resource-chapter-title">Pasientinformasjon</h3>
-            <div>
-              {patientInfoItems.map((resource) => (
-                <article key={resource.title} className="resource-row">
-                  <div className="resource-row-main">
-                    <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title">
-                      {resource.title}
-                    </a>
-                    <p className="resource-description">{resource.description}</p>
-                  </div>
-                  <div className="resource-row-badge">
-                    <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge">
-                      PDF
-                    </a>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
+          {patientInfoCategories.map((category) => (
+            <section key={category.title} className="resource-chapter">
+              <h3 className="resource-chapter-title">{category.title}</h3>
+              <div>
+                {category.items.map((resource) => (
+                  <article key={resource.title} className="resource-row">
+                    <div className="resource-row-main">
+                      <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title">
+                        {resource.title}
+                      </a>
+                      <p className="resource-description">{resource.description}</p>
+                    </div>
+                    <div className="resource-row-badge">
+                      <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge">
+                        {resource.url.startsWith("http") ? "Lenke" : "PDF"}
+                      </a>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </section>
