@@ -210,6 +210,11 @@ export default function ToolHub(
             title: "Y-BOCS",
             description: "Vurdering av tvangssymptomer (OCD)",
             url: "/pdfs/TBR-Y-BOCS.pdf"
+          },
+          {
+            title: "Adult ADHD Quality of Life",
+            description: "Livskvalitetsvurdering ved voksen ADHD",
+            url: "/pdfs/Skjema-ADHD-Adult-ADHD-Quality-of-Life.pdf"
           }
         ]
       },
@@ -227,6 +232,11 @@ export default function ToolHub(
         title: "Demens",
         items: [
           {
+            title: "I- og P-ADL",
+            description: "Kartlegging av instrumentelle og personlige daglige aktiviteter",
+            url: "/pdfs/Skjema-Demens-I-ADL%20og%20P-ADL.pdf"
+          },
+          {
             title: "TMT-3 manual",
             description: "Utredningsskjema for demens – TMT-3 manual",
             url: "/pdfs/Utredningsskjema-Demens-TMT-NR3-manual.pdf"
@@ -235,6 +245,76 @@ export default function ToolHub(
             title: "TMT-3 testark",
             description: "Utredningsskjema for demens – TMT-3 testark",
             url: "/pdfs/Utredningsskjema-Demens-TMT-NR3-testark.pdf"
+          }
+        ]
+      },
+      {
+        title: "Revmatologi",
+        items: [
+          {
+            title: "Fibromyalgi",
+            description: "Kartlegging av fibromyalgi",
+            url: "/pdfs/Skjema-Revma-Fibromyalgikartlegging.pdf"
+          }
+        ]
+      },
+      {
+        title: "Nevrologi",
+        items: [
+          {
+            title: "3x3 Triptan",
+            description: "Registrering av triptanbruk ved migrene",
+            url: "/pdfs/Skjema-Migrene-3x3-Triptan-.pdf"
+          },
+          {
+            title: "Hodepineutredning",
+            description: "Utredningsskjema for hodepine",
+            url: "/pdfs/Skjema-Nevro-Hodepineutredning.pdf"
+          },
+          {
+            title: "PIN-test",
+            description: "PIN-test ved migrene",
+            url: "/pdfs/Skjema-Migrene-PIN-test.pdf"
+          },
+          {
+            title: "HIT-6",
+            description: "Vurdering av hodepinebelastning",
+            url: "/pdfs/Skjema-Nevro-HIT-6.pdf"
+          }
+        ]
+      },
+      {
+        title: "Øvrig",
+        items: [
+          {
+            title: "Smertekartlegging",
+            description: "Kartlegging av smerte og symptomer (ESAS)",
+            url: "/pdfs/Skjema-ESAS-Smertekartlegging.pdf"
+          },
+          {
+            title: "Kostprovokasjon",
+            description: "Skjema for kostprovokasjon (Rikshospitalet)",
+            url: "/pdfs/Øvrig-Kostprovokasjon-(RIkshosp).pdf"
+          },
+          {
+            title: "Kostregistrering",
+            description: "Registrering av kosthold",
+            url: "/pdfs/Øvrig-TBR-Kostregistrering.pdf"
+          },
+          {
+            title: "Søvndagbok",
+            description: "Registrering av søvnmønster",
+            url: "/pdfs/Skjema-Øvrig-Søvndagbok.pdf"
+          }
+        ]
+      },
+      {
+        title: "Trygdemedisin",
+        items: [
+          {
+            title: "Norsk funksjonsskjema",
+            description: "Kartlegging av funksjonsnivå ved trygdemedisinske vurderinger",
+            url: "/pdfs/Skjema-Trygdemedisin-Norsk%20funksjonsskjema.pdf"
           }
         ]
       }
@@ -315,6 +395,24 @@ export default function ToolHub(
     () => resourceCategories.filter((category) => category.title === "Annet" || category.title === "Håndkort"),
     [resourceCategories]
   );
+
+  const patientInfoItems = useMemo<ResourceCard[]>(() => [
+    {
+      title: "Sure oppstøt (GERD)",
+      description: "Pasientinformasjon om sure oppstøt og gastroøsofageal reflukssykdom",
+      url: "/pdfs/Pasinfo-GERD.pdf"
+    },
+    {
+      title: "Eksembehandling",
+      description: "Pasientinformasjon om behandling av eksem",
+      url: "/pdfs/Pasinfo-Derma-Eksembehandling.pdf"
+    },
+    {
+      title: "Føflekksjekk egenbehandling",
+      description: "Pasientinformasjon om egensjekk av føflekker",
+      url: "/pdfs/Pasinfo-Derma-Føflekker-Egensjekk.pdf"
+    }
+  ], []);
 
   const clearPreviewHoverTimeout = () => {
     if (previewHoverTimeoutRef.current !== null) {
@@ -2259,7 +2357,33 @@ export default function ToolHub(
         }
       `}</style>
 
-      {activeTab === "patientinfo" && <div style={{ marginTop: 20, padding: 24, textAlign: "center" }}><p>Pasientinformasjon kommer snart.</p></div>}
+      {activeTab === "patientinfo" && (
+        <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
+          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Pasientinformasjon</h2>
+          <p style={{ marginBottom: 22, color: '#475569' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
+
+          <section className="resource-chapter">
+            <h3 className="resource-chapter-title">Pasientinformasjon</h3>
+            <div>
+              {patientInfoItems.map((resource) => (
+                <article key={resource.title} className="resource-row">
+                  <div className="resource-row-main">
+                    <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title">
+                      {resource.title}
+                    </a>
+                    <p className="resource-description">{resource.description}</p>
+                  </div>
+                  <div className="resource-row-badge">
+                    <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge">
+                      PDF
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
