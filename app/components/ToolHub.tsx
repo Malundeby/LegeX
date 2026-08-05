@@ -43,16 +43,16 @@ import {
 import { calculateToolHubCalcResult } from "@/app/utils/toolHubCalcEngine";
 import { defaultLinkBoxes, type LinkBox } from "@/app/utils/toolHubLinks";
 
-type TabKey = "tools" | "guides" | "resources" | "forms" | "patientinfo";
+type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews";
 
 const tabs: Record<TabKey, string> = {
   tools: "Kalkulatorer",
   guides: "Lenker",
   resources: "Verktøy",
-  forms: "Skjemaer",
-  patientinfo: "Pasientinformasjon"
+  patientinfo: "Pasientinformasjon",
+  overviews: "Oversikter"
 };
-const tabOrder: TabKey[] = ["guides", "tools", "resources", "forms", "patientinfo"];
+const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews"];
 
 interface ResourceCard {
   title: string;
@@ -96,6 +96,8 @@ export default function ToolHub(
   const [copyState, setCopyState] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  const [activeSpecialty, setActiveSpecialty] = useState<string | null>(null);
+  const [activePatientInfoSpecialty, setActivePatientInfoSpecialty] = useState<string | null>(null);
   const [linkBoxOrder, setLinkBoxOrder] = useState<string[]>([]);
   const [draggedBox, setDraggedBox] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ boxId: string; itemId: string } | null>(null);
@@ -245,6 +247,21 @@ export default function ToolHub(
             title: "TMT-3 testark",
             description: "Utredningsskjema for demens – TMT-3 testark",
             url: "/pdfs/Utredningsskjema-Demens-TMT-NR3-testark.pdf"
+          },
+          {
+            title: "Førerkort TMT (kun test)",
+            description: "Trail Making Test for førerkortvurdering ved demens",
+            url: "/pdfs/Verktøy-Demens-Førerkort-TMT-kun%20test.pdf"
+          },
+          {
+            title: "Førerkort TMT (instruksjon og test)",
+            description: "Trail Making Test for førerkortvurdering ved demens, med instruks",
+            url: "/pdfs/Verktøy-Demens-Førerkort-TMT-m-instruks.pdf"
+          },
+          {
+            title: "Barthel ADL-index",
+            description: "Kartlegging av funksjonsnivå ved demens",
+            url: "/pdfs/Funksjonsnivå-Barthel-ADL-index.pdf"
           }
         ]
       },
@@ -320,6 +337,11 @@ export default function ToolHub(
             title: "Norsk funksjonsskjema",
             description: "Kartlegging av funksjonsnivå ved trygdemedisinske vurderinger",
             url: "/pdfs/Skjema-Trygdemedisin-Norsk%20funksjonsskjema.pdf"
+          },
+          {
+            title: "Sykmeldingsoppfølgning",
+            description: "Veiledning for oppfølgning av sykmeldte pasienter",
+            url: "/pdfs/Trygdemedisin-Sykmeldingsoppf%C3%B8lgning.pdf"
           }
         ]
       }
@@ -333,58 +355,8 @@ export default function ToolHub(
   const resourceCategories = useMemo<ResourceCategory[]>(() => {
     const categories: ResourceCategory[] = [
       {
-        title: "Håndkort",
-        items: [
-          {
-            title: "Apotekkort",
-            description: "Håndkort for apotekrelatert oppfølging.",
-            url: "/pdfs/Håndkort-Apotekkort-ToppenLS.pdf"
-          },
-          {
-            title: "Henvisningskort",
-            description: "Håndkort for rask henvisningsstøtte.",
-            url: "/pdfs/Håndkort-Henvisningskort-ToppenLS.pdf"
-          },
-          {
-            title: "Sykedagskort",
-            description: "Håndkort for strukturert sykedagsvurdering.",
-            url: "/pdfs/Håndkort-Sykedagskort.pdf"
-          },
-          {
-            title: "Videre plan",
-            description: "Håndkort for planlegging av videre forløp.",
-            url: "/pdfs/Håndkort-Videre%20plan-ToppenLS.pdf"
-          }
-        ]
-      },
-      {
         title: "Utredningsverktøy",
         items: []
-      },
-      {
-        title: "Annet",
-        items: [
-          {
-            title: "Knuse-dele-listen",
-            description: "Knuse-dele-listen",
-            url: "/pdfs/KnuseDeleListen v16.pdf"
-          },
-          {
-            title: "Eldre (over 70 år)",
-            description: "Spesielle hensyn ved dosering til eldre pasienter",
-            url: "#"
-          },
-          {
-            title: "Nyresvikt",
-            description: "Dosejustering ved redusert nyrefunksjon",
-            url: "#"
-          },
-          {
-            title: "Vanligste interaksjoner",
-            description: "Viktige legemiddelinteraksjoner å vurdere",
-            url: "#"
-          }
-        ]
       }
     ];
 
@@ -396,25 +368,118 @@ export default function ToolHub(
       }));
   }, [utredningsverktoySubcategories]);
 
-  const toolResourceCategories = useMemo(
-    () => resourceCategories.filter((category) => category.title === "Utredningsverktøy"),
-    [resourceCategories]
-  );
-
-  const formResourceCategories = useMemo(
-    () => resourceCategories.filter((category) => category.title === "Annet" || category.title === "Håndkort"),
-    [resourceCategories]
-  );
-
-  const patientInfoCategories = useMemo<ResourceCategory[]>(() => [
+  const overviewCategories = useMemo<ResourceCategory[]>(() => [
     {
-      title: "Pasientinformasjon",
+      title: "Håndkort",
+      items: [
+        {
+          title: "Apotekkort",
+          description: "Håndkort for apotekrelatert oppfølging.",
+          url: "/pdfs/Håndkort-Apotekkort-ToppenLS.pdf"
+        },
+        {
+          title: "Henvisningskort",
+          description: "Håndkort for rask henvisningsstøtte.",
+          url: "/pdfs/Håndkort-Henvisningskort-ToppenLS.pdf"
+        },
+        {
+          title: "Sykedagskort",
+          description: "Håndkort for strukturert sykedagsvurdering.",
+          url: "/pdfs/Håndkort-Sykedagskort.pdf"
+        },
+        {
+          title: "Videre plan",
+          description: "Håndkort for planlegging av videre forløp.",
+          url: "/pdfs/Håndkort-Videre%20plan-ToppenLS.pdf"
+        }
+      ]
+    },
+    {
+      title: "Annet",
+      items: [
+        {
+          title: "Knuse-dele-listen",
+          description: "Knuse-dele-listen",
+          url: "/pdfs/KnuseDeleListen v16.pdf"
+        },
+        {
+          title: "Eldre (over 70 år)",
+          description: "Spesielle hensyn ved dosering til eldre pasienter",
+          url: "#"
+        },
+        {
+          title: "Nyresvikt",
+          description: "Dosejustering ved redusert nyrefunksjon",
+          url: "#"
+        },
+        {
+          title: "Vanligste interaksjoner",
+          description: "Viktige legemiddelinteraksjoner å vurdere",
+          url: "#"
+        },
+        {
+          title: "Osteoporose",
+          description: "Pasientinformasjon om osteoporose",
+          url: "/pdfs/Pasientinformasjon-Osteoporose.pdf"
+        }
+      ]
+    }
+  ], []);
+
+  const patientInfoSubcategories = useMemo<ResourceSubcategory[]>(() => [
+    {
+      title: "Lungemedisin",
+      items: [
+        {
+          title: "Egenbehandling KOLS",
+          description: "Egenbehandlingsplan for KOLS",
+          url: "/pdfs/Egenbehandlingsplan-KOLS.pdf"
+        },
+        {
+          title: "Egenbehandling astma",
+          description: "Egenbehandlingsplan for astma",
+          url: "/pdfs/Egenbehandlingsplan-Astma.pdf"
+        }
+      ]
+    },
+    {
+      title: "Kardiologi",
+      items: [
+        {
+          title: "Hjemmemåling BT (veiledning)",
+          description: "Veiledning for hjemmemåling av blodtrykk",
+          url: "/pdfs/HjemmeBT.pdf"
+        },
+        {
+          title: "Hjemmemåling BT (kun registrering)",
+          description: "Registreringsskjema for hjemmemåling av blodtrykk",
+          url: "/pdfs/HjemmeBT-kun-registrering.pdf"
+        }
+      ]
+    },
+    {
+      title: "Revmatologi",
+      items: [
+        {
+          title: "Polymyalgia revmatika",
+          description: "Behandlingsplan for polymyalgia revmatika",
+          url: "/pdfs/Behandlingsplan-Polymyalgia-rheumtica.pdf"
+        }
+      ]
+    },
+    {
+      title: "Gastroenterologi",
       items: [
         {
           title: "Sure oppstøt (GERD)",
           description: "Pasientinformasjon om sure oppstøt og gastroøsofageal reflukssykdom",
           url: "/pdfs/Pasinfo-GERD.pdf"
-        },
+        }
+      ]
+    },
+    {
+      title: "Dermatologi",
+      items: [
         {
           title: "Eksembehandling",
           description: "Pasientinformasjon om behandling av eksem",
@@ -424,11 +489,21 @@ export default function ToolHub(
           title: "Føflekksjekk egenbehandling",
           description: "Pasientinformasjon om egensjekk av føflekker",
           url: "/pdfs/Pasinfo-Derma-Føflekker-Egensjekk.pdf"
+        }
+      ]
+    },
+    {
+      title: "Psyk",
+      items: [
+        {
+          title: "Prioriteringsmatrise",
+          description: "Prioriteringsmatrise for psykisk helsearbeid",
+          url: "/pdfs/Psyk-Prioriteringsmatrise.pdf"
         },
         {
-          title: "Hjemmemåling BT",
-          description: "Pasientinformasjon om hjemmemåling av blodtrykk",
-          url: "/pdfs/Pasinfo-Hjemmemåling%20BT.pdf"
+          title: "Trafikklysmodell – Psykisk helsearbeid",
+          description: "Trafikklysmodell for vurdering i psykisk helsearbeid",
+          url: "/pdfs/Trafikklysmodell%E2%80%93Psykisk-helsearbeid.pdf"
         }
       ]
     },
@@ -448,9 +523,9 @@ export default function ToolHub(
       ]
     }
   ]
-    .map((category) => ({
-      ...category,
-      items: [...category.items].sort((a, b) => a.title.localeCompare(b.title, "nb"))
+    .map((subcategory) => ({
+      ...subcategory,
+      items: [...subcategory.items].sort((a, b) => a.title.localeCompare(b.title, "nb"))
     }))
     .sort((a, b) => a.title.localeCompare(b.title, "nb")), []);
 
@@ -513,6 +588,45 @@ export default function ToolHub(
   const hidePdfPreview = () => {
     clearPreviewHoverTimeout();
     setPreviewResource(null);
+  };
+
+  const renderResourceRow = (resource: ResourceCard, key: string) => {
+    const canOpen = resource.url !== "#";
+    const previewHandlers = canOpen
+      ? {
+          onMouseEnter: (event: ReactMouseEvent<HTMLElement>) => {
+            schedulePdfPreview(resource, event.clientX, event.clientY);
+          },
+          onMouseMove: (event: ReactMouseEvent<HTMLElement>) => {
+            updatePreviewCursor(event.clientX, event.clientY);
+          },
+          onMouseLeave: hidePdfPreview
+        }
+      : {};
+
+    return (
+      <article key={key} className="resource-row">
+        <div className="resource-row-main">
+          {canOpen ? (
+            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title" {...previewHandlers}>
+              {resource.title}
+            </a>
+          ) : (
+            <span className="resource-title unavailable">{resource.title}</span>
+          )}
+          <p className="resource-description">{resource.description}</p>
+        </div>
+        <div className="resource-row-badge">
+          {canOpen ? (
+            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge" {...previewHandlers}>
+              {resource.url.startsWith("http") ? "Lenke" : "PDF"}
+            </a>
+          ) : (
+            <span className="resource-pdf-badge unavailable">PDF</span>
+          )}
+        </div>
+      </article>
+    );
   };
 
   const dateCalcInlineParsed = useMemo(() => parseCalendarInlineOffset(dateCalcInline), [dateCalcInline]);
@@ -812,6 +926,12 @@ export default function ToolHub(
       setCalcTab("date");
       setSearchQuery("");
       setShowSearch(false);
+    }
+    if (tab !== "resources") {
+      setActiveSpecialty(null);
+    }
+    if (tab !== "patientinfo") {
+      setActivePatientInfoSpecialty(null);
     }
     setActiveTab(tab);
   };
@@ -2066,73 +2186,49 @@ export default function ToolHub(
 
       {activeTab === "guides" && <ModernWidgetDashboard />}
 
-      {(activeTab === "resources" || activeTab === "forms") && (
+      {activeTab === "resources" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
-          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>
-            {activeTab === "resources" ? "Verktøy" : "Skjemaer"}
-          </h2>
-          <p style={{ marginBottom: 22, color: '#475569' }}>
-            {activeTab === "resources"
-              ? "Utredningsverktøy og PDF-ressurser."
-              : "Håndkort og øvrige skjemaressurser."}
-          </p>
+          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Verktøy</h2>
+          <p style={{ marginBottom: 22, color: '#475569' }}>Utredningsverktøy og skjemaressurser.</p>
 
-          {(activeTab === "resources" ? toolResourceCategories : formResourceCategories).map((category) => {
-            const renderResourceRow = (resource: ResourceCard, key: string) => {
-              const canOpen = resource.url !== "#";
-              const previewHandlers = canOpen
-                ? {
-                    onMouseEnter: (event: ReactMouseEvent<HTMLElement>) => {
-                      schedulePdfPreview(resource, event.clientX, event.clientY);
-                    },
-                    onMouseMove: (event: ReactMouseEvent<HTMLElement>) => {
-                      updatePreviewCursor(event.clientX, event.clientY);
-                    },
-                    onMouseLeave: hidePdfPreview
-                  }
-                : {};
-
-              return (
-                <article key={key} className="resource-row">
-                  <div className="resource-row-main">
-                    {canOpen ? (
-                      <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title" {...previewHandlers}>
-                        {resource.title}
-                      </a>
-                    ) : (
-                      <span className="resource-title unavailable">{resource.title}</span>
-                    )}
-                    <p className="resource-description">{resource.description}</p>
-                  </div>
-                  <div className="resource-row-badge">
-                    {canOpen ? (
-                      <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge" {...previewHandlers}>
-                        PDF
-                      </a>
-                    ) : (
-                      <span className="resource-pdf-badge unavailable">PDF</span>
-                    )}
-                  </div>
-                </article>
-              );
-            };
-
+          {resourceCategories.map((category) => {
             return (
               <section key={category.title} className="resource-chapter">
                 <h3 className="resource-chapter-title">{category.title}</h3>
 
                 {category.title === "Utredningsverktøy" ? (
                   <div>
-                    {utredningsverktoySubcategories.map((subcategory) => (
-                      <div key={subcategory.title} className="resource-subcategory">
-                        <h4 className="resource-subcategory-title">{subcategory.title}</h4>
-                        <div className="resource-subcategory-list">
-                          {subcategory.items.map((resource) =>
-                            renderResourceRow(resource, `${category.title}-${subcategory.title}-${resource.title}`)
-                          )}
+                    <div className="specialty-chipbar">
+                      <button
+                        type="button"
+                        className={`specialty-chip ${activeSpecialty === null ? "active" : ""}`}
+                        onClick={() => setActiveSpecialty(null)}
+                      >
+                        Alle
+                      </button>
+                      {utredningsverktoySubcategories.map((subcategory) => (
+                        <button
+                          key={subcategory.title}
+                          type="button"
+                          className={`specialty-chip ${activeSpecialty === subcategory.title ? "active" : ""}`}
+                          onClick={() => setActiveSpecialty(subcategory.title)}
+                        >
+                          {subcategory.title}
+                        </button>
+                      ))}
+                    </div>
+                    {utredningsverktoySubcategories
+                      .filter((subcategory) => activeSpecialty === null || subcategory.title === activeSpecialty)
+                      .map((subcategory) => (
+                        <div key={subcategory.title} className="resource-subcategory">
+                          <h4 className="resource-subcategory-title">{subcategory.title}</h4>
+                          <div className="resource-subcategory-list">
+                            {subcategory.items.map((resource) =>
+                              renderResourceRow(resource, `${category.title}-${subcategory.title}-${resource.title}`)
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 ) : category.items.length > 0 ? (
                   <div>
@@ -2146,60 +2242,10 @@ export default function ToolHub(
               </section>
             );
           })}
-
-          {previewResource && (
-            <div
-              style={{
-                position: 'fixed',
-                left: previewPosition.left,
-                top: previewPosition.top,
-                width: 520,
-                height: 680,
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: 14,
-                boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)',
-                overflow: 'hidden',
-                zIndex: 50,
-                opacity: 1,
-                transform: 'translateY(0)',
-                animation: 'pdfPreviewFadeIn 0.18s ease-out'
-              }}
-            >
-              <div style={{
-                padding: '12px 14px',
-                borderBottom: '1px solid #e5e7eb',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-                background: '#f8fafc'
-              }}>
-                <strong style={{ fontSize: 14, color: '#0f172a' }}>{previewResource.title}</strong>
-                <button
-                  type="button"
-                  onClick={hidePdfPreview}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                    fontSize: 18,
-                    lineHeight: 1
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-              <div style={{ width: '100%', height: 'calc(100% - 49px)' }}>
-                <PdfHoverPreview url={previewResource.url} />
-              </div>
-            </div>
-          )}
         </div>
       )}
 
-      <style jsx>{`
+      <style jsx global>{`
         .resource-chapter {
           margin-bottom: 40px;
         }
@@ -2272,6 +2318,36 @@ export default function ToolHub(
 
         .resource-pdf-badge:hover {
           color: #64748b;
+        }
+
+        .specialty-chipbar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin: 4px 0 14px;
+        }
+
+        .specialty-chip {
+          padding: 5px 12px;
+          border: 1px solid rgba(15, 118, 110, 0.25);
+          background: #f2f7f9;
+          color: #0f766e;
+          font-size: 0.78rem;
+          font-weight: 600;
+          border-radius: 999px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .specialty-chip:hover {
+          background: #fff;
+          border-color: rgba(15, 118, 110, 0.5);
+        }
+
+        .specialty-chip.active {
+          background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+          color: #fff;
+          border-color: transparent;
         }
 
         .resource-subcategory {
@@ -2402,28 +2478,110 @@ export default function ToolHub(
           <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Pasientinformasjon</h2>
           <p style={{ marginBottom: 22, color: '#475569' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
 
-          {patientInfoCategories.map((category) => (
+          <section className="resource-chapter">
+            <h3 className="resource-chapter-title">Pasientinformasjon</h3>
+            <div>
+              <div className="specialty-chipbar">
+                <button
+                  type="button"
+                  className={`specialty-chip ${activePatientInfoSpecialty === null ? "active" : ""}`}
+                  onClick={() => setActivePatientInfoSpecialty(null)}
+                >
+                  Alle
+                </button>
+                {patientInfoSubcategories.map((subcategory) => (
+                  <button
+                    key={subcategory.title}
+                    type="button"
+                    className={`specialty-chip ${activePatientInfoSpecialty === subcategory.title ? "active" : ""}`}
+                    onClick={() => setActivePatientInfoSpecialty(subcategory.title)}
+                  >
+                    {subcategory.title}
+                  </button>
+                ))}
+              </div>
+              {patientInfoSubcategories
+                .filter((subcategory) => activePatientInfoSpecialty === null || subcategory.title === activePatientInfoSpecialty)
+                .map((subcategory) => (
+                  <div key={subcategory.title} className="resource-subcategory">
+                    <h4 className="resource-subcategory-title">{subcategory.title}</h4>
+                    <div className="resource-subcategory-list">
+                      {subcategory.items.map((resource) =>
+                        renderResourceRow(resource, `${subcategory.title}-${resource.title}`)
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {activeTab === "overviews" && (
+        <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
+          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Oversikter</h2>
+          <p style={{ marginBottom: 22, color: '#475569' }}>Håndkort og andre oversikter.</p>
+
+          {overviewCategories.map((category) => (
             <section key={category.title} className="resource-chapter">
               <h3 className="resource-chapter-title">{category.title}</h3>
               <div>
-                {category.items.map((resource) => (
-                  <article key={resource.title} className="resource-row">
-                    <div className="resource-row-main">
-                      <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title">
-                        {resource.title}
-                      </a>
-                      <p className="resource-description">{resource.description}</p>
-                    </div>
-                    <div className="resource-row-badge">
-                      <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge">
-                        {resource.url.startsWith("http") ? "Lenke" : "PDF"}
-                      </a>
-                    </div>
-                  </article>
-                ))}
+                {category.items.map((resource) =>
+                  renderResourceRow(resource, `${category.title}-${resource.title}`)
+                )}
               </div>
             </section>
           ))}
+        </div>
+      )}
+
+      {previewResource && (
+        <div
+          style={{
+            position: 'fixed',
+            left: previewPosition.left,
+            top: previewPosition.top,
+            width: 520,
+            height: 680,
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: 14,
+            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)',
+            overflow: 'hidden',
+            zIndex: 50,
+            opacity: 1,
+            transform: 'translateY(0)',
+            animation: 'pdfPreviewFadeIn 0.18s ease-out'
+          }}
+        >
+          <div style={{
+            padding: '12px 14px',
+            borderBottom: '1px solid #e5e7eb',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            background: '#f8fafc'
+          }}>
+            <strong style={{ fontSize: 14, color: '#0f172a' }}>{previewResource.title}</strong>
+            <button
+              type="button"
+              onClick={hidePdfPreview}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#64748b',
+                cursor: 'pointer',
+                fontSize: 18,
+                lineHeight: 1
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <div style={{ width: '100%', height: 'calc(100% - 49px)' }}>
+            <PdfHoverPreview url={previewResource.url} />
+          </div>
         </div>
       )}
     </section>
