@@ -146,12 +146,54 @@
       { "minScore": 7, "label": "Lett depresjon" },
       { "minScore": 20, "label": "Moderat depresjon" },
       { "minScore": 35, "label": "Alvorlig depresjon" }
-    ]
+    ],
+    "advice": [
+      {
+        "items": [
+          "Grensene under er veiledende og kan variere noe mellom ulike referanser — klinisk skjønn og individuell vurdering av pasienten er alltid avgjørende, særlig nær grenseverdiene."
+        ]
+      },
+      {
+        "title": "0–6 poeng – Ikke deprimert",
+        "items": [
+          "Ingen behandling nødvendig.",
+          "Psykoedukasjon og støttesamtale ved behov."
+        ]
+      },
+      {
+        "title": "7–19 poeng – Lett deprimert",
+        "items": [
+          "Samtaleterapi.",
+          "Vurder antidepressiva ved skåre >15 eller hos eldre."
+        ]
+      },
+      {
+        "title": "20–34 poeng – Moderat deprimert",
+        "items": [
+          "Samtaleterapi.",
+          "Vurder medikament.",
+          "Vurder DPS."
+        ]
+      },
+      {
+        "title": "35–60 poeng – Alvorlig, vurder innleggelse",
+        "items": [
+          "Antidepressiva.",
+          "Henvis DPS / øyeblikkelig hjelp.",
+          "Vurder innleggelse.",
+          "Tett suicidvurdering."
+        ]
+      }
+    ],
+    "indication": "MADRS (Montgomery-Åsberg Depression Rating Scale) brukes til å kvantifisere alvorlighetsgrad av depressive symptomer og til å følge endring under behandling. Skalaen er særlig sensitiv for å fange opp symptomendring, og brukes derfor mye i oppfølging av behandlingsrespons, blant annet i studier av antidepressiv behandling.",
+    "aboutTest": "Skalaen består av ti ledd som skåres av kliniker basert på samtale med pasienten, og dekker kjerneområder som nedstemthet, indre uro, søvn, appetitt og konsentrasjon. Den er godt validert og mye brukt internasjonalt som mål på depresjonsalvorlighetsgrad. MADRS er ikke i seg selv et diagnostisk verktøy — diagnosen depresjon stilles ved klinisk intervju i tråd med ICD/DSM-kriterier — men skalaen krever en viss grad av klinisk trening for konsistent skåring."
   },
   {
     "id": "gad-7",
     "name": "🧠 GAD-7 (angst)",
-    "description": "Generalized Anxiety Disorder 7-item scale. Siste 2 uker.",    "pdfUrl": "/pdfs/TBR-GAD-7-pdf.pdf",    "questions": [
+    "description": "Generalized Anxiety Disorder 7-item scale. Siste 2 uker.",
+    "pdfUrl": "/pdfs/TBR-GAD-7-pdf.pdf",
+    "questions": [
       {
         "id": "gad7-1",
         "text": "Følt deg nervøs, engstelig eller på kanten",
@@ -228,7 +270,46 @@
       { "minScore": 5, "label": "Lett angst" },
       { "minScore": 10, "label": "Moderat angst" },
       { "minScore": 15, "label": "Alvorlig angst" }
-    ]
+    ],
+    "advice": [
+      {
+        "items": [
+          "Skår ≥10: Videre utredning (diagnostisk intervju og vurdering av psykisk status) og/eller henvisning til psykisk helsevern anbefales."
+        ]
+      },
+      {
+        "title": "0–4 poeng – Minimal angst",
+        "items": [
+          "Ingen spesifikke tiltak nødvendig."
+        ]
+      },
+      {
+        "title": "5–9 poeng – Lett angst",
+        "items": [
+          "Følg med."
+        ]
+      },
+      {
+        "title": "10–14 poeng – Moderat angst",
+        "items": [
+          "Mulig klinisk signifikant tilstand."
+        ]
+      },
+      {
+        "title": "15–21 poeng – Alvorlig angst",
+        "items": [
+          "Aktiv behandling sannsynligvis indisert."
+        ]
+      },
+      {
+        "items": [
+          "Ved panikklidelse, sosial fobi og PTSD kan en cutoff på 8 poeng gi bedre sensitivitet/spesifisitet.",
+          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+        ]
+      }
+    ],
+    "indication": "GAD-7 brukes til screening og monitorering av angstsymptomer hos pasienter i allmennpraksis og spesialisthelsetjeneste. Skjemaet fylles ut av pasienten selv og gir en rask, standardisert vurdering av symptomintensitet de siste to ukene.",
+    "aboutTest": "Skjemaet består av sju spørsmål om generaliserte angstsymptomer, og gir en samleskår fra 0 til 21, der høyere skår gjenspeiler mer alvorlige symptomer (skår ≥10 indikerer mulig klinisk signifikant angst). En lavere grenseverdi (8) benyttes noen ganger for tilstander som panikklidelse, sosial fobi og PTSD for å øke sensitiviteten. GAD-7 er validert som screeningverktøy, men erstatter ikke klinisk diagnostikk, og medisinske årsaker til angst (for eksempel thyreoideasykdom eller arytmi) bør utelukkes før en angstlidelse diagnostiseres."
   },
   {
     "id": "asrs",
@@ -465,12 +546,42 @@
     "partAThresholds": [
       { "minScore": 0, "label": "Ikke forhøyet screening" },
       { "minScore": 4, "label": "Forhøyet screening – videre utredning anbefales" }
-    ]
+    ],
+    "advice": [
+      {
+        "items": [
+          "Screeneren er ment å fange opp tilfeller som bør utredes videre, og kan ikke brukes alene til å stille diagnosen ADHD."
+        ]
+      },
+      {
+        "title": "Del A – screening (6 spørsmål)",
+        "items": [
+          "≥4 poeng (av 6) indikerer symptomer sterkt forenlig med voksen-ADHD.",
+          "Positiv screening bør følges opp med klinisk intervju, vurdering av psykisk status og eventuelt nevropsykologisk testing."
+        ]
+      },
+      {
+        "title": "Del B – tilleggssymptomer",
+        "items": [
+          "Brukes som støtte i den kliniske helhetsvurderingen sammen med del A, men inngår ikke i den offisielle screening-terskelen."
+        ]
+      },
+      {
+        "items": [
+          "Vurderingen må ta høyde for andre psykiatriske og somatiske tilstander, siden uoppmerksomhet og hyperaktivitet er uspesifikke symptomer.",
+          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+        ]
+      }
+    ],
+    "indication": "ASRS v1.1 (Adult ADHD Self-Report Scale) brukes som screeningverktøy for ADHD-symptomer hos voksne, for å identifisere pasienter som bør henvises videre til full diagnostisk utredning. Skjemaet er basert på DSM-kriteriene for ADHD.",
+    "aboutTest": "Skjemaet ble utviklet av WHO i samarbeid med forskere (blant annet Kessler et al.) og er validert mot klinisk ADHD-diagnose i voksenpopulasjoner. Et positivt screeningresultat er ikke i seg selv diagnostisk, men indikerer behov for videre klinisk vurdering, der symptomene også må ha vært til stede siden barndommen og ikke bedre forklares av annen tilstand. ASRS bør derfor brukes som et første trinn i utredningen, ikke som en frittstående diagnostisk test."
   },
   {
     "id": "audit",
-    "name": "🧠 AUDIT (alkohol)",
-    "description": "Alcohol Use Disorders Identification Test. 10 spørsmål om alkoholbruk.",    "pdfUrl": "/pdfs/TBR-AUDIT.pdf",    "questions": [
+    "name": "🧠 AUDIT - Kartlegging",
+    "description": "Alcohol Use Disorders Identification Test. 10 spørsmål om alkoholbruk.",
+    "pdfUrl": "/pdfs/TBR-AUDIT.pdf",
+    "questions": [
       {
         "id": "audit-1",
         "text": "Hvor ofte drikker du alkohol?",
@@ -583,7 +694,48 @@
       { "minScore": 8, "label": "Risikofylt alkoholbruk" },
       { "minScore": 16, "label": "Høyt risikofylt/skadelig bruk" },
       { "minScore": 20, "label": "Mulig avhengighet – vurder henvisning" }
-    ]
+    ],
+    "advice": [
+      {
+        "items": [
+          "AUDIT er WHOs anbefalte screeningverktøy for risikofylt og skadelig alkoholbruk, og er ment som screening – ikke diagnostikk."
+        ]
+      },
+      {
+        "title": "0–7 poeng – Lav risiko",
+        "items": [
+          "Ingen spesifikke tiltak nødvendig utover generell informasjon ved behov."
+        ]
+      },
+      {
+        "title": "8–15 poeng – Risikofylt alkoholbruk",
+        "items": [
+          "Kort intervensjon/rådgivning om alkoholbruk anbefales."
+        ]
+      },
+      {
+        "title": "16–19 poeng – Høyt risikofylt/skadelig bruk",
+        "items": [
+          "Kort intervensjon og tettere oppfølging anbefales.",
+          "Vurder henvisning ved manglende bedring."
+        ]
+      },
+      {
+        "title": "≥20 poeng – Mulig avhengighet",
+        "items": [
+          "Videre diagnostisk utredning for alkoholavhengighet anbefales.",
+          "Henvis til rus- og avhengighetstjeneste eller fastlegeoppfølging."
+        ]
+      },
+      {
+        "items": [
+          "Lavere terskler kan være aktuelt hos kvinner, eldre og ungdom.",
+          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+        ]
+      }
+    ],
+    "indication": "AUDIT (Alcohol Use Disorders Identification Test) brukes til å screene for risikofylt og skadelig alkoholbruk, samt mulig avhengighet, i allmennpraksis og andre kliniske settinger. Verktøyet brukes til å identifisere pasienter som kan ha nytte av kort intervensjon eller videre henvisning.",
+    "aboutTest": "Skjemaet består av ti spørsmål om alkoholforbruk, drikkemønster og konsekvenser av alkoholbruk, og er utviklet og validert av WHO på tvers av ulike populasjoner og kulturer. Høyere skår er assosiert med økt sannsynlighet for alkoholbruksforstyrrelse. AUDIT er et screeningverktøy, og en forhøyet skår bør følges opp med en fullstendig klinisk vurdering før eventuell diagnose stilles."
   },
   {
     "id": "eular-ra-2010",
@@ -630,7 +782,31 @@
     "thresholds": [
       { "minScore": 0, "label": "Under klassifikasjonsgrense" },
       { "minScore": 6, "label": "Klassifikasjonskriterier for RA oppfylt" }
-    ]
+    ],
+    "advice": [
+      {
+        "items": [
+          "Dette verktøyet bør brukes som en veiledning ved diagnostisering av RA sammen med klinisk vurdering, diagnostikk og eventuell spesialistvurdering – særlig i grensetilfeller eller atypiske tilfeller."
+        ]
+      },
+      {
+        "title": "Skår ≥6 med synovitt i minst ett ledd og fravær av annen forklarende diagnose:",
+        "items": [
+          "Sterkt tydende på RA.",
+          "Henvis til revmatolog for videre oppfølging og eventuell oppstart av DMARD-behandling.",
+          "Følg jevnlig med på sykdomsaktivitet og behandlingsrespons."
+        ]
+      },
+      {
+        "title": "Skår <6:",
+        "items": [
+          "Vurder alternative diagnoser; videre utredning (f.eks. bildediagnostikk, flere blodprøver) kan være aktuelt.",
+          "Følg tett opp og revurder dersom pasientens symptomer endrer seg."
+        ]
+      }
+    ],
+    "indication": "ACR/EULAR 2010-klassifikasjonskriteriene for revmatoid artritt brukes hos pasienter med minst ett ledd med sikker synovitt som ikke bedre forklares av annen sykdom, for å klassifisere pasienten som revmatoid artritt. Kriteriene ble utviklet for å fange opp pasienter tidligere i sykdomsforløpet enn de eldre 1987-kriteriene, og er særlig relevante for vurdering av tidlig DMARD-behandling og inklusjon i kliniske studier.",
+    "aboutTest": "Skåren summerer poeng for antall og type affiserte ledd, serologi (RF/anti-CCP), akuttfasereaktanter (CRP/SR) og symptomvarighet, der en samlet skår på 6 av 10 eller mer klassifiserer pasienten som RA. Kriteriene er primært utviklet som klassifikasjonskriterier for forskningsformål, men brukes også bredt klinisk. De erstatter ikke klinisk skjønn, spesielt ved tidlig eller atypisk sykdomspresentasjon, og bør tolkes av kliniker med erfaring i revmatologisk utredning."
   },
   {
     "id": "eular-pmr-2012",
@@ -697,6 +873,699 @@
     "thresholds": [
       { "minScore": 0, "label": "Under klassifikasjonsgrense" },
       { "minScore": 4, "label": "Klassifikasjonskriterier for PMR oppfylt (uten ultralyd)" }
-    ]
+    ],
+    "indication": "2012 EULAR/ACR-klassifikasjonskriteriene for polymyalgia rheumatica brukes hos pasienter ≥50 år med nyoppstått bilateral skuldersmerte og forhøyet CRP/SR, for å klassifisere polymyalgia rheumatica og skille denne fra andre årsaker til skulder-/hoftesmerter.",
+    "aboutTest": "Kriteriene inkluderer morgenstivhet, hoftesmerter/redusert hoftebevegelighet, fravær av revmafaktor/anti-CCP og fravær av annen leddaffeksjon, med mulighet for tilleggspoeng ved ultralydfunn. De er utviklet som klassifikasjonskriterier for forskningsformål, og krever at andre differensialdiagnoser (blant annet revmatoid artritt, malignitet og infeksjon) er utelukket, siden ingen enkeltprøve bekrefter diagnosen alene. Rask og god respons på glukokortikoider styrker mistanken klinisk, men inngår ikke i selve klassifikasjonsskåren.",
+    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+  },
+  {
+    "id": "ciwa-ar",
+    "name": "🍷 CIWA-A - Abstinensskår",
+    "description": "Clinical Institute Withdrawal Assessment for Alcohol, revised. Vurder puls og blodtrykk separat. Maks 67 poeng.",
+    "pdfUrl": "/pdfs/Utredningsverkt%C3%B8y-CIWA-alkohol.pdf",
+    "questions": [
+      {
+        "id": "ciwa-ar-1",
+        "text": "Kvalme og oppkast",
+        "options": [
+          { "label": "0 – Ikke kvalme og ikke oppkast", "score": 0 },
+          { "label": "1 – Lett kvalme uten oppkast", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Periodisk kvalme med brekninger", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6", "score": 6 },
+          { "label": "7 – Vedvarende kvalme, hyppige brekninger og oppkast", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-2",
+        "text": "Tremor (armene utstrakt med spredte fingre)",
+        "options": [
+          { "label": "0 – Ingen tremor", "score": 0 },
+          { "label": "1 – Ikke synlig, men kan kjennes fingertupp mot fingertupp", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Moderat, med pasientens armer utstrakt", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6", "score": 6 },
+          { "label": "7 – Sterk, selv når armene ikke er utstrakt", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-3",
+        "text": "Svettetokter",
+        "options": [
+          { "label": "0 – Ingen synlig svette", "score": 0 },
+          { "label": "1 – Knapt merkbar svetting, klamme håndflater", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Tydelige svetteperler i pannen", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6", "score": 6 },
+          { "label": "7 – Gjennomvåt av svette", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-4",
+        "text": "Angst",
+        "options": [
+          { "label": "0 – Ingen angst, rolig", "score": 0 },
+          { "label": "1 – Lett engstelig", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Moderat engstelig eller vaktsom (slik at det oppfattes som angst)", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6", "score": 6 },
+          { "label": "7 – Tilsvarende akutt panikktilstand som ved alvorlig delirium eller akutte schizofrene reaksjoner", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-5",
+        "text": "Uro",
+        "options": [
+          { "label": "0 – Normal aktivitet", "score": 0 },
+          { "label": "1 – Noe mer enn normal aktivitet", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Moderat urolig og rastløs", "score": 4 },
+          { "label": "5", "score": 5 },
+          { "label": "6", "score": 6 },
+          { "label": "7 – Vandrer frem og tilbake under mesteparten av intervjuet eller kaster på seg hele tiden", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-6",
+        "text": "Sensibilitetsforstyrrelser (kløe, prikking, stikking, svie, nummenhet, følelse av småkryp)",
+        "options": [
+          { "label": "0 – Ingen", "score": 0 },
+          { "label": "1 – Svært lett kløe, prikking, stikking, svie eller nummenhet", "score": 1 },
+          { "label": "2 – Lett kløe, prikking, stikking, svie eller nummenhet", "score": 2 },
+          { "label": "3 – Moderat kløe, prikking, stikking, svie eller nummenhet", "score": 3 },
+          { "label": "4 – Moderate hallusinasjoner", "score": 4 },
+          { "label": "5 – Sterke hallusinasjoner", "score": 5 },
+          { "label": "6 – Svært sterke hallusinasjoner", "score": 6 },
+          { "label": "7 – Vedvarende hallusinasjoner", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-7",
+        "text": "Hørselsforstyrrelser",
+        "options": [
+          { "label": "0 – Ingen", "score": 0 },
+          { "label": "1 – Svært lett ubehag eller evne til å skremme", "score": 1 },
+          { "label": "2 – Lett ubehag eller evne til å skremme", "score": 2 },
+          { "label": "3 – Moderat ubehag eller evne til å skremme", "score": 3 },
+          { "label": "4 – Moderate hallusinasjoner", "score": 4 },
+          { "label": "5 – Sterke hallusinasjoner", "score": 5 },
+          { "label": "6 – Svært sterke hallusinasjoner", "score": 6 },
+          { "label": "7 – Vedvarende hallusinasjoner", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-8",
+        "text": "Synsforstyrrelser",
+        "options": [
+          { "label": "0 – Ingen", "score": 0 },
+          { "label": "1 – Svært lett lysfølsomhet", "score": 1 },
+          { "label": "2 – Lett lysfølsomhet", "score": 2 },
+          { "label": "3 – Moderat lysfølsomhet", "score": 3 },
+          { "label": "4 – Moderate hallusinasjoner", "score": 4 },
+          { "label": "5 – Sterke hallusinasjoner", "score": 5 },
+          { "label": "6 – Svært sterke hallusinasjoner", "score": 6 },
+          { "label": "7 – Vedvarende hallusinasjoner", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-9",
+        "text": "Hodepine, trykk i hodet (ikke svimmelhet/ørhet)",
+        "options": [
+          { "label": "0 – Ingen", "score": 0 },
+          { "label": "1 – Svært lett", "score": 1 },
+          { "label": "2 – Lett", "score": 2 },
+          { "label": "3 – Moderat", "score": 3 },
+          { "label": "4 – Moderat sterk", "score": 4 },
+          { "label": "5 – Sterkt", "score": 5 },
+          { "label": "6 – Svært sterkt", "score": 6 },
+          { "label": "7 – Ekstremt sterk", "score": 7 }
+        ]
+      },
+      {
+        "id": "ciwa-ar-10",
+        "text": "Orientering og bevissthetsnivå",
+        "options": [
+          { "label": "0 – Orientert og kan legge sammen flere tall", "score": 0 },
+          { "label": "1 – Kan ikke legge sammen flere tall eller er usikker på dato", "score": 1 },
+          { "label": "2 – Ikke orientert for dato, avviker med inntil 2 dager", "score": 2 },
+          { "label": "3 – Ikke orientert for dato, avviker med mer enn 2 dager", "score": 3 },
+          { "label": "4 – Ikke orientert for sted og/eller person", "score": 4 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "Minimal/ingen abstinens" },
+      { "minScore": 8, "label": "Lett til moderat abstinens" },
+      { "minScore": 16, "label": "Alvorlig abstinens – økt risiko for komplikasjoner (krampeanfall, delirium tremens)" }
+    ],
+    "advice": [
+      {
+        "title": "Poengskår og alvorlighetsgrad",
+        "items": [],
+        "table": {
+          "headers": [
+            "CIWA-Alkohol-skår",
+            "Alvorlighetsgrad"
+          ],
+          "rows": [
+            [
+              "≤8",
+              "Ingen/minimal abstinens"
+            ],
+            [
+              "9–19",
+              "Lett til moderat abstinens"
+            ],
+            [
+              "≥20",
+              "Alvorlig abstinens"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "Anbefaling: Alkoholavrusning bør skje i regi av spesialisthelsetjenesten.",
+        "items": [
+          "Poliklinisk avrusning krever daglig medisinsk tilsyn (fremmøte eller hjemmebesøk), koordinering med TSB, etablerte støttepersoner og rask tilgang til innleggelse ved forverring (Helsedirektoratet). Denne strukturen er normalt ikke tilgjengelig i en ordinær allmennpraksis.",
+          "Avrusning på institusjon bør derfor foretrekkes ved:",
+          "Risiko for alvorlige abstinensreaksjoner",
+          "Tidligere delirium tremens eller abstinenskramper",
+          "Mistanke om dehydrering/elektrolyttforstyrrelse, eller manglende evne til å ta legemidler/væske/mat peroralt",
+          "Manglende tilgang til strukturert daglig oppfølging og støttepersoner",
+          "Ved alkoholabstinens hos pasienter uten etablert samarbeid med TSB/rustjeneste anbefales henvisning til spesialisthelsetjenesten for avrusning."
+        ],
+        "links": [
+          { "label": "Kilde: Helsedirektoratet – Poliklinisk avrusning", "url": "https://www.helsedirektoratet.no/retningslinjer/avrusning-fra-rusmidler-og-vanedannende-legemidler/poliklinisk-avrusning#poliklinisk-avrusning" }
+        ]
+      }
+    ],
+    "indication": "CIWA-Ar brukes til å vurdere alvorlighetsgrad av alkoholabstinens hos innlagte eller overvåkede pasienter, og til å styre symptomstyrt dosering av benzodiazepiner under avrusning. Skalaen fylles ut gjentatte ganger for å følge symptomutvikling over tid.",
+    "aboutTest": "Skalaen består av ti ledd som dekker symptomer som kvalme, tremor, svetting, angst, agitasjon og eventuelle persepsjonsforstyrrelser, og er godt validert i avrusningssammenheng. Symptomstyrt dosering basert på CIWA-Ar har vist å redusere unødvendig legemiddelbruk sammenlignet med fast doseringsskjema. Skalaen krever at pasienten kan kommunisere og samarbeide om vurderingen, og er mindre egnet hos pasienter som er intuberte, sterkt agiterte/psykotiske eller har betydelig komorbiditet — her kan andre observasjonsbaserte skalaer, som CIWA-B, være mer egnet."
+  },
+  {
+    "id": "ciwa-b",
+    "name": "💊 CIWA-B - Abstinensskår",
+    "description": "Clinical Institute Withdrawal Assessment Scale for Benzodiazepines. Spørsmål 1–17 pasientrapport, 18–20 klinisk observasjon. Maks 80 poeng.",
+    "pdfUrl": "/pdfs/Utredningsverk-CIWA-skjema%20benzodiazepiner.pdf",
+    "questions": [
+      {
+        "id": "ciwa-b-1",
+        "text": "Føler du deg irritabel?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig mye", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-2",
+        "text": "Føler du deg trett?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ute av stand til å fungere", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-3",
+        "text": "Føler du deg anspent?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig mye", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-4",
+        "text": "Har du konsentrasjonsvansker?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ute av stand til å konsentrere seg", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-5",
+        "text": "Har du nedsatt matlyst?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ingen appetitt, klarer ikke å spise", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-6",
+        "text": "Har du en følelse av nummenhet eller en brennende følelse i ansikt, hender eller føtter?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Intens brenning / nummenhet", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-7",
+        "text": "Har du hjertebank?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Konstant banking", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-8",
+        "text": "Har du hodepine?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Konstant hodepine", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-9",
+        "text": "Føles musklene «støle» eller smertefulle?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig «støle» og smertefulle", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-10",
+        "text": "Føler du deg engstelig, nervøs eller rastløs?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig engstelig", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-11",
+        "text": "Føler du deg opprørt?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig opprørt", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-12",
+        "text": "Hvor avslappet/rolig var søvnen din siste natt?",
+        "options": [
+          { "label": "0 – Meget avslappet", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ikke i det hele tatt", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-13",
+        "text": "Føler du deg svak?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig svak", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-14",
+        "text": "Tror du at du ikke fikk nok søvn siste natt?",
+        "options": [
+          { "label": "0 – Absolutt nok søvn", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Ikke i det hele tatt", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-15",
+        "text": "Har du noen synsproblemer (overfølsom for lys, uklart syn)?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Meget sensitiv for lys, uklart syn", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-16",
+        "text": "Er du redd/engstelig?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig redd", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-17",
+        "text": "Har du bekymret deg for mulige ulykker/uhell i det siste?",
+        "options": [
+          { "label": "0 – Ikke i det hele tatt", "score": 0 },
+          { "label": "1", "score": 1 },
+          { "label": "2", "score": 2 },
+          { "label": "3", "score": 3 },
+          { "label": "4 – Veldig bekymret", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-18",
+        "text": "Grad av rastløshet og uro (klinisk observasjon)",
+        "options": [
+          { "label": "0 – Ingen, normal aktivitet", "score": 0 },
+          { "label": "2 – Rastløs", "score": 2 },
+          { "label": "4 – Går frem og tilbake, klarer ikke å sitte stille", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-19",
+        "text": "Grad av tremor/skjelving (klinisk observasjon)",
+        "options": [
+          { "label": "0 – Ingen tremor", "score": 0 },
+          { "label": "1 – Ikke synlig, men kan kjennes fingertupp mot fingertupp", "score": 1 },
+          { "label": "2 – Synlig tremor, men mild", "score": 2 },
+          { "label": "3 – Moderat tremor når armene er utstrakt", "score": 3 },
+          { "label": "4 – Sterk synlig tremor selv om armene ikke er utstrakt", "score": 4 }
+        ]
+      },
+      {
+        "id": "ciwa-b-20",
+        "text": "Grad av svette, kjenn på håndflatene (klinisk observasjon)",
+        "options": [
+          { "label": "0 – Ingen synlig svette", "score": 0 },
+          { "label": "1 – Knapt merkbar svette, klamme håndflater", "score": 1 },
+          { "label": "2 – Klam håndflate og panne, svette i armhuler", "score": 2 },
+          { "label": "3 – Tydelige svetteperler i panne", "score": 3 },
+          { "label": "4 – Alvorlig, gjennomvåt av svette", "score": 4 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "Mild abstinens" },
+      { "minScore": 21, "label": "Moderat abstinens" },
+      { "minScore": 41, "label": "Alvorlig abstinens" },
+      { "minScore": 61, "label": "Meget alvorlig abstinens" }
+    ],
+    "advice": [
+      {
+        "title": "Poengskår og alvorlighetsgrad",
+        "items": [],
+        "table": {
+          "headers": [
+            "CIWA-Benzo-skår",
+            "Alvorlighetsgrad"
+          ],
+          "rows": [
+            [
+              "1–20",
+              "Mild abstinens"
+            ],
+            [
+              "21–40",
+              "Moderat abstinens"
+            ],
+            [
+              "41–60",
+              "Alvorlig abstinens"
+            ],
+            [
+              "61–80",
+              "Meget alvorlig abstinens"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "Kan forsøkes i allmennpraksis (langsom, poliklinisk nedtrapping)",
+        "items": [
+          "Stabil pasient, ingen aktivt samtidig rusmiddel-/alkoholbruk, ingen alvorlig psykiatrisk komorbiditet, ingen tidligere mislykket nedtrapping, og benzoens funksjon for pasienten er kartlagt og forstått (søvn, angst, smerte etc.)"
+        ]
+      },
+      {
+        "title": "Bør henvises til spesialisthelsetjeneste/institusjon",
+        "items": [
+          "Høye doser eller lang varighet med kompleks avhengighet",
+          "Samtidig bruk av andre rusmidler eller alkohol (gjør også CIWA-Benzo upåliterlig)",
+          "Rask nedtrapping (5-10 dager) skjer kun inneliggende, krever krampeprofylakse og tett overvåkning",
+          "Tidligere mislykket nedtrapping i allmennpraksis",
+          "Alvorlig psykiatrisk komorbiditet"
+        ]
+      },
+      {
+        "title": "Råd før avrusning startes",
+        "items": [
+          "Omfang (preparat, dose) og varighet av benzobruk",
+          "Samtidig bruk av andre rusmidler/alkohol",
+          "Poliklinisk (allmennpraksis): 12-16 uker",
+          "Oksazepam: minst ruspotensiale, minst negativ effekt på psykomotorisk/kognitiv funksjon → ofte foretrukket. Startdose 10-25 mg x3/dag.",
+          "Diazepam: lengre halveringstid, mer stabil serumkonsentrasjon → alternativ ved behov for jevnere dekning. Startdose 5-10 mg x2-3/dag.",
+          "Valproinsyre eller karbamazepin som krampeprofylakse. Kun ved rask nedtrapping (institusjon), ikke standard ved langsom poliklinisk nedtrapping i allmennpraksis.",
+          "NB: valproat interagerer med benzodiazepiner og gir økt benzo-effekt."
+        ]
+      },
+      {
+        "title": "Underveis i avrusningen",
+        "items": [
+          "CIWA-Benzo kan brukes til å følge trend i abstinenssymptomer gjennom nedtrappingen, ikke til å styre akutt dosering (i motsetning til CIWA-Alkohol)",
+          "Upålitelig ved samtidig bruk av andre rusmidler",
+          "Jevnlige konsultasjoner underveis med tydelig nedtrapningsplan, muntlig og skriftlig"
+        ]
+      },
+      {
+        "items": [],
+        "links": [
+          { "label": "Lommerus (Helse Bergen) – substitusjon og nedtrapping av benzodiazepiner", "url": "https://metodebok.no/emne/GCkx2KZA/substitusjon-og-nedtrapping-av-benzodiazepiner-og-benzodiazepinlignende-preparat/lommerus-(helse-bergen)" },
+          { "label": "Nedtrappingskalkulator", "calcId": "tapering-plan" }
+        ]
+      }
+    ],
+    "indication": "CIWA-B er en alternativ/utvidet skala for å vurdere alvorlighetsgrad av alkoholabstinens, og kan brukes i situasjoner der standard CIWA-Ar er mindre praktisk gjennomførbar, blant annet fordi den i større grad vektlegger objektivt observerbare tegn.",
+    "aboutTest": "Skalaen inneholder flere ledd enn CIWA-Ar og er i mindre grad avhengig av pasientens egen rapportering av subjektive symptomer. Den er mindre validert i litteraturen enn CIWA-Ar, men brukes på samme måte til å styre symptomstyrt behandling av alkoholabstinens. Klinisk skjønn er fortsatt avgjørende, og skalaen bør brukes som et supplement til, ikke en erstatning for, løpende klinisk observasjon."
+  },
+  {
+    "id": "cage",
+    "name": "🍺 CAGE - Rask screening",
+    "description": "Rask screening for alkoholmisbruk. 4 ja/nei-spørsmål.",
+    "questions": [
+      {
+        "id": "cage-1",
+        "text": "Har du noen gang følt at du burde Cut down (trappe ned) på drikkingen din?",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "cage-2",
+        "text": "Har folk Annoyed (irritert) deg ved å kritisere drikkingen din?",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "cage-3",
+        "text": "Har du noen gang følt deg Guilty (skyldig) på grunn av drikkingen din?",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "cage-4",
+        "text": "Har du noen gang trengt en drink første ting om morgenen (Eye-opener) for å roe nervene eller bli kvitt bakrus?",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "Negativ screening" },
+      { "minScore": 1, "label": "Mulig alkoholproblem – vurder videre utredning" },
+      { "minScore": 2, "label": "Klinisk signifikant – høy sannsynlighet for alkoholmisbruk" }
+    ],
+    "advice": [
+      {
+        "items": [
+          "CAGE er et raskt screeningverktøy og gir ikke en diagnose alene."
+        ]
+      },
+      {
+        "title": "0 poeng – Negativ screening",
+        "items": [
+          "Lav sannsynlighet for alkoholproblem ut fra disse spørsmålene alene."
+        ]
+      },
+      {
+        "title": "1 poeng",
+        "items": [
+          "Vurder å stille mer detaljerte spørsmål om mengde, frekvens og drikkemønster, spesielt ved mistanke om bagatellisering."
+        ]
+      },
+      {
+        "title": "≥2 poeng – Klinisk signifikant",
+        "items": [
+          "Høy sannsynlighet for alkoholmisbruk eller -avhengighet.",
+          "Pasienten bør henvises til videre utredning og behandling, f.eks. rus- og avhengighetstjeneste eller fastlegeoppfølging.",
+          "Vurder supplerende verktøy som AUDIT for en mer helhetlig kartlegging."
+        ]
+      },
+      {
+        "items": [
+          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+        ]
+      }
+    ],
+    "indication": "CAGE-spørreskjemaet brukes som et raskt screeningverktøy for problematisk alkoholbruk/mulig avhengighet, og er godt egnet i tidspressede kliniske settinger som allmennpraksis eller innleggelsessamtaler.",
+    "aboutTest": "Skjemaet består av fire enkle spørsmål (Cut down, Annoyed, Guilty, Eye-opener), der en skår på 2 eller mer gir mistanke om et alkoholproblem som bør utredes videre. CAGE har vært i bruk i flere tiår og er raskt å administrere, men er mindre sensitivt for å fange opp risikofylt (ikke-avhengighetspreget) alkoholbruk sammenlignet med mer omfattende verktøy som AUDIT. Skjemaet kvantifiserer ikke alvorlighetsgrad og er kun et screeningverktøy, ikke diagnostisk."
+  },
+  {
+    "id": "alvarado",
+    "name": "🔬 Alvarado-skår",
+    "description": "Klinisk skåringsverktøy for sannsynlighet for akutt appendisitt. 8 kriterier, maks 10 poeng.",
+    "questions": [
+      {
+        "id": "alvarado-1",
+        "text": "Migrasjon av smerte til høyre fossa iliaca",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "alvarado-2",
+        "text": "Anoreksi",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "alvarado-3",
+        "text": "Kvalme eller oppkast",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "alvarado-4",
+        "text": "Ømhet i høyre fossa iliaca",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 2 }
+        ]
+      },
+      {
+        "id": "alvarado-5",
+        "text": "Slippømhet (rebound tenderness)",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "alvarado-6",
+        "text": "Forhøyet temperatur (≥37,3 °C)",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      },
+      {
+        "id": "alvarado-7",
+        "text": "Leukocytose (>10 000/mm³)",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 2 }
+        ]
+      },
+      {
+        "id": "alvarado-8",
+        "text": "Venstreforskyvning (>75 % nøytrofile)",
+        "options": [
+          { "label": "Nei", "score": 0 },
+          { "label": "Ja", "score": 1 }
+        ]
+      }
+    ],
+    "thresholds": [
+      { "minScore": 0, "label": "Lav sannsynlighet for appendisitt", "color": "#16a34a" },
+      { "minScore": 5, "label": "Mulig appendisitt", "color": "#eab308" },
+      { "minScore": 7, "label": "Sannsynlig appendisitt", "color": "#f97316" },
+      { "minScore": 9, "label": "Meget sannsynlig appendisitt", "color": "#dc2626" }
+    ],
+    "advice": [
+      {
+        "items": [
+          "Alvarado-skår er et klinisk beslutningsstøtteverktøy og erstatter ikke klinisk vurdering eller billeddiagnostikk ved usikkerhet."
+        ]
+      },
+      {
+        "title": "0–4 poeng – Lav sannsynlighet",
+        "items": [
+          "Appendisitt er mindre sannsynlig. Vurder andre differensialdiagnoser (gynekologisk, urologisk, annen GI-årsak).",
+          "Klinisk oppfølging og reevaluering ved forverring."
+        ]
+      },
+      {
+        "title": "5–6 poeng – Mulig appendisitt",
+        "items": [
+          "Observasjon, ny klinisk vurdering og evt. supplerende bildediagnostikk (ultralyd/CT) anbefales."
+        ]
+      },
+      {
+        "title": "7–8 poeng – Sannsynlig appendisitt",
+        "items": [
+          "Kirurgisk vurdering anbefales, gjerne supplert med bildediagnostikk."
+        ]
+      },
+      {
+        "title": "9–10 poeng – Meget sannsynlig appendisitt",
+        "items": [
+          "Høy sannsynlighet for appendisitt. Kirurgisk henvisning bør vurderes uten unødig forsinkelse.",
+          "Merk: enkelte validerte grenser er kjønnsspesifikke (høyeste risiko ved ≥9 hos menn og ≥10 hos kvinner, laveste risiko ved ≤1 hos menn og ≤2 hos kvinner) – ta høyde for dette i tolkningen."
+        ]
+      }
+    ],
+    "indication": "Brukes ved mistenkt akutt appendisitt for å estimere sannsynlighet for diagnosen.",
+    "aboutTest": "Skåren er evaluert både for å utelukke og bekrefte appendisitt: skår <3–4 utelukker appendisitt med 96 % sensitivitet, mens skår >6–7 bekrefter med 58–88 % sensitivitet, avhengig av studie og cut-off. McKay (2007) anbefaler CT ved skår 4–6, kirurgisk vurdering ved skår ≥7, og ingen CT ved skår ≤3 (appendisitt lite sannsynlig)."
   }
 ]

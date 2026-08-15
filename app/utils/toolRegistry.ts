@@ -26,6 +26,24 @@ export interface PdfOption {
   patientFacing?: boolean;
 }
 
+export interface ToolAdviceTable {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface ToolAdviceLink {
+  label: string;
+  url?: string;
+  calcId?: string;
+}
+
+export interface ToolAdviceGroup {
+  title?: string;
+  items: string[];
+  table?: ToolAdviceTable;
+  links?: ToolAdviceLink[];
+}
+
 export interface ScoringTool {
   id: string;
   name: string;
@@ -35,6 +53,10 @@ export interface ScoringTool {
   pdfUrl?: string;
   patientPdfUrl?: string;
   pdfOptions?: PdfOption[];
+  advice?: ToolAdviceGroup[];
+  nextStepPlaceholder?: string;
+  indication?: string;
+  aboutTest?: string;
 }
 
 export interface CalcField {
@@ -45,6 +67,7 @@ export interface CalcField {
   max?: number;
   step?: number;
   options?: string[];
+  scores?: number[];
   part?: string;
 }
 
@@ -63,6 +86,9 @@ export interface Calculator {
   layout?: "horizontal" | "vertical-select";
   pdfUrl?: string;
   patientPdfUrl?: string;
+  nextStepPlaceholder?: string;
+  indication?: string;
+  aboutTest?: string;
 }
 
 export type ToolAliasType = "score" | "calc";
@@ -119,7 +145,10 @@ export const toolAliases: Record<string, ToolAlias> = {
   "wells-pe": { id: "wells-pe", type: "calc" },
   "doak-dosing": { id: "doak-dosing", type: "calc" },
   "psa-age-adjusted": { id: "psa-age-adjusted", type: "calc" },
-  "anemia-assessment": { id: "anemia-assessment", type: "calc" }
+  "anemia-assessment": { id: "anemia-assessment", type: "calc" },
+  alvarado: { id: "alvarado", type: "score" },
+  "homa-ir": { id: "homa-ir", type: "calc" },
+  "cpeptide-glucose": { id: "cpeptide-glucose", type: "calc" }
 };
 
 const scoringToolIds = new Set(scoringToolRegistry.map((tool) => tool.id));

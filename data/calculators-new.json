@@ -46,7 +46,7 @@
       { "id": "pittingEdema", "label": "Pittingødem (kun symptomatisk ben)", "type": "select", "options": ["Nei", "Ja"] },
       { "id": "collateralVeins", "label": "Kollaterale overflatiske vener (ikke varicer)", "type": "select", "options": ["Nei", "Ja"] },
       { "id": "previousDVT", "label": "Tidligere DVT dokumentert", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "alternativeDiagnosis", "label": "Alternativ diagnose minst like sannsynlig", "type": "select", "options": ["Nei", "Ja"] }
+      { "id": "alternativeDiagnosis", "label": "Alternativ diagnose minst like sannsynlig", "type": "select", "options": ["Nei", "Ja"], "scores": [0, -2] }
     ],
     "thresholds": [
       { "max": 0, "label": "Lav sannsynlighet", "color": "#4caf50" },
@@ -59,17 +59,17 @@
     "name": "Wells Lungeemboli",
     "description": "Klinisk sannsynlighet for lungeemboli (LE).",
     "fields": [
-      { "id": "dvtSymptoms", "label": "Kliniske tegn/symptomer på DVT", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "peMoreLikely", "label": "LE er mest sannsynlige diagnose", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "heartRate", "label": "Hjertefrekvens >100/min", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "immobilization", "label": "Immobilisering/kirurgi siste 4 uker", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "previousVTE", "label": "Tidligere DVT eller LE", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "hemoptysis", "label": "Hemoptyse", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "malignancy", "label": "Aktiv kreftsykdom (behandling siste 6 mnd)", "type": "select", "options": ["Nei", "Ja"] }
+      { "id": "dvtSymptoms", "label": "Kliniske tegn/symptomer på DVT", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 3] },
+      { "id": "peMoreLikely", "label": "LE er mest sannsynlige diagnose", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 3] },
+      { "id": "heartRate", "label": "Hjertefrekvens >100/min", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 1.5] },
+      { "id": "immobilization", "label": "Immobilisering/kirurgi siste 4 uker", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 1.5] },
+      { "id": "previousVTE", "label": "Tidligere DVT eller LE", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 1.5] },
+      { "id": "hemoptysis", "label": "Hemoptyse", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 1] },
+      { "id": "malignancy", "label": "Aktiv kreftsykdom (behandling siste 6 mnd)", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 1] }
     ],
     "thresholds": [
-      { "max": 1, "label": "Lav sannsynlighet", "color": "#4caf50" },
-      { "max": 4, "label": "Moderat sannsynlighet", "color": "#ff9800" },
+      { "max": 1.5, "label": "Lav sannsynlighet", "color": "#4caf50" },
+      { "max": 6, "label": "Moderat sannsynlighet", "color": "#ff9800" },
       { "max": 999, "label": "Høy sannsynlighet", "color": "#f44336" }
     ]
   },
@@ -80,9 +80,9 @@
     "fields": [
       { "id": "chf", "label": "Hjertesvikt / LV dysfunksjon", "type": "select", "options": ["Nei", "Ja"] },
       { "id": "hypertension", "label": "Hypertensjon", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "age75", "label": "Alder ≥75 år", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "age75", "label": "Alder ≥75 år", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 2] },
       { "id": "diabetes", "label": "Diabetes mellitus", "type": "select", "options": ["Nei", "Ja"] },
-      { "id": "stroke", "label": "Tidligere slag/TIA/tromboembolisme", "type": "select", "options": ["Nei", "Ja"] },
+      { "id": "stroke", "label": "Tidligere slag/TIA/tromboembolisme", "type": "select", "options": ["Nei", "Ja"], "scores": [0, 2] },
       { "id": "vascular", "label": "Vaskulær sykdom (tidligere MI, PAD, aortaplakk)", "type": "select", "options": ["Nei", "Ja"] },
       { "id": "age65", "label": "Alder 65-74 år", "type": "select", "options": ["Nei", "Ja"] },
       { "id": "female", "label": "Kvinne", "type": "select", "options": ["Nei", "Ja"] }
