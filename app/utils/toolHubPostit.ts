@@ -5,6 +5,7 @@ export interface PostitItem {
   label: string;
   itemType: "calc" | "tool" | "link";
   url?: string;
+  subcategory?: string;
 }
 
 export interface PostitSection {
@@ -15,20 +16,19 @@ export interface PostitSection {
 
 export const defaultPostitBoxOrder = [
   "generelle",
-  "psykiatri",
+  "endokrinologi",
+  "gastromedisin",
+  "hematologi",
   "kardiologi",
   "lungemedisin",
-  "hematologi",
-  "gastromedisin",
-  "endokrinologi",
-  "urologi",
+  "psykiatri",
+  "revmatologi",
   "svangerskap",
-  "pediatri",
-  "revmatologi"
+  "urologi"
 ];
 
 const postitTitles: Record<string, string> = {
-  generelle: "Generelle",
+  generelle: "Andre",
   psykiatri: "Psykiatri",
   kardiologi: "Kardiologi",
   lungemedisin: "Lungemedisin",
@@ -37,40 +37,45 @@ const postitTitles: Record<string, string> = {
   endokrinologi: "Endokrinologi",
   urologi: "Urologi",
   svangerskap: "Svangerskap",
-  pediatri: "Pediatri",
   revmatologi: "Revmatologi"
 };
 
-const calcPostitMap: Record<string, { boxId: string; label?: string }> = {
+const excludedCalcIds = new Set(["doak-dosing", "anemia-assessment"]);
+
+const calcPostitMap: Record<string, { boxId: string; label?: string; subcategory?: string }> = {
   bmi: { boxId: "generelle", label: "BMI" },
-  nyha: { boxId: "kardiologi", label: "NYHA" },
-  ccs: { boxId: "kardiologi", label: "CCS" },
-  "ccs-angina": { boxId: "kardiologi", label: "CCS" },
-  chadsvasc: { boxId: "kardiologi", label: "CHA₂DS₂-VA" },
-  hasbled: { boxId: "kardiologi", label: "HAS-BLED" },
-  act: { boxId: "lungemedisin", label: "ACT voksne" },
-  "act-asthma": { boxId: "lungemedisin", label: "ACT voksne" },
-  "act-child": { boxId: "lungemedisin", label: "ACT barn" },
-  mmrc: { boxId: "lungemedisin", label: "mMRC" },
-  cat: { boxId: "lungemedisin", label: "CAT" },
-  "cat-copd": { boxId: "lungemedisin", label: "CAT" },
-  crb65: { boxId: "lungemedisin", label: "CRB-65" },
-  "doak-dosing": { boxId: "hematologi", label: "DOAK-dosering" },
-  "anemia-assessment": { boxId: "hematologi", label: "Anemivurdering" },
-  "wells-dvt": { boxId: "hematologi", label: "Wells DVT" },
-  "wells-pe": { boxId: "hematologi", label: "Wells Lungeemboli" },
-  fib4: { boxId: "gastromedisin", label: "FIB-4" },
+  nyha: { boxId: "kardiologi", label: "NYHA", subcategory: "Hjertesvikt" },
+  ccs: { boxId: "kardiologi", label: "CCS", subcategory: "Angina" },
+  "ccs-angina": { boxId: "kardiologi", label: "CCS", subcategory: "Angina" },
+  chadsvasc: { boxId: "kardiologi", label: "CHA₂DS₂-VA", subcategory: "Antikoagulasjon" },
+  hasbled: { boxId: "kardiologi", label: "HAS-BLED", subcategory: "Antikoagulasjon" },
+  act: { boxId: "lungemedisin", label: "ACT voksne", subcategory: "Astma" },
+  "act-asthma": { boxId: "lungemedisin", label: "ACT voksne", subcategory: "Astma" },
+  "act-child": { boxId: "lungemedisin", label: "ACT barn", subcategory: "Astma" },
+  mmrc: { boxId: "lungemedisin", label: "mMRC", subcategory: "KOLS" },
+  cat: { boxId: "lungemedisin", label: "CAT", subcategory: "KOLS" },
+  "cat-copd": { boxId: "lungemedisin", label: "CAT", subcategory: "KOLS" },
+  crb65: { boxId: "lungemedisin", label: "CRB-65", subcategory: "Pneumoni" },
+  "wells-dvt": { boxId: "hematologi", label: "Wells DVT", subcategory: "Trombose" },
+  "wells-pe": { boxId: "hematologi", label: "Wells Lungeemboli", subcategory: "Trombose" },
+  fib4: { boxId: "gastromedisin", label: "FIB-4", subcategory: "Leverfibrose" },
+  "homa-ir": { boxId: "endokrinologi", label: "HOMA-IR", subcategory: "Metabolisme" },
+  "cpeptide-glucose": { boxId: "endokrinologi", label: "C-peptid/glukose-ratio", subcategory: "Metabolisme" },
   "psa-age-adjusted": { boxId: "urologi", label: "Aldersjustert PSA" },
   ipss: { boxId: "urologi", label: "IPSS-8" }
 };
 
-const toolPostitMap: Record<string, { boxId: string; label?: string }> = {
-  madrs: { boxId: "psykiatri", label: "MADRS" },
-  "gad-7": { boxId: "psykiatri", label: "GAD-7" },
-  asrs: { boxId: "psykiatri", label: "ASRS v1.1" },
-  audit: { boxId: "psykiatri", label: "AUDIT" },
+const toolPostitMap: Record<string, { boxId: string; label?: string; subcategory?: string }> = {
+  madrs: { boxId: "psykiatri", label: "MADRS", subcategory: "Depresjon" },
+  "gad-7": { boxId: "psykiatri", label: "GAD-7", subcategory: "Angst" },
+  asrs: { boxId: "psykiatri", label: "ASRS v1.1", subcategory: "ADHD" },
+  audit: { boxId: "psykiatri", label: "AUDIT - Kartlegging", subcategory: "Alkohol" },
   "eular-ra-2010": { boxId: "revmatologi", label: "EULAR 2010 Revmatoid Artritt" },
-  "eular-pmr-2012": { boxId: "revmatologi", label: "EULAR 2012 Polymyalgia Rheumatica" }
+  "eular-pmr-2012": { boxId: "revmatologi", label: "EULAR 2012 Polymyalgia Rheumatica" },
+  "ciwa-ar": { boxId: "psykiatri", label: "CIWA-A - Abstinensskår", subcategory: "Alkohol" },
+  "ciwa-b": { boxId: "psykiatri", label: "CIWA-B - Abstinensskår", subcategory: "Benzodiazepiner" },
+  cage: { boxId: "psykiatri", label: "CAGE - Rask screening", subcategory: "Alkohol" },
+  alvarado: { boxId: "gastromedisin", label: "Alvarado-skår", subcategory: "Appendisitt" }
 };
 
 const specialCalculatorItems: PostitItem[] = [
@@ -80,23 +85,9 @@ const specialCalculatorItems: PostitItem[] = [
   { id: "pregnancy-calculator", label: "Svangerskap", itemType: "calc" }
 ];
 
-const externalPostitItemsByBox: Record<string, Array<{ id: string; label: string; url: string }>> = {
-  psykiatri: [
-    { id: "psy-ciwa-alcohol", label: "CIWA-alkohol", url: "https://www.mdcalc.com/search?query=CIWA-Ar" },
-    { id: "psy-ciwa-benzo", label: "CIWA-benzodiazepiner", url: "https://www.mdcalc.com/search?query=CIWA-B" }
-  ],
-  gastromedisin: [
-    { id: "gastro-alvarado", label: "Alvarado-score", url: "https://www.mdcalc.com/calc/617/alvarado-score-acute-appendicitis" }
-  ],
-  endokrinologi: [
-    { id: "endo-homa", label: "HOMA-IR", url: "https://dosepilot.com/calc/homa-ir-calculator/" },
-    { id: "endo-cpep", label: "C-peptid til glukose", url: "https://www.mdcalc.com/calc/10529/c-peptide-glucose-ratio" }
-  ],
+const externalPostitItemsByBox: Record<string, Array<{ id: string; label: string; url: string; subcategory?: string }>> = {
   svangerskap: [
     { id: "obs-sukk-s", label: "SUKK-S skår", url: "https://www.google.com/search?q=SUKK-S+sk%C3%A5r" }
-  ],
-  pediatri: [
-    { id: "ped-anafylaksi", label: "6.1 Anafylaksi - Helsebiblioteket", url: "https://www.helsebiblioteket.no/innhold/retningslinjer/pediatri/akuttveileder-i-pediatri/6.allergi-og-anafylaksi/6.1-anafylaksi" }
   ]
 };
 
@@ -113,13 +104,16 @@ export function buildPostitSections(
   postitBoxOrder.forEach((boxId) => buckets.set(boxId, []));
 
   sortedCalcs.forEach((calc) => {
+    if (excludedCalcIds.has(calc.id)) {
+      return;
+    }
     const mapped = calcPostitMap[calc.id];
     const boxId = mapped?.boxId ?? "generelle";
     const label = mapped?.label ?? cleanToolDisplayName(calc.name);
     if (!buckets.has(boxId)) {
       buckets.set(boxId, []);
     }
-    buckets.get(boxId)?.push({ id: calc.id, label, itemType: "calc" });
+    buckets.get(boxId)?.push({ id: calc.id, label, itemType: "calc", subcategory: mapped?.subcategory });
   });
 
   sortedTools.forEach((tool) => {
@@ -129,7 +123,7 @@ export function buildPostitSections(
     if (!buckets.has(boxId)) {
       buckets.set(boxId, []);
     }
-    buckets.get(boxId)?.push({ id: tool.id, label, itemType: "tool" });
+    buckets.get(boxId)?.push({ id: tool.id, label, itemType: "tool", subcategory: mapped?.subcategory });
   });
 
   specialCalculatorItems.forEach((item) => {
@@ -141,7 +135,7 @@ export function buildPostitSections(
       buckets.set(boxId, []);
     }
     items.forEach((item) => {
-      buckets.get(boxId)?.push({ id: item.id, label: item.label, itemType: "link", url: item.url });
+      buckets.get(boxId)?.push({ id: item.id, label: item.label, itemType: "link", url: item.url, subcategory: item.subcategory });
     });
   });
 
@@ -160,10 +154,16 @@ export function buildPostitSections(
       return true;
     });
 
+    const sortedItems = [...dedupedItems].sort((a, b) => {
+      const subcategoryCompare = (a.subcategory ?? "").localeCompare(b.subcategory ?? "", "nb");
+      if (subcategoryCompare !== 0) return subcategoryCompare;
+      return a.label.localeCompare(b.label, "nb");
+    });
+
     return {
       boxId,
       title: postitTitles[boxId] ?? boxId,
-      items: dedupedItems
+      items: sortedItems
     };
   });
 }

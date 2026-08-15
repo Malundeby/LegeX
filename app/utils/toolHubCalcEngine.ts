@@ -1,5 +1,20 @@
 import type { Calculator } from "@/app/utils/toolRegistry";
 
+export function getFieldOptionScore(
+  field: Calculator["fields"][number],
+  option: string,
+  index: number
+): number {
+  if (field.scores && field.scores[index] !== undefined) {
+    return field.scores[index];
+  }
+  const match = option.match(/^(-?\d+(?:\.\d+)?)/);
+  if (match) return parseFloat(match[1]);
+  if (option === "Ja") return 1;
+  if (option === "Nei") return 0;
+  return index + 1;
+}
+
 export interface ToolHubCalcResult {
   value: string;
   label: string;
@@ -9,11 +24,17 @@ export interface ToolHubCalcResult {
   maxScore: number;
   detailedText?: string;
   guideText?: string;
+  fib4AgeBranch?: "young" | "middle" | "old";
+  fib4Tier?: "low" | "indeterminate" | "high";
+  cgrMode?: "fastende" | "postprandial";
+  cgrTier?: "low" | "mid" | "high";
+  wellsDvtTier?: "low" | "mid" | "high";
 }
 
 export function calculateToolHubCalcResult(
   activeCalc: Calculator | null | undefined,
-  calcInputs: Record<string, string | number>
+  calcInputs: Record<string, string | number>,
+  manualScore?: number | null
 ): ToolHubCalcResult | null {
   if (!activeCalc) return null;
 
@@ -43,41 +64,215 @@ export function calculateToolHubCalcResult(
     const alt = Number(calcInputs["alt"]);
     const platelets = Number(calcInputs["platelets"]);
 
-    if (!age || !ast || !alt || !platelets) return null;
-
-    const fib4 = (age * ast) / (platelets * Math.sqrt(alt));
-
-    let interpretation = "";
-    let guideText = "";
-
-    if (age < 35) {
-      interpretation = fib4 < 2.0 ? "Lav risiko for avansert fibrose" : "Høy risiko for avansert fibrose";
-      guideText = "Veiledning for alder <35 år:\n• <2.0: Lav risiko\n• ≥2.0: Høy risiko";
-    } else if (age <= 65) {
-      if (fib4 < 1.3) {
-        interpretation = "Lav risiko for avansert fibrose";
-      } else if (fib4 <= 2.67) {
-        interpretation = "Ubestemt – vurder videre utredning";
-      } else {
-        interpretation = "Høy risiko for avansert fibrose";
-      }
-      guideText = "Veiledning for alder 35-65 år:\n• <1.3: Lav risiko\n• 1.3-2.67: Ubestemt\n• >2.67: Høy risiko";
+    let fib4: number;
+    if (manualScore != null) {
+      fib4 = Math.max(0, manualScore);
     } else {
-      interpretation = fib4 < 2.0 ? "Lav risiko for avansert fibrose" : "Høy risiko for avansert fibrose";
-      guideText = "Veiledning for alder >65 år:\n• <2.0: Lav risiko\n• ≥2.0: Høy risiko";
+      if (!age || !ast || !alt || !platelets) return null;
+      fib4 = (age * ast) / (platelets * Math.sqrt(alt));
     }
 
-    const detailedText = `FIB-4: ${fib4.toFixed(2)}\nAlder: ${age} år\nAST: ${ast} U/L\nALT: ${alt} U/L\nTrombocytter: ${platelets} × 10⁹/L\n\n${interpretation}`;
+    const effectiveAge = age || 50;
+
+    let interpretation = "";
+    let nextStep = "";
+    let color = "#666";
+    let fib4AgeBranch: "young" | "middle" | "old";
+    let fib4Tier: "low" | "indeterminate" | "high";
+
+    if (effectiveAge <= 35) {
+      fib4AgeBranch = "young";
+      fib4Tier = "indeterminate";
+      interpretation = "FIB-4 ikke validert for denne aldersgruppen";
+      nextStep = "FIB-4 er ikke validert for alder ≤35 år og bør ikke brukes til risikostratifisering. Vurder alternativ fibrosevurdering, f.eks. elastografi (Fibroscan).";
+      color = "#6b7280";
+    } else if (effectiveAge < 65) {
+      fib4AgeBranch = "middle";
+      if (fib4 < 1.3) {
+        fib4Tier = "low";
+        interpretation = "Avansert fibrose lite sannsynlig";
+        nextStep = "Lav risiko for avansert fibrose. Rutinemessig oppfølging.";
+        color = "#4caf50";
+      } else if (fib4 <= 2.67) {
+        fib4Tier = "indeterminate";
+        interpretation = "Ubestemt – videre utredning anbefales";
+        nextStep = "Vurder videre utredning, f.eks. elastografi (Fibroscan) eller henvisning til spesialist.";
+        color = "#ff9800";
+      } else {
+        fib4Tier = "high";
+        interpretation = "Avansert fibrose sannsynlig";
+        nextStep = "Høy sannsynlighet for avansert fibrose. Henvisning til spesialist/hepatolog anbefales.";
+        color = "#f44336";
+      }
+    } else {
+      fib4AgeBranch = "old";
+      if (fib4 < 2.0) {
+        fib4Tier = "low";
+        interpretation = "Avansert fibrose lite sannsynlig";
+        nextStep = "Lav risiko for avansert fibrose (aldersjusterte grenser). Rutinemessig oppfølging.";
+        color = "#4caf50";
+      } else if (fib4 <= 2.67) {
+        fib4Tier = "indeterminate";
+        interpretation = "Ubestemt – videre utredning anbefales";
+        nextStep = "Vurder videre utredning, f.eks. elastografi (Fibroscan) eller henvisning til spesialist.";
+        color = "#ff9800";
+      } else {
+        fib4Tier = "high";
+        interpretation = "Avansert fibrose sannsynlig";
+        nextStep = "Høy sannsynlighet for avansert fibrose. Henvisning til spesialist/hepatolog anbefales.";
+        color = "#f44336";
+      }
+    }
+
+    const detailedText = manualScore != null
+      ? `FIB-4 (manuelt satt): ${fib4.toFixed(2)}${age ? `\nAlder: ${age} år` : ""}\n\n${interpretation}\n\nNeste steg: ${nextStep}`
+      : `FIB-4: ${fib4.toFixed(2)}\nAlder: ${age} år\nAST: ${ast} U/L\nALT: ${alt} U/L\nTrombocytter: ${platelets} × 10⁹/L\n\n${interpretation}\n\nNeste steg: ${nextStep}`;
 
     return {
       value: fib4.toFixed(2),
       label: interpretation,
-      color: "#666",
-      text: `FIB-4: ${fib4.toFixed(2)} (${interpretation})`,
+      color,
+      text: `FIB-4: ${fib4.toFixed(2)} (${interpretation}) – Neste steg: ${nextStep}`,
       score: fib4,
       maxScore: 10,
       detailedText,
+      guideText: nextStep,
+      fib4AgeBranch,
+      fib4Tier
+    };
+  }
+
+  if (activeCalc.id === "homa-ir") {
+    const glucose = Number(calcInputs["glucose"]);
+    const insulinRaw = Number(calcInputs["insulin"]);
+    const insulinUnit = calcInputs["insulinUnit"] === "miu" ? "miu" : "pmol";
+
+    const PMOL_PER_MIU = 6.945;
+    const insulinMiuPerL = insulinUnit === "miu" ? insulinRaw : insulinRaw / PMOL_PER_MIU;
+
+    let homaIr: number;
+    if (manualScore != null) {
+      homaIr = Math.max(0, manualScore);
+    } else {
+      if (!glucose || !insulinRaw) return null;
+      homaIr = (glucose * insulinMiuPerL) / 22.5;
+    }
+
+    let interpretation = "";
+    let nextStep = "";
+    let color = "#666";
+
+    if (homaIr < 1.0) {
+      interpretation = "Optimal insulinfølsomhet";
+      nextStep = "Ingen holdepunkter for insulinresistens ut fra HOMA-IR.";
+      color = "#4caf50";
+    } else if (homaIr < 2.0) {
+      interpretation = "Normal insulinfølsomhet";
+      nextStep = "Innenfor normalområdet. Ingen spesifikke tiltak nødvendig ut fra HOMA-IR alene.";
+      color = "#8bc34a";
+    } else if (homaIr < 3.0) {
+      interpretation = "Tidlig insulinresistens";
+      nextStep = "Vurder livsstilstiltak (kosthold, fysisk aktivitet, vektreduksjon) og oppfølging av øvrige metabolske risikofaktorer.";
+      color = "#ff9800";
+    } else {
+      interpretation = "Betydelig insulinresistens";
+      nextStep = "Sterk mistanke om insulinresistens. Vurder utredning for metabolsk syndrom/prediabetes og henvisning ved behov.";
+      color = "#f44336";
+    }
+
+    const guideText = `${nextStep}\n\nMerk: Det finnes ingen universelt akseptert grense for HOMA-IR – cut-off kan variere med populasjon og analysemetode. Tolk alltid sammen med klinisk bilde.`;
+    const insulinUnitLabel = insulinUnit === "miu" ? "mIU/L" : "pmol/L";
+    const detailedText = manualScore != null
+      ? `HOMA-IR (manuelt satt): ${homaIr.toFixed(2)}\n\n${interpretation}\n\nNeste steg: ${nextStep}`
+      : `HOMA-IR: ${homaIr.toFixed(2)}\nFastende glukose: ${glucose} mmol/L\nFastende insulin: ${insulinRaw} ${insulinUnitLabel} (${insulinMiuPerL.toFixed(1)} mIU/L)\n\n${interpretation}\n\nNeste steg: ${nextStep}`;
+
+    return {
+      value: homaIr.toFixed(2),
+      label: interpretation,
+      color,
+      text: `HOMA-IR: ${homaIr.toFixed(2)} (${interpretation}) – Neste steg: ${nextStep}`,
+      score: homaIr,
+      maxScore: 6,
+      detailedText,
       guideText
+    };
+  }
+
+  if (activeCalc.id === "cpeptide-glucose") {
+    const state = calcInputs["state"] === "Postprandial" ? "Postprandial" : "Fastende";
+    const cpeptidePmol = Number(calcInputs["cpeptide"]);
+    const glucoseMmol = Number(calcInputs["glucose"]);
+
+    const CPEPTIDE_PMOL_PER_NGML = 331;
+    const MGDL_PER_MMOL_GLUCOSE = 18.0156;
+    const glucoseMgDl = glucoseMmol * MGDL_PER_MMOL_GLUCOSE;
+    const isPostprandial = state === "Postprandial";
+
+    let ratio: number;
+    let interpretation = "";
+    let nextStep = "";
+    let color = "#666";
+    let cgrTier: "low" | "mid" | "high";
+
+    if (manualScore != null) {
+      ratio = Math.max(0, manualScore);
+    } else {
+      if (!cpeptidePmol || !glucoseMmol) return null;
+      if (isPostprandial) {
+        const cpeptideNgMl = cpeptidePmol / CPEPTIDE_PMOL_PER_NGML;
+        ratio = (cpeptideNgMl / glucoseMgDl) * 100;
+      } else {
+        ratio = cpeptidePmol / glucoseMgDl;
+      }
+    }
+
+    if (isPostprandial) {
+      if (ratio < 2) {
+        cgrTier = "low";
+        interpretation = "Tap av betacellefunksjon";
+        nextStep = "Insulinbehandling er nødvendig.";
+        color = "#f44336";
+      } else {
+        cgrTier = "high";
+        interpretation = "Bevart betacellefunksjon";
+        nextStep = "Insulinbehandling er vanligvis ikke nødvendig.";
+        color = "#4caf50";
+      }
+    } else {
+      if (ratio < 2) {
+        cgrTier = "low";
+        interpretation = "Insulinsekresjonssvikt";
+        nextStep = "Insulinbehandling er nødvendig.";
+        color = "#f44336";
+      } else if (ratio <= 5) {
+        cgrTier = "mid";
+        interpretation = "Nedsatt endogen insulinsekresjon";
+        nextStep = "Basalinsulin pluss andre antidiabetika kan være aktuelt.";
+        color = "#ff9800";
+      } else {
+        cgrTier = "high";
+        interpretation = "Bevart endogen insulinsekresjon";
+        nextStep = "Insulinbehandling er vanligvis ikke nødvendig.";
+        color = "#4caf50";
+      }
+    }
+
+    const guideText = `${nextStep}\n\nInsulinmangel/tap av betacellefunksjon støtter type 1-diabetes, mens bevart sekresjon er mer forenlig med type 2-diabetes. Insulinsvikt kan likevel utvikle seg ved langvarig/alvorlig type 2-diabetes pga. progredierende betacellesvikt.\n\nIkke anbefalt ved kronisk nyresykdom (eGFR <60 mL/min/1,73m²) – C-peptid elimineres renalt, og nedsatt nyrefunksjon kan gi falskt forhøyede verdier.\n\nBruk alltid sammen med klinisk skjønn og bredere klinisk kontekst.\n\nKilder: Saisho Y. Int J Mol Sci. 2016;17(5) (postprandial formel); Fritsche A. Exp Clin Endocrinol Diabetes. 2023;131(9):500-503 (fastende formel).`;
+    const detailedText = manualScore != null
+      ? `C-peptid/glukose-ratio (manuelt satt): ${ratio.toFixed(2)}\nTilstand: ${state}\n\n${interpretation}\n\nNeste steg: ${nextStep}`
+      : `C-peptid/glukose-ratio: ${ratio.toFixed(2)}\nTilstand: ${state}\nC-peptid: ${cpeptidePmol} pmol/L\nGlukose: ${glucoseMmol} mmol/L\n\n${interpretation}\n\nNeste steg: ${nextStep}`;
+
+    return {
+      value: ratio.toFixed(2),
+      label: interpretation,
+      color,
+      text: `C-peptid/glukose-ratio: ${ratio.toFixed(2)} (${interpretation}) – Neste steg: ${nextStep}`,
+      score: ratio,
+      maxScore: 10,
+      detailedText,
+      guideText,
+      cgrMode: isPostprandial ? "postprandial" : "fastende",
+      cgrTier
     };
   }
 
@@ -308,59 +503,46 @@ export function calculateToolHubCalcResult(
   }
 
   if (activeCalc.thresholds && activeCalc.thresholds.length > 0) {
-    let totalScore = 0;
     let maxScore = 0;
-    let hasAllValues = true;
-
     for (const field of activeCalc.fields) {
-      const value = calcInputs[field.id];
       if (field.type === "select" && field.options) {
-        if (!value) {
-          hasAllValues = false;
-          break;
-        }
-
-        const selectedIndex = field.options.indexOf(String(value));
-
-        const match = String(value).match(/^(\d+)/);
-        let score = 0;
-
-        if (match) {
-          score = parseInt(match[1]);
-        } else if (String(value) === "Ja") {
-          score = 1;
-        } else if (String(value) === "Nei") {
-          score = 0;
-        } else if (selectedIndex >= 0) {
-          score = selectedIndex + 1;
-        }
-
-        totalScore += score;
-
         const maxOption = field.options.reduce((max, opt, idx) => {
-          const m = opt.match(/^(\d+)/);
-          if (m) {
-            return Math.max(max, parseInt(m[1]));
-          }
-          if (opt === "Ja") {
-            return Math.max(max, 1);
-          }
-          if (opt === "Nei") {
-            return max;
-          }
-          return Math.max(max, idx + 1);
+          return Math.max(max, getFieldOptionScore(field, opt, idx));
         }, 0);
         maxScore += maxOption;
       }
     }
 
-    if (!hasAllValues) return null;
+    let totalScore = 0;
+    let hasAllValues = true;
+
+    if (manualScore != null) {
+      totalScore = Math.min(maxScore, Math.max(0, Math.round(manualScore)));
+      hasAllValues = false;
+    } else {
+      for (const field of activeCalc.fields) {
+        const value = calcInputs[field.id];
+        if (field.type === "select" && field.options) {
+          if (!value) {
+            hasAllValues = false;
+            break;
+          }
+
+          const selectedIndex = field.options.indexOf(String(value));
+          totalScore += getFieldOptionScore(field, String(value), selectedIndex);
+        }
+      }
+
+      if (!hasAllValues) return null;
+    }
 
     const t = activeCalc.thresholds.find((th) => totalScore <= th.max);
 
     let detailedText: string | undefined = undefined;
 
-    if (activeCalc.id === "ipss") {
+    if (!hasAllValues) {
+      detailedText = `Symptomskår (manuelt satt): ${totalScore}/${maxScore} (${t?.label ?? "Ukjent"})`;
+    } else if (activeCalc.id === "ipss") {
       const questionLabels = [
         "Ufullstendig tømming",
         "Hyppig vannlating (<2t)",
@@ -433,6 +615,21 @@ export function calculateToolHubCalcResult(
       copyText = `${cleanName}: ${totalScore}/${maxScore} (${t?.label ?? "Ukjent"})`;
     }
 
+    let guideText: string | undefined = undefined;
+    let wellsDvtTier: "low" | "mid" | "high" | undefined = undefined;
+    if (activeCalc.id === "wells-dvt") {
+      if (totalScore <= 0) {
+        wellsDvtTier = "low";
+        guideText = "DVT lite sannsynlig (forventet prevalens ca. 5 %).\n• Gå videre med D-dimer.\n  – Negativ D-dimer (moderat/høy sensitivitet): DVT tilstrekkelig utelukket (posttest-sannsynlighet <1 %) – ingen videre bildediagnostikk nødvendig.\n  – Positiv D-dimer: gå videre til ultralyd.\n    · Negativ UL: DVT utelukket.\n    · Positiv UL: vurder antikoagulasjon.";
+      } else if (totalScore <= 2) {
+        wellsDvtTier = "mid";
+        guideText = "Moderat risiko for DVT (pretest-sannsynlighet ca. 17 %).\n• Gå videre med høysensitiv D-dimer (moderat-sensitive tester er ikke tilstrekkelige).\n  – Negativ høysensitiv D-dimer: DVT tilstrekkelig utelukket (posttest-sannsynlighet <1 %).\n  – Positiv D-dimer: gå videre til ultralyd.\n    · Negativ UL: DVT utelukket.\n    · Positiv UL: vurder antikoagulasjon.";
+      } else {
+        wellsDvtTier = "high";
+        guideText = "DVT sannsynlig (pretest-sannsynlighet ca. 17–53 %).\n• Gå direkte til ultralyd.\n  – Positiv UL: behandle DVT.\n  – Negativ UL: D-dimer kan brukes til ytterligere risikostratifisering.\n    · Negativ D-dimer: DVT tilstrekkelig utelukket – vurder utskrivelse.\n    · Positiv D-dimer: fortsatt mistanke om DVT – ny ultralyd bør gjøres innen 1 uke.";
+      }
+    }
+
     return {
       value: totalScore.toString(),
       label: t?.label ?? "Ukjent",
@@ -441,7 +638,8 @@ export function calculateToolHubCalcResult(
       score: totalScore,
       maxScore,
       detailedText,
-      guideText: undefined
+      guideText,
+      wellsDvtTier
     };
   }
 
