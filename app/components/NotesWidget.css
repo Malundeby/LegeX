@@ -4,8 +4,8 @@
   position: relative;
   background: #f5f5f5;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
-  border: 1px solid rgba(221, 227, 238, 0.9);
+  box-shadow: 0 4px 12px rgba(74, 53, 39, 0.1);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -14,7 +14,7 @@
 }
 
 .notes-widget:hover {
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 8px 20px rgba(74, 53, 39, 0.15);
 }
 
 .notes-widget.is-dragging {
@@ -25,7 +25,7 @@
 
 .notes-widget.is-pinned {
   border: 2px solid var(--primary);
-  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.2);
+  box-shadow: 0 6px 16px rgba(181, 87, 63, 0.2);
 }
 
 .notes-widget-loading {
@@ -71,7 +71,7 @@
 .notes-widget-title:focus {
   outline: none;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 0 0 2px rgba(181, 87, 63, 0.3);
 }
 
 /* Action buttons */
@@ -149,7 +149,7 @@
 .notes-color-option.is-selected {
   border-color: var(--primary);
   border-width: 2px;
-  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 2px 8px rgba(181, 87, 63, 0.3);
 }
 
 /* Content area */
@@ -197,8 +197,8 @@
     135deg,
     transparent 0%,
     transparent 50%,
-    rgba(15, 118, 110, 0.3) 50%,
-    rgba(15, 118, 110, 0.3) 100%
+    rgba(181, 87, 63, 0.3) 50%,
+    rgba(181, 87, 63, 0.3) 100%
   );
 }
 
@@ -221,7 +221,7 @@
 .notes-fullscreen-modal {
   background: white;
   border-radius: 20px;
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.3);
+  box-shadow: 0 24px 48px rgba(74, 53, 39, 0.3);
   max-width: 800px;
   width: 100%;
   max-height: 90vh;
@@ -294,7 +294,7 @@
 .notes-fullscreen-title-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+  box-shadow: 0 0 0 3px rgba(181, 87, 63, 0.1);
 }
 
 .notes-fullscreen-content-editable {
@@ -312,7 +312,7 @@
 
 .notes-fullscreen-content-editable:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+  box-shadow: 0 0 0 3px rgba(181, 87, 63, 0.1);
 }
 
 .notes-fullscreen-content-editable:empty::before {

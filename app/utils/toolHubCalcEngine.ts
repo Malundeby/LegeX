@@ -29,6 +29,11 @@ export interface ToolHubCalcResult {
   cgrMode?: "fastende" | "postprandial";
   cgrTier?: "low" | "mid" | "high";
   wellsDvtTier?: "low" | "mid" | "high";
+  wellsPeTier?: "low" | "high";
+  homaIrTier?: "optimal" | "normal" | "early" | "significant";
+  psaTier?: "normal" | "elevated" | "markedly-elevated";
+  chadsvascTier?: "low" | "low-mid" | "mod-high";
+  ipssTier?: "mild" | "moderate" | "severe";
 }
 
 export function calculateToolHubCalcResult(
@@ -136,7 +141,7 @@ export function calculateToolHubCalcResult(
       score: fib4,
       maxScore: 10,
       detailedText,
-      guideText: nextStep,
+      guideText: `${nextStep}\n\nKilder: Sterling et al. 2006 (Ishak fibrosestadium); McPherson et al. 2017 (METAVIR F3–F4).`,
       fib4AgeBranch,
       fib4Tier
     };
@@ -161,26 +166,31 @@ export function calculateToolHubCalcResult(
     let interpretation = "";
     let nextStep = "";
     let color = "#666";
+    let homaIrTier: "optimal" | "normal" | "early" | "significant";
 
     if (homaIr < 1.0) {
+      homaIrTier = "optimal";
       interpretation = "Optimal insulinfølsomhet";
-      nextStep = "Ingen holdepunkter for insulinresistens ut fra HOMA-IR.";
+      nextStep = "Insulinresistens lite sannsynlig ut fra denne målingen alene.";
       color = "#4caf50";
     } else if (homaIr < 2.0) {
+      homaIrTier = "normal";
       interpretation = "Normal insulinfølsomhet";
-      nextStep = "Innenfor normalområdet. Ingen spesifikke tiltak nødvendig ut fra HOMA-IR alene.";
+      nextStep = "Ingen ytterligere tiltak nødvendig ut fra HOMA-IR alene.";
       color = "#8bc34a";
     } else if (homaIr < 3.0) {
+      homaIrTier = "early";
       interpretation = "Tidlig insulinresistens";
       nextStep = "Vurder livsstilstiltak (kosthold, fysisk aktivitet, vektreduksjon) og oppfølging av øvrige metabolske risikofaktorer.";
       color = "#ff9800";
     } else {
+      homaIrTier = "significant";
       interpretation = "Betydelig insulinresistens";
-      nextStep = "Sterk mistanke om insulinresistens. Vurder utredning for metabolsk syndrom/prediabetes og henvisning ved behov.";
+      nextStep = "Styrker mistanke om insulinresistens. Vurder utredning for metabolsk syndrom/prediabetes, og henvisning ved behov.";
       color = "#f44336";
     }
 
-    const guideText = `${nextStep}\n\nMerk: Det finnes ingen universelt akseptert grense for HOMA-IR – cut-off kan variere med populasjon og analysemetode. Tolk alltid sammen med klinisk bilde.`;
+    const guideText = `${nextStep}\n\nMerk: Det finnes ingen universell grenseverdi for HOMA-IR – cut-off avhenger av populasjon og analysemetode brukt av laboratoriet. Skal alltid tolkes sammen med det kliniske bildet.`;
     const insulinUnitLabel = insulinUnit === "miu" ? "mIU/L" : "pmol/L";
     const detailedText = manualScore != null
       ? `HOMA-IR (manuelt satt): ${homaIr.toFixed(2)}\n\n${interpretation}\n\nNeste steg: ${nextStep}`
@@ -194,7 +204,8 @@ export function calculateToolHubCalcResult(
       score: homaIr,
       maxScore: 6,
       detailedText,
-      guideText
+      guideText,
+      homaIrTier
     };
   }
 
@@ -365,13 +376,16 @@ export function calculateToolHubCalcResult(
 
     let interpretation = "";
     let color = "#4caf50";
+    let psaTier: "normal" | "elevated" | "markedly-elevated" = "normal";
 
     if (isElevated) {
       interpretation = `Forhøyet PSA for alder (referanse: <${upperLimit} µg/L)`;
       color = "#ff9800";
+      psaTier = "elevated";
       if (adjustedPSA > upperLimit * 2) {
         interpretation = `Betydelig forhøyet PSA for alder (referanse: <${upperLimit} µg/L)`;
         color = "#f44336";
+        psaTier = "markedly-elevated";
       }
     } else {
       interpretation = `Innenfor referanse for alder (referanse: <${upperLimit} µg/L)`;
@@ -397,7 +411,8 @@ export function calculateToolHubCalcResult(
       score: adjustedPSA,
       maxScore: upperLimit * 2,
       detailedText,
-      guideText
+      guideText,
+      psaTier
     };
   }
 
@@ -550,7 +565,8 @@ export function calculateToolHubCalcResult(
         "Vannlatingstrang",
         "Svak stråle",
         "Må presse for å starte",
-        "Nocturi (ganger per natt)"
+        "Nocturi (ganger per natt)",
+        "Livskvalitet (ikke del av symptomskår)"
       ];
 
       detailedText =
@@ -617,6 +633,9 @@ export function calculateToolHubCalcResult(
 
     let guideText: string | undefined = undefined;
     let wellsDvtTier: "low" | "mid" | "high" | undefined = undefined;
+    let wellsPeTier: "low" | "high" | undefined = undefined;
+    let chadsvascTier: "low" | "low-mid" | "mod-high" | undefined = undefined;
+    let ipssTier: "mild" | "moderate" | "severe" | undefined = undefined;
     if (activeCalc.id === "wells-dvt") {
       if (totalScore <= 0) {
         wellsDvtTier = "low";
@@ -627,6 +646,44 @@ export function calculateToolHubCalcResult(
       } else {
         wellsDvtTier = "high";
         guideText = "DVT sannsynlig (pretest-sannsynlighet ca. 17–53 %).\n• Gå direkte til ultralyd.\n  – Positiv UL: behandle DVT.\n  – Negativ UL: D-dimer kan brukes til ytterligere risikostratifisering.\n    · Negativ D-dimer: DVT tilstrekkelig utelukket – vurder utskrivelse.\n    · Positiv D-dimer: fortsatt mistanke om DVT – ny ultralyd bør gjøres innen 1 uke.";
+      }
+    } else if (activeCalc.id === "wells-pe") {
+      if (totalScore <= 4) {
+        wellsPeTier = "low";
+        guideText = "LE lite sannsynlig.\nTa D-dimer (aldersjustert hos pasienter over 50 år). Negativ: lungeemboli tilstrekkelig utelukket. Positiv: gå videre til CT-angiografi av lungearteriene.";
+      } else {
+        wellsPeTier = "high";
+        guideText = "LE sannsynlig.\nGå direkte til CT-angiografi av lungearteriene, uten D-dimer først. Pasienten legges inn på sykehus.";
+      }
+    } else if (activeCalc.id === "chadsvasc") {
+      if (totalScore <= 0) {
+        chadsvascTier = "low";
+        guideText = "Lav risiko – antikoagulasjon vanligvis ikke indisert.";
+      } else if (totalScore === 1) {
+        chadsvascTier = "low-mid";
+        guideText = "Lav-moderat risiko – vurder antikoagulasjon (individuell vurdering).";
+      } else {
+        chadsvascTier = "mod-high";
+        guideText = "Moderat-høy risiko – antikoagulasjon anbefales, balansert mot blødningsrisiko (f.eks. HAS-BLED).";
+      }
+    } else if (activeCalc.id === "doac-score") {
+      guideText = `DOAC-score: ${totalScore} poeng.\n\nDet finnes ingen validert grenseverdi eller offisiell risikokategori for DOAC-scoren – den er en kontinuerlig skala der hvert ekstra poeng er assosiert med økt relativ blødningsrisiko (~48,7 % økning per poeng i utviklingsstudien). Skåren er ment å utfylle HAS-BLED, ikke erstatte den, og skal brukes til delt beslutningstaking sammen med pasienten – ikke som eneste grunnlag for å avstå fra eller redusere antikoagulasjonsbehandling.`;
+    } else if (activeCalc.id === "hasbled") {
+      if (totalScore <= 2) {
+        guideText = "Lav blødningsrisiko.\nVelg antikoagulasjonsbehandling basert på CHA₂DS₂-VA og nasjonale retningslinjer.";
+      } else {
+        guideText = "Høy blødningsrisiko.\nVed HAS-BLED ≥3 anbefaler ESC:\n• Ikke seponer eller unnlat antikoagulasjon alene på bakgrunn av høy HAS-BLED-skår — hvis CHA₂DS₂-VA tilsier indikasjon, skal pasienten som regel likevel antikoaguleres. Høy blødningsrisiko er sjelden en kontraindikasjon i seg selv.\n• Tettere klinisk oppfølging — hyppigere kontroller (f.eks. etter 4 uker, så hver 3.–6. måned i stedet for årlig).\n• Korriger modifiserbare faktorer aktivt: behandle hypertensjon til mål, seponer NSAIDs/platehemmere som ikke er strengt indisert, reduser alkoholforbruk, stabiliser INR (evt. bytt fra warfarin til DOAK – DOAK har generelt lavere blødningsrisiko, spesielt intrakranial blødning).\n• Vurder DOAK fremfor vitamin K-antagonist ved høy blødningsrisiko, siden dette i seg selv reduserer risiko uten å redusere effekten mot slag.\n• Vurder dosejustering av DOAK der det er indisert (nyrefunksjon, alder, vekt – offisielle dosereduksjonskriterier), ikke egenhendig underdosering.";
+      }
+    } else if (activeCalc.id === "ipss") {
+      if (totalScore <= 7) {
+        ipssTier = "mild";
+        guideText = "0–7 poeng – Milde symptomer.\nAktiv observasjon er som regel tilstrekkelig. Informer om livsstilstiltak (væskeinntak, koffein/alkohol, blæretrening).";
+      } else if (totalScore <= 19) {
+        ipssTier = "moderate";
+        guideText = "8–19 poeng – Moderate symptomer.\nVurder medikamentell behandling (f.eks. alfablokker eller 5-alfa-reduktasehemmer) i tillegg til livsstilstiltak. Suppler med rektal eksplorasjon, uroflowmetri og PSA ved behov.";
+      } else {
+        ipssTier = "severe";
+        guideText = "20–35 poeng – Alvorlige symptomer.\nMedikamentell behandling bør vurderes aktivt, og henvisning til urolog for videre utredning og eventuell kirurgisk behandling bør overveies – spesielt ved sterk symptombyrde eller mistanke om komplikasjoner (f.eks. urinretensjon).\nSkåren erstatter ikke annen relevant utredning som rektal eksplorasjon, uroflowmetri og PSA.";
       }
     }
 
@@ -639,7 +696,10 @@ export function calculateToolHubCalcResult(
       maxScore,
       detailedText,
       guideText,
-      wellsDvtTier
+      wellsDvtTier,
+      wellsPeTier,
+      chadsvascTier,
+      ipssTier
     };
   }
 

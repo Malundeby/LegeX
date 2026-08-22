@@ -40,7 +40,11 @@ export default function FeedbackButton() {
         title="Gi tilbakemelding"
         aria-label="Gi tilbakemelding"
       >
-        <span className="feedback-fab-icon">💬</span>
+        <span className="feedback-fab-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M4 5h16v11H9l-4 4v-4H4V5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
         <span className="feedback-fab-label">Tilbakemelding</span>
       </button>
 
@@ -50,13 +54,19 @@ export default function FeedbackButton() {
             <div className="feedback-modal-header">
               <h3>Gi tilbakemelding</h3>
               <button type="button" className="feedback-close" onClick={closeModal} aria-label="Lukk">
-                ✕
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
               </button>
             </div>
 
             {isSubmitted ? (
               <div className="feedback-success">
-                <span className="feedback-success-icon">✓</span>
+                <span className="feedback-success-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <path d="M4 11.5L9 16.5L18 6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
                 <p>Takk for tilbakemeldingen!</p>
                 <button type="button" className="feedback-submit" onClick={closeModal}>
                   Lukk

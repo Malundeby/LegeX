@@ -49,6 +49,7 @@ const calcPostitMap: Record<string, { boxId: string; label?: string; subcategory
   "ccs-angina": { boxId: "kardiologi", label: "CCS", subcategory: "Angina" },
   chadsvasc: { boxId: "kardiologi", label: "CHA₂DS₂-VA", subcategory: "Antikoagulasjon" },
   hasbled: { boxId: "kardiologi", label: "HAS-BLED", subcategory: "Antikoagulasjon" },
+  "doac-score": { boxId: "kardiologi", label: "DOAC-score", subcategory: "Antikoagulasjon" },
   act: { boxId: "lungemedisin", label: "ACT voksne", subcategory: "Astma" },
   "act-asthma": { boxId: "lungemedisin", label: "ACT voksne", subcategory: "Astma" },
   "act-child": { boxId: "lungemedisin", label: "ACT barn", subcategory: "Astma" },

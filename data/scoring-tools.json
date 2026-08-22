@@ -155,6 +155,7 @@
       },
       {
         "title": "0–6 poeng – Ikke deprimert",
+        "tier": "none",
         "items": [
           "Ingen behandling nødvendig.",
           "Psykoedukasjon og støttesamtale ved behov."
@@ -162,6 +163,7 @@
       },
       {
         "title": "7–19 poeng – Lett deprimert",
+        "tier": "mild",
         "items": [
           "Samtaleterapi.",
           "Vurder antidepressiva ved skåre >15 eller hos eldre."
@@ -169,6 +171,7 @@
       },
       {
         "title": "20–34 poeng – Moderat deprimert",
+        "tier": "moderate",
         "items": [
           "Samtaleterapi.",
           "Vurder medikament.",
@@ -177,6 +180,7 @@
       },
       {
         "title": "35–60 poeng – Alvorlig, vurder innleggelse",
+        "tier": "severe",
         "items": [
           "Antidepressiva.",
           "Henvis DPS / øyeblikkelig hjelp.",
@@ -273,43 +277,41 @@
     ],
     "advice": [
       {
-        "items": [
-          "Skår ≥10: Videre utredning (diagnostisk intervju og vurdering av psykisk status) og/eller henvisning til psykisk helsevern anbefales."
-        ]
-      },
-      {
         "title": "0–4 poeng – Minimal angst",
+        "tier": "minimal",
         "items": [
           "Ingen spesifikke tiltak nødvendig."
         ]
       },
       {
         "title": "5–9 poeng – Lett angst",
+        "tier": "mild",
         "items": [
-          "Følg med."
+          "Følg med, vurder ny kartlegging ved neste konsultasjon."
         ]
       },
       {
         "title": "10–14 poeng – Moderat angst",
+        "tier": "moderate",
         "items": [
-          "Mulig klinisk signifikant tilstand."
+          "Mulig klinisk signifikant tilstand. Vurder videre utredning og/eller henvisning til psykisk helsevern (skår ≥10)."
         ]
       },
       {
         "title": "15–21 poeng – Alvorlig angst",
+        "tier": "severe",
         "items": [
-          "Aktiv behandling sannsynligvis indisert."
+          "Aktiv behandling sannsynligvis indisert. Videre utredning og/eller henvisning til psykisk helsevern anbefales."
         ]
       },
       {
         "items": [
-          "Ved panikklidelse, sosial fobi og PTSD kan en cutoff på 8 poeng gi bedre sensitivitet/spesifisitet.",
-          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+          "Ved panikklidelse, sosial fobi og PTSD kan en cutoff på 8 poeng gi bedre sensitivitet/spesifisitet. Skåringen bør alltid suppleres med klinisk skjønn."
         ]
       }
     ],
     "indication": "GAD-7 brukes til screening og monitorering av angstsymptomer hos pasienter i allmennpraksis og spesialisthelsetjeneste. Skjemaet fylles ut av pasienten selv og gir en rask, standardisert vurdering av symptomintensitet de siste to ukene.",
-    "aboutTest": "Skjemaet består av sju spørsmål om generaliserte angstsymptomer, og gir en samleskår fra 0 til 21, der høyere skår gjenspeiler mer alvorlige symptomer (skår ≥10 indikerer mulig klinisk signifikant angst). En lavere grenseverdi (8) benyttes noen ganger for tilstander som panikklidelse, sosial fobi og PTSD for å øke sensitiviteten. GAD-7 er validert som screeningverktøy, men erstatter ikke klinisk diagnostikk, og medisinske årsaker til angst (for eksempel thyreoideasykdom eller arytmi) bør utelukkes før en angstlidelse diagnostiseres."
+    "aboutTest": "De sju spørsmålene dekker kjernesymptomer på generalisert angst de siste to ukene, og er raske å fylle ut i venterommet eller digitalt. Skåren brukes både til å vurdere alvorlighetsgrad ved førstegangskonsultasjon og til å følge behandlingsrespons over tid. Somatiske differensialdiagnoser (f.eks. thyreoideasykdom, arytmi) bør vurderes før angstdiagnose stilles."
   },
   {
     "id": "asrs",
@@ -549,32 +551,33 @@
     ],
     "advice": [
       {
+        "title": "Del A ≥4 poeng (av 6) – Symptomer sterkt forenlig med voksen-ADHD",
+        "tier": "partA-high",
         "items": [
-          "Screeneren er ment å fange opp tilfeller som bør utredes videre, og kan ikke brukes alene til å stille diagnosen ADHD."
-        ]
-      },
-      {
-        "title": "Del A – screening (6 spørsmål)",
-        "items": [
-          "≥4 poeng (av 6) indikerer symptomer sterkt forenlig med voksen-ADHD.",
           "Positiv screening bør følges opp med klinisk intervju, vurdering av psykisk status og eventuelt nevropsykologisk testing."
         ]
       },
       {
-        "title": "Del B – tilleggssymptomer",
+        "title": "Del A <4 poeng – Lav sannsynlighet ut fra screeningen alene",
+        "tier": "partA-low",
         "items": [
-          "Brukes som støtte i den kliniske helhetsvurderingen sammen med del A, men inngår ikke i den offisielle screening-terskelen."
+          "Vurder likevel klinisk oppfølging ved sterk klinisk mistanke, siden Del A har begrenset sensitivitet alene."
+        ]
+      },
+      {
+        "title": "Del B – tilleggssymptomer (alle skår)",
+        "items": [
+          "Brukes som støtte i helhetsvurderingen, men inngår ikke i den offisielle screeningterskelen."
         ]
       },
       {
         "items": [
-          "Vurderingen må ta høyde for andre psykiatriske og somatiske tilstander, siden uoppmerksomhet og hyperaktivitet er uspesifikke symptomer.",
-          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+          "Uansett resultat: vurderingen må ta høyde for andre psykiatriske og somatiske tilstander, og skåringen bør suppleres med klinisk skjønn."
         ]
       }
     ],
     "indication": "ASRS v1.1 (Adult ADHD Self-Report Scale) brukes som screeningverktøy for ADHD-symptomer hos voksne, for å identifisere pasienter som bør henvises videre til full diagnostisk utredning. Skjemaet er basert på DSM-kriteriene for ADHD.",
-    "aboutTest": "Skjemaet ble utviklet av WHO i samarbeid med forskere (blant annet Kessler et al.) og er validert mot klinisk ADHD-diagnose i voksenpopulasjoner. Et positivt screeningresultat er ikke i seg selv diagnostisk, men indikerer behov for videre klinisk vurdering, der symptomene også må ha vært til stede siden barndommen og ikke bedre forklares av annen tilstand. ASRS bør derfor brukes som et første trinn i utredningen, ikke som en frittstående diagnostisk test."
+    "aboutTest": "Skjemaet fanger opp kjernesymptomer på uoppmerksomhet, hyperaktivitet og impulsivitet hos voksne, og er validert mot klinisk ADHD-diagnose i flere studier. Del A (seks spørsmål) er selve screeningdelen; Del B gir tilleggsinformasjon som støtte i helhetsvurderingen. Positiv screening bør følges opp med klinisk intervju og eventuelt nevropsykologisk testing."
   },
   {
     "id": "audit",
@@ -698,39 +701,40 @@
     "advice": [
       {
         "items": [
-          "AUDIT er WHOs anbefalte screeningverktøy for risikofylt og skadelig alkoholbruk, og er ment som screening – ikke diagnostikk."
+          "AUDIT er WHOs anbefalte screeningverktøy for risikofylt og skadelig alkoholbruk – et hjelpemiddel for screening, ikke diagnostikk."
         ]
       },
       {
-        "title": "0–7 poeng – Lav risiko",
+        "title": "Lav risiko (0–7 poeng)",
+        "tier": "low",
         "items": [
           "Ingen spesifikke tiltak nødvendig utover generell informasjon ved behov."
         ]
       },
       {
-        "title": "8–15 poeng – Risikofylt alkoholbruk",
+        "title": "Risikofylt alkoholbruk (8–15 poeng)",
+        "tier": "risky",
         "items": [
           "Kort intervensjon/rådgivning om alkoholbruk anbefales."
         ]
       },
       {
-        "title": "16–19 poeng – Høyt risikofylt/skadelig bruk",
+        "title": "Høyt risikofylt/skadelig bruk (16–19 poeng)",
+        "tier": "harmful",
         "items": [
-          "Kort intervensjon og tettere oppfølging anbefales.",
-          "Vurder henvisning ved manglende bedring."
+          "Kort intervensjon og tettere oppfølging anbefales; vurder henvisning ved manglende bedring."
         ]
       },
       {
-        "title": "≥20 poeng – Mulig avhengighet",
+        "title": "Mulig avhengighet (≥20 poeng)",
+        "tier": "dependence",
         "items": [
-          "Videre diagnostisk utredning for alkoholavhengighet anbefales.",
-          "Henvis til rus- og avhengighetstjeneste eller fastlegeoppfølging."
+          "Videre diagnostisk utredning anbefales, med henvisning til rus- og avhengighetstjeneste eller fastlegeoppfølging."
         ]
       },
       {
         "items": [
-          "Lavere terskler kan være aktuelt hos kvinner, eldre og ungdom.",
-          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+          "Husk at lavere terskler kan være aktuelt hos kvinner, eldre og ungdom, og at skåringen alltid bør suppleres med klinisk skjønn."
         ]
       }
     ],
@@ -791,6 +795,7 @@
       },
       {
         "title": "Skår ≥6 med synovitt i minst ett ledd og fravær av annen forklarende diagnose:",
+        "tier": "ra-likely",
         "items": [
           "Sterkt tydende på RA.",
           "Henvis til revmatolog for videre oppfølging og eventuell oppstart av DMARD-behandling.",
@@ -799,13 +804,14 @@
       },
       {
         "title": "Skår <6:",
+        "tier": "ra-unlikely",
         "items": [
           "Vurder alternative diagnoser; videre utredning (f.eks. bildediagnostikk, flere blodprøver) kan være aktuelt.",
           "Følg tett opp og revurder dersom pasientens symptomer endrer seg."
         ]
       }
     ],
-    "indication": "ACR/EULAR 2010-klassifikasjonskriteriene for revmatoid artritt brukes hos pasienter med minst ett ledd med sikker synovitt som ikke bedre forklares av annen sykdom, for å klassifisere pasienten som revmatoid artritt. Kriteriene ble utviklet for å fange opp pasienter tidligere i sykdomsforløpet enn de eldre 1987-kriteriene, og er særlig relevante for vurdering av tidlig DMARD-behandling og inklusjon i kliniske studier.",
+    "indication": "Klassifiserer revmatoid artritt hos pasienter med minst ett ledd med sikker synovitt.",
     "aboutTest": "Skåren summerer poeng for antall og type affiserte ledd, serologi (RF/anti-CCP), akuttfasereaktanter (CRP/SR) og symptomvarighet, der en samlet skår på 6 av 10 eller mer klassifiserer pasienten som RA. Kriteriene er primært utviklet som klassifikasjonskriterier for forskningsformål, men brukes også bredt klinisk. De erstatter ikke klinisk skjønn, spesielt ved tidlig eller atypisk sykdomspresentasjon, og bør tolkes av kliniker med erfaring i revmatologisk utredning."
   },
   {
@@ -876,6 +882,29 @@
     ],
     "indication": "2012 EULAR/ACR-klassifikasjonskriteriene for polymyalgia rheumatica brukes hos pasienter ≥50 år med nyoppstått bilateral skuldersmerte og forhøyet CRP/SR, for å klassifisere polymyalgia rheumatica og skille denne fra andre årsaker til skulder-/hoftesmerter.",
     "aboutTest": "Kriteriene inkluderer morgenstivhet, hoftesmerter/redusert hoftebevegelighet, fravær av revmafaktor/anti-CCP og fravær av annen leddaffeksjon, med mulighet for tilleggspoeng ved ultralydfunn. De er utviklet som klassifikasjonskriterier for forskningsformål, og krever at andre differensialdiagnoser (blant annet revmatoid artritt, malignitet og infeksjon) er utelukket, siden ingen enkeltprøve bekrefter diagnosen alene. Rask og god respons på glukokortikoider styrker mistanken klinisk, men inngår ikke i selve klassifikasjonsskåren.",
+    "advice": [
+      {
+        "title": "<4 poeng",
+        "tier": "pmr-unlikely",
+        "items": [
+          "Vurder henvisning til revmatolog og supplerende utredning, spesielt ved atypisk symptombilde eller manglende steroidrespons."
+        ]
+      },
+      {
+        "title": "≥4 poeng (uten ultralyd)",
+        "tier": "pmr-likely",
+        "items": [
+          "Sterkt tydende på polymyalgia rheumatica, forutsatt at andre differensialdiagnoser (revmatoid artritt, malignitet, infeksjon, andre revmatiske sykdommer) er utelukket.",
+          "Vurder prøvebehandling med glukokortikoider – rask og god respons støtter diagnosen ytterligere.",
+          "Følg opp med gjentatt klinisk vurdering og nedtrapping av steroiddose etter respons."
+        ]
+      },
+      {
+        "items": [
+          "Merk: Ved supplerende ultralydfunn økes grensen til ≥5 poeng i de opprinnelige klassifikasjonskriteriene – dette skjemaet inkluderer ikke ultralydspørsmål."
+        ]
+      }
+    ],
     "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
   },
   {
@@ -1029,42 +1058,29 @@
     ],
     "advice": [
       {
-        "title": "Poengskår og alvorlighetsgrad",
-        "items": [],
-        "table": {
-          "headers": [
-            "CIWA-Alkohol-skår",
-            "Alvorlighetsgrad"
-          ],
-          "rows": [
-            [
-              "≤8",
-              "Ingen/minimal abstinens"
-            ],
-            [
-              "9–19",
-              "Lett til moderat abstinens"
-            ],
-            [
-              "≥20",
-              "Alvorlig abstinens"
-            ]
-          ]
-        }
+        "title": "≤8 poeng – Ingen/minimal abstinens",
+        "tier": "minimal",
+        "items": [
+          "Symptomstyrt dosering vanligvis ikke nødvendig. Fortsett observasjon."
+        ]
       },
       {
-        "title": "Anbefaling: Alkoholavrusning bør skje i regi av spesialisthelsetjenesten.",
+        "title": "9–19 poeng – Lett til moderat abstinens",
+        "tier": "mild-mod",
         "items": [
-          "Poliklinisk avrusning krever daglig medisinsk tilsyn (fremmøte eller hjemmebesøk), koordinering med TSB, etablerte støttepersoner og rask tilgang til innleggelse ved forverring (Helsedirektoratet). Denne strukturen er normalt ikke tilgjengelig i en ordinær allmennpraksis.",
-          "Avrusning på institusjon bør derfor foretrekkes ved:",
-          "Risiko for alvorlige abstinensreaksjoner",
-          "Tidligere delirium tremens eller abstinenskramper",
-          "Mistanke om dehydrering/elektrolyttforstyrrelse, eller manglende evne til å ta legemidler/væske/mat peroralt",
-          "Manglende tilgang til strukturert daglig oppfølging og støttepersoner",
-          "Ved alkoholabstinens hos pasienter uten etablert samarbeid med TSB/rustjeneste anbefales henvisning til spesialisthelsetjenesten for avrusning."
-        ],
-        "links": [
-          { "label": "Kilde: Helsedirektoratet – Poliklinisk avrusning", "url": "https://www.helsedirektoratet.no/retningslinjer/avrusning-fra-rusmidler-og-vanedannende-legemidler/poliklinisk-avrusning#poliklinisk-avrusning" }
+          "Symptomstyrt behandling med benzodiazepiner kan vurderes. Poliklinisk oppfølging kan være aktuelt ved god struktur og støtte rundt pasienten."
+        ]
+      },
+      {
+        "title": "≥20 poeng – Alvorlig abstinens",
+        "tier": "severe",
+        "items": [
+          "Avrusning bør skje i regi av spesialisthelsetjenesten. Vurder institusjon spesielt ved tidligere delirium tremens/abstinenskramper, mistanke om dehydrering/elektrolyttforstyrrelse, eller manglende tilgang til strukturert daglig oppfølging."
+        ]
+      },
+      {
+        "items": [
+          "Kilde: Helsedirektoratet – Poliklinisk avrusning."
         ]
       }
     ],
@@ -1304,32 +1320,24 @@
     ],
     "advice": [
       {
-        "title": "Poengskår og alvorlighetsgrad",
-        "items": [],
-        "table": {
-          "headers": [
-            "CIWA-Benzo-skår",
-            "Alvorlighetsgrad"
-          ],
-          "rows": [
-            [
-              "1–20",
-              "Mild abstinens"
-            ],
-            [
-              "21–40",
-              "Moderat abstinens"
-            ],
-            [
-              "41–60",
-              "Alvorlig abstinens"
-            ],
-            [
-              "61–80",
-              "Meget alvorlig abstinens"
-            ]
-          ]
-        }
+        "title": "1–20 poeng – Mild abstinens",
+        "tier": "mild",
+        "items": []
+      },
+      {
+        "title": "21–40 poeng – Moderat abstinens",
+        "tier": "moderate",
+        "items": []
+      },
+      {
+        "title": "41–60 poeng – Alvorlig abstinens",
+        "tier": "severe",
+        "items": []
+      },
+      {
+        "title": "61–80 poeng – Meget alvorlig abstinens",
+        "tier": "very-severe",
+        "items": []
       },
       {
         "title": "Kan forsøkes i allmennpraksis (langsom, poliklinisk nedtrapping)",
@@ -1429,27 +1437,28 @@
       },
       {
         "title": "0 poeng – Negativ screening",
+        "tier": "negative",
         "items": [
           "Lav sannsynlighet for alkoholproblem ut fra disse spørsmålene alene."
         ]
       },
       {
         "title": "1 poeng",
+        "tier": "borderline",
         "items": [
           "Vurder å stille mer detaljerte spørsmål om mengde, frekvens og drikkemønster, spesielt ved mistanke om bagatellisering."
         ]
       },
       {
         "title": "≥2 poeng – Klinisk signifikant",
+        "tier": "significant",
         "items": [
-          "Høy sannsynlighet for alkoholmisbruk eller -avhengighet.",
-          "Pasienten bør henvises til videre utredning og behandling, f.eks. rus- og avhengighetstjeneste eller fastlegeoppfølging.",
-          "Vurder supplerende verktøy som AUDIT for en mer helhetlig kartlegging."
+          "Høy sannsynlighet for alkoholmisbruk eller -avhengighet. Henvis til videre utredning og behandling, f.eks. rus- og avhengighetstjeneste eller fastlegeoppfølging. Vurder supplerende verktøy som AUDIT for en mer helhetlig kartlegging."
         ]
       },
       {
         "items": [
-          "Skåringen bør alltid suppleres med klinisk skjønn og individuell vurdering av pasienten."
+          "Skåringen bør alltid suppleres med klinisk skjønn."
         ]
       }
     ],
@@ -1534,34 +1543,36 @@
     ],
     "advice": [
       {
+        "title": "0–4 – Lav sannsynlighet",
+        "tier": "unlikely",
         "items": [
-          "Alvarado-skår er et klinisk beslutningsstøtteverktøy og erstatter ikke klinisk vurdering eller billeddiagnostikk ved usikkerhet."
+          "Appendisitt mindre sannsynlig. Vurder andre differensialdiagnoser. Reevaluer ved forverring."
         ]
       },
       {
-        "title": "0–4 poeng – Lav sannsynlighet",
+        "title": "5–6 – Mulig appendisitt",
+        "tier": "possible",
         "items": [
-          "Appendisitt er mindre sannsynlig. Vurder andre differensialdiagnoser (gynekologisk, urologisk, annen GI-årsak).",
-          "Klinisk oppfølging og reevaluering ved forverring."
+          "Vurder innleggelse."
         ]
       },
       {
-        "title": "5–6 poeng – Mulig appendisitt",
+        "title": "7–8 – Sannsynlig appendisitt",
+        "tier": "probable",
         "items": [
-          "Observasjon, ny klinisk vurdering og evt. supplerende bildediagnostikk (ultralyd/CT) anbefales."
+          "Kirurgisk vurdering anbefales, gjerne med supplerende bildediagnostikk."
         ]
       },
       {
-        "title": "7–8 poeng – Sannsynlig appendisitt",
+        "title": "9–10 – Meget sannsynlig appendisitt",
+        "tier": "highly-likely",
         "items": [
-          "Kirurgisk vurdering anbefales, gjerne supplert med bildediagnostikk."
+          "Kirurgisk henvisning bør skje uten unødig forsinkelse."
         ]
       },
       {
-        "title": "9–10 poeng – Meget sannsynlig appendisitt",
         "items": [
-          "Høy sannsynlighet for appendisitt. Kirurgisk henvisning bør vurderes uten unødig forsinkelse.",
-          "Merk: enkelte validerte grenser er kjønnsspesifikke (høyeste risiko ved ≥9 hos menn og ≥10 hos kvinner, laveste risiko ved ≤1 hos menn og ≤2 hos kvinner) – ta høyde for dette i tolkningen."
+          "Erstatter ikke klinisk vurdering eller billeddiagnostikk ved usikkerhet. Enkelte grenser er kjønnsspesifikke (høyest risiko ≥9 hos menn / ≥10 hos kvinner, lavest risiko ≤1 hos menn / ≤2 hos kvinner)."
         ]
       }
     ],
