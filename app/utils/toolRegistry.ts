@@ -42,6 +42,7 @@ export interface ToolAdviceGroup {
   items: string[];
   table?: ToolAdviceTable;
   links?: ToolAdviceLink[];
+  tier?: string;
 }
 
 export interface ScoringTool {
@@ -89,6 +90,7 @@ export interface Calculator {
   nextStepPlaceholder?: string;
   indication?: string;
   aboutTest?: string;
+  aboutTestExtra?: string;
 }
 
 export type ToolAliasType = "score" | "calc";
@@ -144,6 +146,7 @@ export const toolAliases: Record<string, ToolAlias> = {
   "wells-dvt": { id: "wells-dvt", type: "calc" },
   "wells-pe": { id: "wells-pe", type: "calc" },
   "doak-dosing": { id: "doak-dosing", type: "calc" },
+  "doac-score": { id: "doac-score", type: "calc" },
   "psa-age-adjusted": { id: "psa-age-adjusted", type: "calc" },
   "anemia-assessment": { id: "anemia-assessment", type: "calc" },
   alvarado: { id: "alvarado", type: "score" },

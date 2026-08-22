@@ -41,6 +41,7 @@ import {
   type SpecialCalcTab
 } from "@/app/utils/specialCalculators";
 import { calculateToolHubCalcResult, getFieldOptionScore } from "@/app/utils/toolHubCalcEngine";
+import { getScoreToolTier } from "@/app/utils/toolHubScoreEngine";
 import { defaultLinkBoxes, type LinkBox } from "@/app/utils/toolHubLinks";
 
 type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews";
@@ -87,8 +88,8 @@ const fib4TierStyles: Record<"low" | "indeterminate" | "high", { border: string;
   high: { border: "#f44336", bg: "#fdecea" }
 };
 
-const fib4BranchAccent = { border: "#0f766e", bg: "#e7f7f4" };
-const fib4Neutral = { border: "#e5e7eb", bg: "#f9fafb" };
+const fib4BranchAccent = { border: "var(--primary)", bg: "var(--primary-bg)" };
+const fib4Neutral = { border: "var(--border-soft)", bg: "#f5efe4" };
 
 function Fib4FlowchartBox({
   active,
@@ -107,7 +108,7 @@ function Fib4FlowchartBox({
         borderRadius: 10,
         border: `${active ? 2 : 1}px solid ${style.border}`,
         background: style.bg,
-        color: "#374151",
+        color: "var(--text)",
         fontSize: 12.5,
         lineHeight: 1.4,
         textAlign: "center",
@@ -127,7 +128,7 @@ function Fib4Flowchart({
   activeTier?: "low" | "indeterminate" | "high";
 }) {
   const arrow = (
-    <div style={{ textAlign: "center", fontSize: 16, color: "#9ca3af", margin: "4px 0" }}>↓</div>
+    <div style={{ textAlign: "center", fontSize: 16, color: "var(--faint)", margin: "4px 0" }}>↓</div>
   );
 
   return (
@@ -179,7 +180,7 @@ function Fib4Flowchart({
           </div>
         </div>
       </div>
-      <div style={{ marginTop: 14, paddingTop: 10, borderTop: "1px solid #e5e7eb", fontSize: 11.5, color: "#6b7280", lineHeight: 1.5 }}>
+      <div style={{ marginTop: 14, paddingTop: 10, borderTop: "1px solid var(--border-soft)", fontSize: 11.5, color: "var(--muted)", lineHeight: 1.5 }}>
         <div>* Basert på Ishak fibrosestadium (Sterling et al. 2006).</div>
         <div>* «Avansert fibrose» definert som METAVIR stadium F3–F4 (McPherson et al. 2017).</div>
       </div>
@@ -233,7 +234,7 @@ function HomaIrFields({
           Fastende insulin ({insulinUnit === "miu" ? "mIU/L" : "pmol/L"})
         </label>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "inline-flex", backgroundColor: "#e8e8ed", borderRadius: 9, padding: 2 }}>
+          <div style={{ display: "inline-flex", backgroundColor: "#e7d9c6", borderRadius: 9, padding: 2 }}>
             {(["pmol", "miu"] as const).map(unit => {
               const isActive = insulinUnit === unit;
               return (
@@ -244,8 +245,8 @@ function HomaIrFields({
                   style={{
                     padding: "6px 10px",
                     border: "none",
-                    background: isActive ? "#0f766e" : "transparent",
-                    color: isActive ? "#ffffff" : "#3c3c43",
+                    background: isActive ? "var(--primary)" : "transparent",
+                    color: isActive ? "var(--panel)" : "var(--text)",
                     fontWeight: isActive ? 600 : 400,
                     borderRadius: 7,
                     cursor: "pointer",
@@ -268,9 +269,9 @@ function HomaIrFields({
                 width: 20,
                 height: 20,
                 borderRadius: "50%",
-                border: "1px solid #cbd5e1",
-                background: "#ffffff",
-                color: "#64748b",
+                border: "1px solid var(--border)",
+                background: "var(--panel)",
+                color: "var(--muted)",
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: "pointer",
@@ -291,13 +292,13 @@ function HomaIrFields({
                 zIndex: 10,
                 width: 260,
                 padding: 12,
-                background: "#ffffff",
-                border: "1px solid #d1d5db",
+                background: "var(--panel)",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
                 fontSize: 12.5,
                 lineHeight: 1.5,
-                color: "#374151"
+                color: "var(--text)"
               }}>
                 <div style={{ fontWeight: 600, marginBottom: 4 }}>Om mIU/L</div>
                 <div>mIU/L står for «milli-International Units per liter» (milli-internasjonale enheter per liter).</div>
@@ -356,9 +357,9 @@ function InfoPopoverButton({
           width: 20,
           height: 20,
           borderRadius: "50%",
-          border: "1px solid #cbd5e1",
-          background: "#ffffff",
-          color: "#64748b",
+          border: "1px solid var(--border)",
+          background: "var(--panel)",
+          color: "var(--muted)",
           fontSize: 12,
           fontWeight: 700,
           cursor: "pointer",
@@ -379,13 +380,13 @@ function InfoPopoverButton({
           zIndex: 10,
           width: popoverWidth,
           padding: 12,
-          background: "#ffffff",
-          border: "1px solid #d1d5db",
+          background: "var(--panel)",
+          border: "1px solid var(--border)",
           borderRadius: 8,
           boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
           fontSize: 12.5,
           lineHeight: 1.5,
-          color: "#374151"
+          color: "var(--text)"
         }}>
           {children}
         </div>
@@ -409,7 +410,7 @@ function HeadingToggleButton({
       onClick={onClick}
       style={{
         padding: '6px 12px',
-        background: active ? '#0f766e' : '#14b8a6',
+        background: active ? 'var(--primary)' : 'var(--primary-light)',
         color: 'white',
         borderRadius: 6,
         fontSize: 12,
@@ -432,13 +433,13 @@ function HeadingInfoBox({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
       padding: 12,
-      background: '#e7f7f4',
+      background: 'var(--primary-bg)',
       borderRadius: 6,
       marginBottom: 12,
       fontSize: 13,
       lineHeight: 1.5,
-      color: '#0f172a',
-      borderLeft: '3px solid #0f766e',
+      color: '#3c2a1f',
+      borderLeft: '3px solid var(--primary)',
       whiteSpace: 'pre-line'
     }}>
       {children}
@@ -460,7 +461,7 @@ function CPeptideGlucoseFields({
       <div className="calc-field-row">
         <label style={{ fontWeight: 500, fontSize: 13 }}>Målingstilstand</label>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "inline-flex", backgroundColor: "#e8e8ed", borderRadius: 9, padding: 2 }}>
+          <div style={{ display: "inline-flex", backgroundColor: "#e7d9c6", borderRadius: 9, padding: 2 }}>
             {(["Fastende", "Postprandial"] as const).map(opt => {
               const isActive = state === opt;
               return (
@@ -471,8 +472,8 @@ function CPeptideGlucoseFields({
                   style={{
                     padding: "6px 14px",
                     border: "none",
-                    background: isActive ? "#0f766e" : "transparent",
-                    color: isActive ? "#ffffff" : "#3c3c43",
+                    background: isActive ? "var(--primary)" : "transparent",
+                    color: isActive ? "var(--panel)" : "var(--text)",
                     fontWeight: isActive ? 600 : 400,
                     borderRadius: 7,
                     cursor: "pointer",
@@ -541,32 +542,32 @@ function CgrInterpretationTable({
   activeTier
 }: {
   title: string;
-  rows: Array<{ tier: "low" | "mid" | "high"; range: string; label: string }>;
-  activeTier?: "low" | "mid" | "high";
+  rows: Array<{ tier: string; range: string; label: string }>;
+  activeTier?: string;
 }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontWeight: 600, fontSize: 12.5, color: "#374151", marginBottom: 6 }}>{title}</div>
+      <div style={{ fontWeight: 600, fontSize: 12.5, color: "var(--text)", marginBottom: 6 }}>{title}</div>
       <table style={{ borderCollapse: "collapse", fontSize: 12.5, width: "100%" }}>
         <tbody>
           {rows.map(row => {
             const isActive = row.tier === activeTier;
             return (
-              <tr key={row.tier} style={{ background: isActive ? "#e7f7f4" : "transparent" }}>
+              <tr key={row.tier} style={{ background: isActive ? "var(--primary-bg)" : "transparent" }}>
                 <td style={{
                   padding: "5px 10px",
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid var(--border-soft)",
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "#0f766e" : "#374151",
+                  color: isActive ? "var(--primary)" : "var(--text)",
                   whiteSpace: "nowrap"
                 }}>
                   {row.range}
                 </td>
                 <td style={{
                   padding: "5px 10px",
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid var(--border-soft)",
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "#0f766e" : "#374151"
+                  color: isActive ? "var(--primary)" : "var(--text)"
                 }}>
                   {row.label}
                 </td>
@@ -578,6 +579,8 @@ function CgrInterpretationTable({
     </div>
   );
 }
+
+const TierInterpretationTable = CgrInterpretationTable;
 
 function CgrInterpretationTables({
   activeMode,
@@ -640,8 +643,8 @@ export default function ToolHub(
   const [draggedBox, setDraggedBox] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ boxId: string; itemId: string } | null>(null);
   const [showClinicalTip, setShowClinicalTip] = useState(false);
-  const [showCPeptideInfo, setShowCPeptideInfo] = useState(false);
   const [showCPeptideExamples, setShowCPeptideExamples] = useState(false);
+  const [showChadsvascMore, setShowChadsvascMore] = useState(false);
   const [showAdvice, setShowAdvice] = useState(false);
   const [showIndication, setShowIndication] = useState(false);
   const [showAboutTest, setShowAboutTest] = useState(false);
@@ -1431,8 +1434,17 @@ export default function ToolHub(
     const totalScore = manualScore ?? activeTool.questions.reduce((s, q) => s + (answers[q.id]?.score ?? 0), 0);
     const threshold = [...activeTool.thresholds].sort((a, b) => b.minScore - a.minScore).find(t => totalScore >= t.minScore);
     const thresholdColor = threshold?.color ?? "#666";
-    return { totalScore, maxScore, thresholdLabel: threshold?.label ?? "Uklassifisert", thresholdColor };
+    const partScores: Record<string, number> = {};
+    activeTool.questions.forEach(q => {
+      if (!q.part) return;
+      partScores[q.part] = (partScores[q.part] ?? 0) + (answers[q.id]?.score ?? 0);
+    });
+    return { totalScore, maxScore, thresholdLabel: threshold?.label ?? "Uklassifisert", thresholdColor, partScores };
   }, [activeTool, answers, manualScore]);
+
+  const activeScoreTier = activeTool && scoreSummary
+    ? getScoreToolTier(activeTool.id, scoreSummary.totalScore, scoreSummary.partScores)
+    : undefined;
 
   const summaryText = activeTool && scoreSummary ? `${activeTool.name}: ${scoreSummary.totalScore}/${scoreSummary.maxScore} (${scoreSummary.thresholdLabel})` : "";
   const detailedSummaryText = activeTool && scoreSummary
@@ -1462,11 +1474,10 @@ export default function ToolHub(
   }, [activeCalc, calcResult, calcScoreBarIsDraggable]);
 
   const handleAnswerChange = (qid: string, score: number, idx: number) => { setManualScore(null); setAnswers(p => ({ ...p, [qid]: { score, optionIndex: idx } })); };
-  const handleToggleIndication = () => { setShowIndication(v => !v); setShowAboutTest(false); setShowClinicalTip(false); setShowCPeptideInfo(false); setShowCPeptideExamples(false); };
-  const handleToggleAboutTest = () => { setShowAboutTest(v => !v); setShowIndication(false); setShowClinicalTip(false); setShowCPeptideInfo(false); setShowCPeptideExamples(false); };
-  const handleToggleClinicalTip = () => { setShowClinicalTip(v => !v); setShowIndication(false); setShowAboutTest(false); setShowCPeptideInfo(false); setShowCPeptideExamples(false); };
-  const handleToggleCPeptideInfo = () => { setShowCPeptideInfo(v => !v); setShowIndication(false); setShowAboutTest(false); setShowClinicalTip(false); setShowCPeptideExamples(false); };
-  const handleToggleCPeptideExamples = () => { setShowCPeptideExamples(v => !v); setShowIndication(false); setShowAboutTest(false); setShowClinicalTip(false); setShowCPeptideInfo(false); };
+  const handleToggleIndication = () => { setShowIndication(v => !v); setShowAboutTest(false); setShowClinicalTip(false); setShowCPeptideExamples(false); };
+  const handleToggleAboutTest = () => { setShowAboutTest(v => !v); setShowIndication(false); setShowClinicalTip(false); setShowCPeptideExamples(false); };
+  const handleToggleClinicalTip = () => { setShowClinicalTip(v => !v); setShowIndication(false); setShowAboutTest(false); setShowCPeptideExamples(false); };
+  const handleToggleCPeptideExamples = () => { setShowCPeptideExamples(v => !v); setShowIndication(false); setShowAboutTest(false); setShowClinicalTip(false); };
   const handleToolChange = (id: string) => { setActiveToolId(id); setActiveCalcId(""); setAnswers({}); setManualScore(null); setShowClinicalTip(false); setShowAdvice(false); setShowIndication(false); setShowAboutTest(false); };
 
   const updateManualScoreFromClientX = (clientX: number) => {
@@ -1515,7 +1526,6 @@ export default function ToolHub(
       setActiveCalcId(id);
       setActiveToolId("");
       setShowClinicalTip(false);
-      setShowCPeptideInfo(false);
       setShowCPeptideExamples(false);
       setShowAdvice(false);
       setShowIndication(false);
@@ -1528,7 +1538,6 @@ export default function ToolHub(
     setActiveCalcId(id);
     setActiveToolId("");
     setShowClinicalTip(false);
-    setShowCPeptideInfo(false);
     setShowCPeptideExamples(false);
     setShowAdvice(false);
     setShowIndication(false);
@@ -1713,7 +1722,12 @@ export default function ToolHub(
             type="button"
             title="Søk"
           >
-            <span>🔍</span>
+            <span aria-hidden="true" style={{ display: "inline-flex" }}>
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </span>
             <span>Søk</span>
           </button>
           <div className="tabbar" role="tablist">
@@ -1750,10 +1764,10 @@ export default function ToolHub(
                 <div
                   key={section.boxId}
                   style={{
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid var(--border-soft)',
                     borderRadius: 12,
                     padding: 12,
-                    background: '#f8fafc',
+                    background: '#f2e9db',
                     minHeight: 180
                   }}
                 >
@@ -1770,7 +1784,7 @@ export default function ToolHub(
                               fontWeight: 700,
                               textTransform: 'uppercase',
                               letterSpacing: 0.5,
-                              color: '#6b7280',
+                              color: 'var(--muted)',
                               margin: index === 0 ? '0 0 6px 0' : '12px 0 6px 0'
                             }}>
                               {item.subcategory}
@@ -1794,13 +1808,13 @@ export default function ToolHub(
                             style={{
                               textAlign: 'left',
                               width: '100%',
-                              border: '1px solid #dbe2ea',
+                              border: '1px solid #d9c6ab',
                               borderRadius: 10,
-                              background: '#ffffff',
+                              background: 'var(--panel)',
                               padding: '10px 14px',
                               fontSize: 13,
                               fontWeight: 600,
-                              color: '#111827',
+                              color: 'var(--heading)',
                               cursor: 'pointer'
                             }}
                           >
@@ -1927,7 +1941,7 @@ export default function ToolHub(
                         {q.options.map((o, oi) => (
                           <label key={o.label} style={{ fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                             <span><input type="radio" name={q.id} checked={answers[q.id]?.optionIndex === oi} onChange={() => handleAnswerChange(q.id, o.score, oi)} /> {o.label}</span>
-                            <span style={{ fontWeight: 600, color: '#6b7280' }}>{o.score > 0 ? `+${o.score}` : o.score}</span>
+                            <span style={{ fontWeight: 600, color: 'var(--muted)' }}>{o.score > 0 ? `+${o.score}` : o.score}</span>
                           </label>
                         ))}
                       </div>
@@ -1961,8 +1975,8 @@ export default function ToolHub(
                         width: '24px',
                         height: '24px',
                         borderRadius: '50%',
-                        background: '#ffffff',
-                        border: `4px solid ${scoreSummary?.thresholdColor ?? '#9ca3af'}`,
+                        background: 'var(--panel)',
+                        border: `4px solid ${scoreSummary?.thresholdColor ?? 'var(--faint)'}`,
                         boxShadow: '0 3px 8px rgba(0,0,0,0.25)',
                         zIndex: 2,
                         transition: 'all 0.3s ease',
@@ -1975,11 +1989,11 @@ export default function ToolHub(
                       justifyContent: 'space-between', 
                       marginTop: '8px',
                       fontSize: '13px',
-                      color: '#6b7280',
+                      color: 'var(--muted)',
                       fontWeight: 500
                     }}>
                       <span>0</span>
-                      <span style={{ fontWeight: 600, color: '#374151' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>
                         {scoreSummary ? `${scoreSummary.totalScore} / ${scoreSummary.maxScore}` : '0 / 0'}
                       </span>
                       <span>{scoreSummary?.maxScore ?? 0}</span>
@@ -2012,7 +2026,7 @@ export default function ToolHub(
                           width: '24px',
                           height: '24px',
                           borderRadius: '50%',
-                          background: '#ffffff',
+                          background: 'var(--panel)',
                           border: `4px solid ${scoreSummary.thresholdColor}`,
                           boxShadow: '0 3px 8px rgba(0,0,0,0.25)',
                           zIndex: 2,
@@ -2024,11 +2038,11 @@ export default function ToolHub(
                         justifyContent: 'space-between', 
                         marginTop: '8px',
                         fontSize: '13px',
-                        color: '#6b7280',
+                        color: 'var(--muted)',
                         fontWeight: 500
                       }}>
                         <span>0</span>
-                        <span style={{ fontWeight: 600, color: '#374151' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text)' }}>
                           {scoreSummary.totalScore} / {scoreSummary.maxScore}
                         </span>
                         <span>{scoreSummary.maxScore}</span>
@@ -2045,7 +2059,7 @@ export default function ToolHub(
                             onClick={() => setShowAdvice(!showAdvice)}
                             style={{
                               padding: '5px 10px',
-                              background: showAdvice ? '#0f766e' : '#14b8a6',
+                              background: showAdvice ? 'var(--primary)' : 'var(--primary-light)',
                               color: 'white',
                               borderRadius: 6,
                               fontSize: 12,
@@ -2068,35 +2082,43 @@ export default function ToolHub(
                         <div style={{
                           marginTop: 16,
                           padding: 16,
-                          background: '#ffffff',
-                          border: '1px solid #d1d5db',
+                          background: 'var(--panel)',
+                          border: '1px solid var(--border)',
                           borderLeft: `4px solid ${scoreSummary.thresholdColor}`,
                           borderRadius: 8
                         }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: '#374151', marginBottom: 10 }}>NESTE STEG</div>
-                          <div style={{ fontSize: 13.5, lineHeight: 1.6, color: '#374151' }}>{activeTool.nextStepPlaceholder}</div>
+                          <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 10 }}>NESTE STEG</div>
+                          <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>{activeTool.nextStepPlaceholder}</div>
                         </div>
                       )}
                       {activeTool.advice && activeTool.advice.length > 0 && showAdvice && (
                         <div style={{
                           marginTop: 16,
                           padding: 16,
-                          background: '#ffffff',
-                          border: '1px solid #d1d5db',
+                          background: 'var(--panel)',
+                          border: '1px solid var(--border)',
                           borderLeft: `4px solid ${scoreSummary.thresholdColor}`,
                           borderRadius: 8
                         }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: '#374151', marginBottom: 10 }}>NESTE STEG</div>
-                          {activeTool.advice.map((group, gi) => (
-                            <div key={gi} style={{ marginBottom: gi < activeTool.advice!.length - 1 ? 10 : 0 }}>
-                              {group.title && <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 4 }}>{group.title}</div>}
+                          <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 10 }}>NESTE STEG</div>
+                          {activeTool.advice.map((group, gi) => {
+                            const isActiveGroup = !!group.tier && group.tier === activeScoreTier;
+                            return (
+                            <div key={gi} style={{
+                              marginBottom: gi < activeTool.advice!.length - 1 ? 10 : 0,
+                              padding: isActiveGroup ? 8 : 0,
+                              borderRadius: isActiveGroup ? 6 : 0,
+                              background: isActiveGroup ? 'var(--primary-bg)' : 'transparent',
+                              borderLeft: isActiveGroup ? '3px solid var(--primary)' : 'none'
+                            }}>
+                              {group.title && <div style={{ fontWeight: isActiveGroup ? 700 : 600, fontSize: 13.5, marginBottom: 4, color: isActiveGroup ? 'var(--primary)' : 'var(--text)' }}>{group.title}</div>}
                               {group.table && (
                                 <div style={{ overflowX: 'auto', marginBottom: group.items.length > 0 ? 8 : 0 }}>
                                   <table style={{ borderCollapse: 'collapse', fontSize: 13.5, minWidth: 260 }}>
                                     <thead>
                                       <tr>
                                         {group.table.headers.map((h, hi) => (
-                                          <th key={hi} style={{ textAlign: 'left', padding: '4px 16px 4px 0', borderBottom: '2px solid #e5e7eb', color: '#374151' }}>{h}</th>
+                                          <th key={hi} style={{ textAlign: 'left', padding: '4px 16px 4px 0', borderBottom: '2px solid var(--border-soft)', color: 'var(--text)' }}>{h}</th>
                                         ))}
                                       </tr>
                                     </thead>
@@ -2104,7 +2126,7 @@ export default function ToolHub(
                                       {group.table.rows.map((row, ri) => (
                                         <tr key={ri}>
                                           {row.map((cell, ci) => (
-                                            <td key={ci} style={{ padding: '4px 16px 4px 0', borderBottom: '1px solid #f3f4f6', color: '#374151' }}>{cell}</td>
+                                            <td key={ci} style={{ padding: '4px 16px 4px 0', borderBottom: '1px solid #efe0cd', color: 'var(--text)' }}>{cell}</td>
                                           ))}
                                         </tr>
                                       ))}
@@ -2115,7 +2137,7 @@ export default function ToolHub(
                               {group.items.length > 0 && (
                                 <ul style={{ margin: 0, paddingLeft: 20 }}>
                                   {group.items.map((item, ii) => (
-                                    <li key={ii} style={{ fontSize: 13.5, lineHeight: 1.5, color: '#374151' }}>{item}</li>
+                                    <li key={ii} style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--text)' }}>{item}</li>
                                   ))}
                                 </ul>
                               )}
@@ -2124,7 +2146,7 @@ export default function ToolHub(
                                   {group.links.map((link, li) => (
                                     <li key={li} style={{ fontSize: 13.5, lineHeight: 1.5 }}>
                                       {link.url ? (
-                                        <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: '#0f766e', fontWeight: 600 }}>
+                                        <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600 }}>
                                           {link.label}
                                         </a>
                                       ) : link.calcId ? (
@@ -2135,7 +2157,7 @@ export default function ToolHub(
                                             background: 'none',
                                             border: 'none',
                                             padding: 0,
-                                            color: '#0f766e',
+                                            color: 'var(--primary)',
                                             fontWeight: 600,
                                             fontSize: 13.5,
                                             cursor: 'pointer',
@@ -2152,7 +2174,8 @@ export default function ToolHub(
                                 </ul>
                               )}
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -2302,19 +2325,19 @@ export default function ToolHub(
                                   type="button"
                                   aria-label="Vis forslag til antall tabletter"
                                   onClick={() => setShowMedUnitsPicker((prev) => !prev)}
-                                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "#6b7280", fontSize: 14, cursor: "pointer", padding: "4px 6px", lineHeight: 1 }}
+                                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "var(--muted)", fontSize: 14, cursor: "pointer", padding: "4px 6px", lineHeight: 1 }}
                                 >
                                   ▾
                                 </button>
                                 {showMedUnitsPicker && (
-                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "#ffffff", boxShadow: "0 10px 20px rgba(15, 23, 42, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
+                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "var(--panel)", boxShadow: "0 10px 20px rgba(74, 53, 39, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
                                     {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
                                       <button
                                         key={option}
                                         type="button"
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => { setMedUnits(option); setShowMedUnitsPicker(false); }}
-                                        style={{ border: "none", background: medUnits === option ? "#f3f4f6" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "#111827" }}
+                                        style={{ border: "none", background: medUnits === option ? "#efe0cd" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "var(--heading)" }}
                                       >
                                         {option}
                                       </button>
@@ -2393,19 +2416,19 @@ export default function ToolHub(
                                   type="button"
                                   aria-label="Vis forslag til antall tabletter"
                                   onClick={() => setShowAvgUnitsPicker((prev) => !prev)}
-                                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "#6b7280", fontSize: 14, cursor: "pointer", padding: "4px 6px", lineHeight: 1 }}
+                                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "var(--muted)", fontSize: 14, cursor: "pointer", padding: "4px 6px", lineHeight: 1 }}
                                 >
                                   ▾
                                 </button>
                                 {showAvgUnitsPicker && (
-                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "#ffffff", boxShadow: "0 10px 20px rgba(15, 23, 42, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
+                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "var(--panel)", boxShadow: "0 10px 20px rgba(74, 53, 39, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
                                     {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
                                       <button
                                         key={option}
                                         type="button"
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => { setAvgPrevUnits(option); setShowAvgUnitsPicker(false); }}
-                                        style={{ border: "none", background: avgPrevUnits === option ? "#f3f4f6" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "#111827" }}
+                                        style={{ border: "none", background: avgPrevUnits === option ? "#efe0cd" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "var(--heading)" }}
                                       >
                                         {option}
                                       </button>
@@ -2644,7 +2667,7 @@ export default function ToolHub(
                         onClick={handleToggleClinicalTip}
                         style={{
                           padding: '6px 12px',
-                          background: showClinicalTip ? '#0f766e' : '#14b8a6',
+                          background: showClinicalTip ? 'var(--primary)' : 'var(--primary-light)',
                           color: 'white',
                           borderRadius: 6,
                           fontSize: 12,
@@ -2664,33 +2687,10 @@ export default function ToolHub(
                     {activeCalc.id === "cpeptide-glucose" && (
                       <button
                         type="button"
-                        onClick={handleToggleCPeptideInfo}
-                        style={{
-                          padding: '6px 12px',
-                          background: showCPeptideInfo ? '#0f766e' : '#14b8a6',
-                          color: 'white',
-                          borderRadius: 6,
-                          fontSize: 12,
-                          fontWeight: 600,
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        ℹ️ Om C-peptid
-                      </button>
-                    )}
-                    {activeCalc.id === "cpeptide-glucose" && (
-                      <button
-                        type="button"
                         onClick={handleToggleCPeptideExamples}
                         style={{
                           padding: '6px 12px',
-                          background: showCPeptideExamples ? '#0f766e' : '#14b8a6',
+                          background: showCPeptideExamples ? 'var(--primary)' : 'var(--primary-light)',
                           color: 'white',
                           borderRadius: 6,
                           fontSize: 12,
@@ -2713,7 +2713,34 @@ export default function ToolHub(
                   <HeadingInfoBox>{activeCalc.indication}</HeadingInfoBox>
                 )}
                 {activeCalc.aboutTest && showAboutTest && (
-                  <HeadingInfoBox>{activeCalc.aboutTest}</HeadingInfoBox>
+                  <HeadingInfoBox>
+                    {activeCalc.aboutTest}
+                    {activeCalc.id === 'chadsvasc' && activeCalc.aboutTestExtra && (
+                      <>
+                        <br />
+                        <button
+                          type="button"
+                          onClick={() => setShowChadsvascMore(v => !v)}
+                          style={{
+                            marginTop: 6,
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            color: 'var(--primary)',
+                            fontWeight: 600,
+                            fontSize: 13,
+                            cursor: 'pointer',
+                            textDecoration: 'underline'
+                          }}
+                        >
+                          {showChadsvascMore ? 'Vis mindre ▴' : 'Les mer ▾'}
+                        </button>
+                        {showChadsvascMore && (
+                          <div style={{ marginTop: 6 }}>{activeCalc.aboutTestExtra}</div>
+                        )}
+                      </>
+                    )}
+                  </HeadingInfoBox>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   {activePdfOptions.length > 0 && (
@@ -2796,46 +2823,32 @@ export default function ToolHub(
                 {activeCalc.id === "doak-dosing" && showClinicalTip && (
                   <div style={{
                     padding: 12,
-                    background: '#e7f7f4',
+                    background: 'var(--primary-bg)',
                     borderRadius: 6,
                     marginBottom: 12,
                     fontSize: 13,
-                    color: '#0f172a',
-                    borderLeft: '3px solid #0f766e'
+                    color: '#3c2a1f',
+                    borderLeft: '3px solid var(--primary)'
                   }}>
                     <strong>Klinisk tips:</strong> Apixaban og Dabigatran doseres to ganger daglig og har lavere blødningsrisiko enn Edoxaban og Rivaroxaban som doseres en gang daglig.
-                  </div>
-                )}
-                {activeCalc.id === "cpeptide-glucose" && showCPeptideInfo && (
-                  <div style={{
-                    padding: 12,
-                    background: '#e7f7f4',
-                    borderRadius: 6,
-                    marginBottom: 12,
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    color: '#0f172a',
-                    borderLeft: '3px solid #0f766e'
-                  }}>
-                    C-peptid dannes når proinsulin spaltes til insulin, og skilles ut i blodet i like store mengder. Fordi C-peptid har lengre halveringstid (20–30 min) enn insulin (5–8 min) og ikke fjernes av leveren ved første passasje, gir det et mer stabilt mål på endogen insulinproduksjon enn insulin målt direkte. Brukes til å vurdere betacellefunksjon, skille type 1 fra type 2 diabetes, og avgjøre behov for insulinbehandling.
-                    <br />
-                    Obs! Nivået påvirkes av nyrefunksjon, da C-peptid elimineres renalt.
                   </div>
                 )}
                 {activeCalc.id === "cpeptide-glucose" && showCPeptideExamples && (
                   <div style={{
                     padding: 12,
-                    background: '#e7f7f4',
+                    background: 'var(--primary-bg)',
                     borderRadius: 6,
                     marginBottom: 12,
                     fontSize: 13,
                     lineHeight: 1.5,
-                    color: '#0f172a',
-                    borderLeft: '3px solid #0f766e'
+                    color: '#3c2a1f',
+                    borderLeft: '3px solid var(--primary)'
                   }}>
                     <strong>Type 1 diabetes:</strong> lav C-peptid (ofte tross normal/høy glukose), fordi autoimmun betacelledestruksjon gir manglende egenproduksjon.
                     <br />
                     <strong>Type 2 diabetes:</strong> normal eller høy C-peptid, spesielt tidlig i forløpet, fordi betacellene fortsatt produserer insulin (ofte med samtidig insulinresistens). Ved lang sykdomsvarighet kan C-peptid gradvis falle etter hvert som betacellefunksjonen svekkes.
+                    <br />
+                    <strong>Insulin-resistens:</strong> C-peptid som er høyere enn ventet for en gitt glukose. HOMA-IR er en bedre test for dette.
                     <br />
                     <strong>Insulin-krevende diabetes:</strong> Lav C-peptid tross normal/høy glukose (sviktende egenproduksjon).
                     <br />
@@ -2861,7 +2874,7 @@ export default function ToolHub(
                           marginTop: idx > 0 ? 30 : 10,
                           marginBottom: 16,
                           paddingBottom: 8,
-                          borderBottom: '2px solid #e5e7eb'
+                          borderBottom: '2px solid var(--border-soft)'
                         }}>
                           <h3 style={{ 
                             fontSize: 16, 
@@ -2886,9 +2899,9 @@ export default function ToolHub(
                                 onClick={() => handleInputChange(f.id, option)}
                                 style={{
                                   padding: '10px 14px',
-                                  border: isActive ? '2px solid #0891b2' : '1px solid #e0e0e0',
-                                  background: isActive ? '#ecfeff' : '#ffffff',
-                                  color: '#000000',
+                                  border: isActive ? '2px solid #0891b2' : '1px solid #d9c6ab',
+                                  background: isActive ? '#ecfeff' : 'var(--panel)',
+                                  color: '#3c2a1f',
                                   fontWeight: isActive ? 600 : 400,
                                   borderRadius: 8,
                                   cursor: 'pointer',
@@ -2921,9 +2934,9 @@ export default function ToolHub(
                                 onClick={() => handleInputChange(f.id, option)}
                                 style={{
                                   padding: '8px 12px',
-                                  border: isActive ? '2px solid #0891b2' : '1px solid #d0d0d0',
-                                  background: isActive ? '#0891b2' : '#ffffff',
-                                  color: isActive ? '#ffffff' : '#333333',
+                                  border: isActive ? '2px solid #0891b2' : '1px solid #d9c6ab',
+                                  background: isActive ? '#0891b2' : 'var(--panel)',
+                                  color: isActive ? 'var(--primary-text)' : '#4a3527',
                                   fontWeight: isActive ? 600 : 400,
                                   borderRadius: 6,
                                   cursor: 'pointer',
@@ -2945,7 +2958,7 @@ export default function ToolHub(
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                           <div style={{
                             display: 'inline-flex',
-                            backgroundColor: '#e8e8ed',
+                            backgroundColor: '#e7d9c6',
                             borderRadius: 9,
                             padding: 2,
                             position: 'relative'
@@ -2964,7 +2977,7 @@ export default function ToolHub(
                                     padding: '6px 16px',
                                     border: 'none',
                                     background: isActive ? activeColor : 'transparent',
-                                    color: isActive ? '#ffffff' : '#3c3c43',
+                                    color: isActive ? 'var(--panel)' : 'var(--text)',
                                     fontWeight: isActive ? 600 : 400,
                                     borderRadius: 7,
                                     cursor: 'pointer',
@@ -3013,8 +3026,8 @@ export default function ToolHub(
                       onClick={() => { setCalcInputs({}); setManualCalcScore(null); }}
                       style={{
                         padding: '10px 24px',
-                        background: '#6b7280',
-                        color: '#ffffff',
+                        background: 'var(--muted)',
+                        color: 'var(--primary-text)',
                         border: 'none',
                         borderRadius: 8,
                         cursor: 'pointer',
@@ -3023,8 +3036,8 @@ export default function ToolHub(
                         transition: 'all 0.2s ease',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#4b5563'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = '#6b7280'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#7a5f4a'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--muted)'}
                     >
                       Nullstill
                     </button>
@@ -3057,8 +3070,8 @@ export default function ToolHub(
                         width: '24px',
                         height: '24px',
                         borderRadius: '50%',
-                        background: '#ffffff',
-                        border: `4px solid ${calcResult?.color ?? '#9ca3af'}`,
+                        background: 'var(--panel)',
+                        border: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
                         boxShadow: '0 3px 8px rgba(0,0,0,0.25)',
                         zIndex: 2,
                         transition: 'all 0.3s ease',
@@ -3071,17 +3084,17 @@ export default function ToolHub(
                       justifyContent: 'space-between',
                       marginTop: '8px',
                       fontSize: '13px',
-                      color: '#6b7280',
+                      color: 'var(--muted)',
                       fontWeight: 500
                     }}>
                       <span>0</span>
-                      <span style={{ fontWeight: 600, color: '#374151' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>
                         {calcResult && calcResult.maxScore ? `${calcScoreDisplay} / ${calcResult.maxScore}` : `0 / ${calcMaxScore}`}
                       </span>
                       <span>{calcResult?.maxScore ?? calcMaxScore}</span>
                     </div>
                     {calcScoreBarIsDraggable && (
-                      <div style={{ marginTop: 6, fontSize: 12, color: '#9ca3af' }}>
+                      <div style={{ marginTop: 6, fontSize: 12, color: 'var(--faint)' }}>
                         Dra markøren for å sette resultatet direkte, uten å fylle ut alle feltene.
                       </div>
                     )}
@@ -3089,8 +3102,8 @@ export default function ToolHub(
                 )}
                 
                 {activeCalc && (
-                  <div className="summary" style={{ borderColor: calcResult?.color ?? '#d1d5db', marginTop: 20, maxWidth: 700 }}>
-                    <div style={{ fontWeight: 700, color: calcResult?.color ?? '#6b7280' }}>Resultat</div>
+                  <div className="summary" style={{ borderColor: calcResult?.color ?? 'var(--border)', marginTop: 20, maxWidth: 700 }}>
+                    <div style={{ fontWeight: 700, color: calcResult?.color ?? 'var(--muted)' }}>Resultat</div>
 
                     {/* Visual score indicator for calculators */}
                     {calcResult?.maxScore && (
@@ -3113,7 +3126,7 @@ export default function ToolHub(
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: '#ffffff',
+                            background: 'var(--panel)',
                             border: `4px solid ${calcResult.color}`,
                             boxShadow: '0 3px 8px rgba(0,0,0,0.25)',
                             zIndex: 2,
@@ -3125,11 +3138,11 @@ export default function ToolHub(
                           justifyContent: 'space-between',
                           marginTop: '8px',
                           fontSize: '13px',
-                          color: '#6b7280',
+                          color: 'var(--muted)',
                           fontWeight: 500
                         }}>
                           <span>0</span>
-                          <span style={{ fontWeight: 600, color: '#374151' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text)' }}>
                             {calcResult.score} / {calcResult.maxScore}
                           </span>
                           <span>{calcResult.maxScore}</span>
@@ -3154,7 +3167,7 @@ export default function ToolHub(
                             onClick={() => setShowAdvice(!showAdvice)}
                             style={{
                               padding: '5px 10px',
-                              background: showAdvice ? '#0f766e' : '#14b8a6',
+                              background: showAdvice ? 'var(--primary)' : 'var(--primary-light)',
                               color: 'white',
                               borderRadius: 6,
                               fontSize: 12,
@@ -3190,7 +3203,7 @@ export default function ToolHub(
                           onClick={() => setShowAdvice(!showAdvice)}
                           style={{
                             padding: '5px 10px',
-                            background: showAdvice ? '#0f766e' : '#14b8a6',
+                            background: showAdvice ? 'var(--primary)' : 'var(--primary-light)',
                             color: 'white',
                             borderRadius: 6,
                             fontSize: 12,
@@ -3213,27 +3226,27 @@ export default function ToolHub(
                       <div style={{
                         marginTop: 16,
                         padding: 16,
-                        background: '#ffffff',
-                        border: '1px solid #d1d5db',
-                        borderLeft: `4px solid ${calcResult?.color ?? '#9ca3af'}`,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
                         borderRadius: 8
                       }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: '#374151', marginBottom: 10 }}>NESTE STEG</div>
-                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: '#374151' }}>{activeCalc.nextStepPlaceholder}</div>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 10 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>{activeCalc.nextStepPlaceholder}</div>
                       </div>
                     )}
                     {activeCalc.id === 'fib4' && showAdvice && (
                       <div style={{
                         marginTop: 16,
                         padding: 16,
-                        background: '#ffffff',
-                        border: '1px solid #d1d5db',
-                        borderLeft: `4px solid ${calcResult?.color ?? '#9ca3af'}`,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
                         borderRadius: 8,
                         maxWidth: 640
                       }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: '#374151', marginBottom: 4 }}>NESTE STEG</div>
-                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: '#374151', marginBottom: 14 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', marginBottom: 14 }}>
                           {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling. Referanseskjemaet under viser tolkningen for alle aldersgrupper og skårenivåer."}
                         </div>
                         <Fib4Flowchart activeBranch={calcResult?.fib4AgeBranch} activeTier={calcResult?.fib4Tier} />
@@ -3243,14 +3256,14 @@ export default function ToolHub(
                       <div style={{
                         marginTop: 16,
                         padding: 16,
-                        background: '#ffffff',
-                        border: '1px solid #d1d5db',
-                        borderLeft: `4px solid ${calcResult?.color ?? '#9ca3af'}`,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
                         borderRadius: 8,
                         maxWidth: 480
                       }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: '#374151', marginBottom: 4 }}>NESTE STEG</div>
-                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: '#374151', whiteSpace: 'pre-line' }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line' }}>
                           {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling. Referansetabellene under viser tolkningen for både fastende og postprandial ratio."}
                         </div>
                         <CgrInterpretationTables activeMode={calcResult?.cgrMode} activeTier={calcResult?.cgrTier} />
@@ -3260,14 +3273,14 @@ export default function ToolHub(
                       <div style={{
                         marginTop: 16,
                         padding: 16,
-                        background: '#ffffff',
-                        border: '1px solid #d1d5db',
-                        borderLeft: `4px solid ${calcResult?.color ?? '#9ca3af'}`,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
                         borderRadius: 8,
                         maxWidth: 480
                       }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: '#374151', marginBottom: 4 }}>NESTE STEG</div>
-                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: '#374151', whiteSpace: 'pre-line', marginBottom: 14 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line', marginBottom: 14 }}>
                           {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling."}
                         </div>
                         <CgrInterpretationTable
@@ -3279,19 +3292,150 @@ export default function ToolHub(
                           ]}
                           activeTier={calcResult?.wellsDvtTier}
                         />
+                        <InfoPopoverButton ariaLabel="Om aldersjustert D-dimer" popoverWidth={340}>
+                          <div style={{ fontWeight: 600, marginBottom: 6 }}>Aldersjustert D-dimer</div>
+                          <div>
+                            Hos pasienter over 50 år kan en aldersjustert D-dimer-grense (alder × 10 µg/L, i stedet for standard cut-off) brukes for å redusere andelen falskt positive D-dimer-svar uten å tape klinisk relevant sensitivitet. Dette gjelder ved lav/moderat pretest-sannsynlighet (Wells DVT ≤2 poeng) – ikke ved høy sannsynlighet, hvor D-dimer uansett ikke bør brukes til å utelukke DVT alene.
+                          </div>
+                        </InfoPopoverButton>
                       </div>
                     )}
-                    {activeCalc.id !== 'fib4' && activeCalc.id !== 'cpeptide-glucose' && activeCalc.id !== 'wells-dvt' && calcResult?.guideText && showAdvice && (
+                    {activeCalc.id === 'wells-pe' && showAdvice && (
                       <div style={{
                         marginTop: 16,
                         padding: 16,
-                        background: '#ffffff',
-                        border: '1px solid #d1d5db',
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
+                        borderRadius: 8,
+                        maxWidth: 480
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line', marginBottom: 14 }}>
+                          {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling."}
+                        </div>
+                        <TierInterpretationTable
+                          title="Wells LE – skåretolkning"
+                          rows={[
+                            { tier: "low", range: "≤4 poeng", label: "LE lite sannsynlig" },
+                            { tier: "high", range: ">4 poeng", label: "LE sannsynlig" }
+                          ]}
+                          activeTier={calcResult?.wellsPeTier}
+                        />
+                      </div>
+                    )}
+                    {activeCalc.id === 'chadsvasc' && showAdvice && (
+                      <div style={{
+                        marginTop: 16,
+                        padding: 16,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
+                        borderRadius: 8,
+                        maxWidth: 480
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line', marginBottom: 14 }}>
+                          {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling."}
+                        </div>
+                        <TierInterpretationTable
+                          title="CHA₂DS₂-VA – skåretolkning"
+                          rows={[
+                            { tier: "low", range: "0 poeng", label: "Lav risiko" },
+                            { tier: "low-mid", range: "1 poeng", label: "Lav-moderat risiko" },
+                            { tier: "mod-high", range: "≥2 poeng", label: "Moderat-høy risiko" }
+                          ]}
+                          activeTier={calcResult?.chadsvascTier}
+                        />
+                      </div>
+                    )}
+                    {activeCalc.id === 'ipss' && showAdvice && (
+                      <div style={{
+                        marginTop: 16,
+                        padding: 16,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
+                        borderRadius: 8,
+                        maxWidth: 480
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line', marginBottom: 14 }}>
+                          {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling."}
+                        </div>
+                        <TierInterpretationTable
+                          title="IPSS-8 – skåretolkning"
+                          rows={[
+                            { tier: "mild", range: "0–7 poeng", label: "Milde symptomer" },
+                            { tier: "moderate", range: "8–19 poeng", label: "Moderate symptomer" },
+                            { tier: "severe", range: "20–35 poeng", label: "Alvorlige symptomer" }
+                          ]}
+                          activeTier={calcResult?.ipssTier}
+                        />
+                      </div>
+                    )}
+                    {activeCalc.id === 'homa-ir' && showAdvice && (
+                      <div style={{
+                        marginTop: 16,
+                        padding: 16,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
+                        borderRadius: 8,
+                        maxWidth: 480
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line', marginBottom: 14 }}>
+                          {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling."}
+                        </div>
+                        <TierInterpretationTable
+                          title="HOMA-IR – skåretolkning"
+                          rows={[
+                            { tier: "optimal", range: "<1,0", label: "Optimal insulinfølsomhet" },
+                            { tier: "normal", range: "1,0–1,99", label: "Normal insulinfølsomhet" },
+                            { tier: "early", range: "2,0–2,99", label: "Tidlig insulinresistens" },
+                            { tier: "significant", range: "≥3,0", label: "Betydelig insulinresistens" }
+                          ]}
+                          activeTier={calcResult?.homaIrTier}
+                        />
+                      </div>
+                    )}
+                    {activeCalc.id === 'psa-age-adjusted' && showAdvice && (
+                      <div style={{
+                        marginTop: 16,
+                        padding: 16,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderLeft: `4px solid ${calcResult?.color ?? 'var(--faint)'}`,
+                        borderRadius: 8,
+                        maxWidth: 480
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 4 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line', marginBottom: 14 }}>
+                          {calcResult?.guideText ?? "Fyll ut skjemaet over for å få en aldersjustert vurdering."}
+                        </div>
+                        <TierInterpretationTable
+                          title="Aldersjustert PSA – skåretolkning"
+                          rows={[
+                            { tier: "normal", range: "Under grense", label: "Innenfor referanse for alder" },
+                            { tier: "elevated", range: "Over grense", label: "Forhøyet for alder" },
+                            { tier: "markedly-elevated", range: "Over 2× grense", label: "Betydelig forhøyet for alder" }
+                          ]}
+                          activeTier={calcResult?.psaTier}
+                        />
+                      </div>
+                    )}
+                    {activeCalc.id !== 'fib4' && activeCalc.id !== 'cpeptide-glucose' && activeCalc.id !== 'wells-dvt' && activeCalc.id !== 'wells-pe' && activeCalc.id !== 'chadsvasc' && activeCalc.id !== 'ipss' && activeCalc.id !== 'homa-ir' && activeCalc.id !== 'psa-age-adjusted' && calcResult?.guideText && showAdvice && (
+                      <div style={{
+                        marginTop: 16,
+                        padding: 16,
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
                         borderLeft: `4px solid ${calcResult.color}`,
                         borderRadius: 8
                       }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: '#374151', marginBottom: 10 }}>NESTE STEG</div>
-                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: '#374151', whiteSpace: 'pre-line' }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, color: 'var(--text)', marginBottom: 10 }}>NESTE STEG</div>
+                        <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-line' }}>
                           {calcResult.guideText}
                         </div>
                       </div>
@@ -3309,8 +3453,8 @@ export default function ToolHub(
 
       {activeTab === "resources" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
-          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Verktøy</h2>
-          <p style={{ marginBottom: 22, color: '#475569' }}>Utredningsverktøy og skjemaressurser.</p>
+          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Verktøy</h2>
+          <p style={{ marginBottom: 22, color: '#7a5f4a' }}>Utredningsverktøy og skjemaressurser.</p>
 
           {resourceCategories.map((category) => {
             return (
@@ -3376,9 +3520,9 @@ export default function ToolHub(
           font-size: clamp(0.98rem, 1.5vw, 1.23rem);
           line-height: 1.08;
           font-weight: 800;
-          color: #1e293b;
+          color: var(--heading);
           letter-spacing: -0.025em;
-          border-bottom: 4px solid #1e293b;
+          border-bottom: 4px solid var(--heading);
           padding-bottom: 8px;
         }
 
@@ -3388,7 +3532,7 @@ export default function ToolHub(
           justify-content: space-between;
           gap: 16px;
           padding: 13px 2px 12px 0;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #e6d7bf;
         }
 
         .resource-row:last-child {
@@ -3402,7 +3546,7 @@ export default function ToolHub(
 
         .resource-title {
           display: inline-block;
-          color: #0f766e;
+          color: var(--primary);
           font-size: clamp(0.98rem, 1.25vw, 1.16rem);
           font-weight: 400;
           line-height: 1.15;
@@ -3415,7 +3559,7 @@ export default function ToolHub(
 
         .resource-description {
           margin: 2px 0 0;
-          color: #3f536c;
+          color: #7a5f4a;
           font-size: clamp(0.58rem, 0.9vw, 0.76rem);
           line-height: 1.28;
         }
@@ -3429,7 +3573,7 @@ export default function ToolHub(
         }
 
         .resource-pdf-badge {
-          color: #94a3b8;
+          color: #a08a6f;
           font-size: clamp(0.82rem, 1.05vw, 0.98rem);
           font-weight: 800;
           letter-spacing: 0.07em;
@@ -3438,7 +3582,7 @@ export default function ToolHub(
         }
 
         .resource-pdf-badge:hover {
-          color: #64748b;
+          color: var(--muted);
         }
 
         .resource-row-variants {
@@ -3470,9 +3614,9 @@ export default function ToolHub(
 
         .resource-variant-button {
           padding: 5px 12px;
-          border: 1px solid rgba(15, 118, 110, 0.3);
-          background: #f2f7f9;
-          color: #0f766e;
+          border: 1px solid rgba(181, 87, 63, 0.3);
+          background: #e7d9c6;
+          color: var(--primary);
           font-size: 0.78rem;
           font-weight: 700;
           border-radius: 999px;
@@ -3483,15 +3627,15 @@ export default function ToolHub(
         }
 
         .resource-variant-button:hover {
-          background: #0f766e;
+          background: var(--primary);
           color: #fff;
-          border-color: #0f766e;
+          border-color: var(--primary);
         }
 
         .resource-variant-button.unavailable {
-          color: #94a3b8;
+          color: #a08a6f;
           cursor: not-allowed;
-          background: #f8fafc;
+          background: #f2e9db;
         }
 
         .specialty-chipbar {
@@ -3503,9 +3647,9 @@ export default function ToolHub(
 
         .specialty-chip {
           padding: 5px 12px;
-          border: 1px solid rgba(15, 118, 110, 0.25);
-          background: #f2f7f9;
-          color: #0f766e;
+          border: 1px solid rgba(181, 87, 63, 0.25);
+          background: #e7d9c6;
+          color: var(--primary);
           font-size: 0.78rem;
           font-weight: 600;
           border-radius: 999px;
@@ -3515,7 +3659,7 @@ export default function ToolHub(
 
         .specialty-chip:hover {
           background: #fff;
-          border-color: rgba(15, 118, 110, 0.5);
+          border-color: rgba(181, 87, 63, 0.5);
         }
 
         .specialty-chip.active {
@@ -3534,7 +3678,7 @@ export default function ToolHub(
 
         .resource-subcategory-title {
           margin: 0 0 6px;
-          color: #0f766e;
+          color: var(--primary);
           font-size: clamp(0.8rem, 1vw, 0.92rem);
           font-weight: 800;
           text-transform: uppercase;
@@ -3544,19 +3688,19 @@ export default function ToolHub(
         .resource-subcategory-list {
           margin-left: 14px;
           padding-left: 14px;
-          border-left: 1px solid #cbd5e1;
+          border-left: 1px solid var(--border);
         }
 
         .resource-title.unavailable,
         .resource-pdf-badge.unavailable {
-          color: #94a3b8;
+          color: #a08a6f;
           cursor: not-allowed;
           text-decoration: none;
         }
 
         .resource-empty {
           margin: 12px 0 0;
-          color: #64748b;
+          color: var(--muted);
           font-size: 0.95rem;
         }
 
@@ -3649,8 +3793,8 @@ export default function ToolHub(
 
       {activeTab === "patientinfo" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
-          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Pasientinformasjon</h2>
-          <p style={{ marginBottom: 22, color: '#475569' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
+          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Pasientinformasjon</h2>
+          <p style={{ marginBottom: 22, color: '#7a5f4a' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
 
           <section className="resource-chapter">
             <h3 className="resource-chapter-title">Pasientinformasjon</h3>
@@ -3693,8 +3837,8 @@ export default function ToolHub(
 
       {activeTab === "overviews" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
-          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#1f2937' }}>Oversikter</h2>
-          <p style={{ marginBottom: 22, color: '#475569' }}>Håndkort og andre oversikter.</p>
+          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Oversikter</h2>
+          <p style={{ marginBottom: 22, color: '#7a5f4a' }}>Håndkort og andre oversikter.</p>
 
           {overviewCategories.map((category) => (
             <section key={category.title} className="resource-chapter">
@@ -3717,10 +3861,10 @@ export default function ToolHub(
             top: previewPosition.top,
             width: 520,
             height: 680,
-            background: '#ffffff',
-            border: '1px solid #cbd5e1',
+            background: 'var(--panel)',
+            border: '1px solid var(--border)',
             borderRadius: 14,
-            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)',
+            boxShadow: '0 20px 40px rgba(74, 53, 39, 0.18)',
             overflow: 'hidden',
             zIndex: 50,
             opacity: 1,
@@ -3730,21 +3874,21 @@ export default function ToolHub(
         >
           <div style={{
             padding: '12px 14px',
-            borderBottom: '1px solid #e5e7eb',
+            borderBottom: '1px solid var(--border-soft)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 12,
-            background: '#f8fafc'
+            background: '#f2e9db'
           }}>
-            <strong style={{ fontSize: 14, color: '#0f172a' }}>{previewResource.title}</strong>
+            <strong style={{ fontSize: 14, color: '#3c2a1f' }}>{previewResource.title}</strong>
             <button
               type="button"
               onClick={hidePdfPreview}
               style={{
                 border: 'none',
                 background: 'transparent',
-                color: '#64748b',
+                color: 'var(--muted)',
                 cursor: 'pointer',
                 fontSize: 18,
                 lineHeight: 1

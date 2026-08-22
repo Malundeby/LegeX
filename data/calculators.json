@@ -305,7 +305,8 @@
       }
     ],
     "indication": "Canadian Cardiovascular Society (CCS) angina-klassifisering brukes hos pasienter med kjent eller mistenkt stabil koronarsykdom for å gradere hvor mye fysisk aktivitet som utløser brystsmerter. Den brukes til å objektivisere symptombyrde, følge effekt av behandling over tid, og som grunnlag for videre utredning og behandlingsvalg.",
-    "aboutTest": "Klassifiseringen deler angina inn i fire grader (I–IV) basert på aktivitetsnivået som utløser symptomer, fra ingen begrensning ved vanlig aktivitet (grad I) til symptomer i hvile (grad IV). Den ble introdusert av Canadian Cardiovascular Society i 1976 og er siden blitt en av de mest brukte funksjonelle klassifiseringene ved angina pectoris. Vurderingen er basert på pasientens egen beskrivelse og er derfor delvis subjektiv, med en viss variasjon mellom ulike undersøkere. Den erstatter ikke objektiv iskemiutredning (arbeids-EKG, bildediagnostikk), men supplerer denne ved å beskrive funksjonell påvirkning."
+    "aboutTest": "Klassifiseringen deler angina inn i fire grader (I–IV) basert på aktivitetsnivået som utløser symptomer, fra ingen begrensning ved vanlig aktivitet (grad I) til symptomer i hvile (grad IV). Den ble introdusert av Canadian Cardiovascular Society i 1976 og er siden blitt en av de mest brukte funksjonelle klassifiseringene ved angina pectoris. Vurderingen er basert på pasientens egen beskrivelse og er derfor delvis subjektiv, med en viss variasjon mellom ulike undersøkere. Den erstatter ikke objektiv iskemiutredning (arbeids-EKG, bildediagnostikk), men supplerer denne ved å beskrive funksjonell påvirkning.",
+    "nextStepPlaceholder": "Ble tidligere brukt til å styre behandling, men brukes i dag som symptomklassifisering."
   },
   {
     "id": "nyha",
@@ -348,7 +349,8 @@
       }
     ],
     "indication": "NYHA-klassifiseringen (New York Heart Association) brukes hos pasienter med kjent hjertesvikt for å gradere funksjonsbegrensning knyttet til fysisk aktivitet. Den brukes til å følge sykdomsutvikling, vurdere behandlingsrespons og som grunnlag for beslutninger om behandlingsintensitet, inkludert vurdering av enkelte device- og medikamentbehandlinger.",
-    "aboutTest": "Klassifiseringen deler hjertesviktpasienter inn i fire funksjonsklasser (I–IV) basert på symptomer som tung pust og fatigue ved ulike aktivitetsnivåer. Den har vært i bruk siden 1920-tallet og er fortsatt mye brukt klinisk og i studier til tross for sin enkelhet. Klassifiseringen er subjektiv og har vist betydelig variasjon mellom undersøkere, og korrelerer ikke alltid godt med objektive mål som ejeksjonsfraksjon eller arbeidskapasitet på tredemølletest. Den bør derfor tolkes som et supplement til, ikke en erstatning for, objektiv funksjonsvurdering."
+    "aboutTest": "Klassifiseringen deler hjertesviktpasienter inn i fire funksjonsklasser (I–IV) basert på symptomer som tung pust og fatigue ved ulike aktivitetsnivåer. Den har vært i bruk siden 1920-tallet og er fortsatt mye brukt klinisk og i studier til tross for sin enkelhet. Klassifiseringen er subjektiv og har vist betydelig variasjon mellom undersøkere, og korrelerer ikke alltid godt med objektive mål som ejeksjonsfraksjon eller arbeidskapasitet på tredemølletest. Den bør derfor tolkes som et supplement til, ikke en erstatning for, objektiv funksjonsvurdering.",
+    "nextStepPlaceholder": "Norsk veileder for hjertesvikt i allmennpraksis: https://www.legeforeningen.no/contentassets/ee690b8c98084969ba2057ba4b4fe336/2024-08-veileder-hjertesvikt-i-allmennpraksis.pdf\n\nESC 2021 guidelines for hjertesvikt: https://academic.oup.com/eurheartj/article/42/36/3599/6358045?login=false"
   },
   {
     "id": "chadsvasc",
@@ -444,9 +446,10 @@
         "color": "#f44336"
       }
     ],
-    "indication": "CHA₂DS₂-VASc-skår brukes hos pasienter med atrieflimmer for å estimere individuell risiko for hjerneslag og annen tromboembolisk hendelse. Skåren brukes til å vurdere om det er indikasjon for antikoagulasjonsbehandling, og danner grunnlag for en strukturert nytte–risiko-vurdering sammen med pasienten.",
-    "aboutTest": "Skåren summerer poeng for hjertesvikt, hypertensjon, alder, diabetes, tidligere slag/TIA, vaskulær sykdom og kjønn, og er validert i store atrieflimmer-kohorter som prediktor for slagrisiko. Nyere evidens har styrket grunnlaget for antikoagulasjon fremfor platehemming ved forhøyet skår, og det diskuteres i litteraturen om kjønn fortsatt bør telle som selvstendig risikofaktor. Skåren bør alltid sees i sammenheng med blødningsrisikovurdering (f.eks. HAS-BLED) før beslutning om antikoagulasjon tas, og erstatter ikke klinisk skjønn i det enkelte tilfellet.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "indication": "Brukes til å vurdere indikasjon for antikoagulasjonsbehandling ved atrieflimmer.",
+    "aboutTest": "Skåren gir poeng for kjente risikofaktorer for hjerneslag ved atrieflimmer og er godt validert i store pasientkohorter. En høy skår styrker indikasjonen for antikoagulasjon, men beslutningen bør alltid balanseres mot blødningsrisiko (f.eks. via HAS-BLED).",
+    "aboutTestExtra": "CHA₂DS₂-VA erstatter CHA₂DS₂-VASc fordi kjønn (Sc-en i VASc) viste seg å være en risikomodifikator og ikke en selvstendig risikofaktor for slag. Den økte slagrisikoen som tidligere ble tilskrevet kvinnelig kjønn, skyldes i hovedsak at kvinner med atrieflimmer statistisk sett er eldre og har flere andre risikofaktorer, ikke kjønnet i seg selv. Når disse faktorene er justert for, forsvinner mesteparten av kjønnsforskjellen i risiko.",
+    "nextStepPlaceholder": "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling for neste steg."
   },
   {
     "id": "hasbled",
@@ -553,8 +556,8 @@
       }
     ],
     "indication": "HAS-BLED-skår brukes hos pasienter med atrieflimmer som vurderes for eller allerede står på antikoagulasjonsbehandling, for å estimere ettårs risiko for alvorlig blødning. Den brukes til å identifisere modifiserbare blødningsrisikofaktorer og til å strukturere oppfølging, ikke til å utelukke antikoagulasjon i seg selv.",
-    "aboutTest": "Skåren inkluderer hypertensjon, unormal nyre-/leverfunksjon, tidligere slag, blødningshistorikk/-predisposisjon, labil INR, alder, samtidig bruk av legemidler som øker blødningsrisiko, og alkoholbruk. Den er validert i antikoagulerte atrieflimmer-populasjoner og korrelerer med observert blødningsrisiko. En høy skår (≥3) bør lede til tettere oppfølging og korrigering av modifiserbare faktorer, fremfor automatisk å avstå fra antikoagulasjon, siden gevinsten ved slagforebygging ofte oppveier blødningsrisikoen.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "aboutTest": "Skåren identifiserer pasienter med forhøyet blødningsrisiko ved antikoagulasjon, basert på ni kliniske faktorer. Mange av disse er modifiserbare (f.eks. ukontrollert hypertensjon, samtidig NSAID-bruk, alkohol), og en høy skår bør derfor utløse målrettede tiltak snarere enn å avstå fra behandling, siden nytten av slagforebygging ofte er større enn blødningsrisikoen.",
+    "nextStepPlaceholder": "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling for neste steg."
   },
   {
     "id": "mmrc",
@@ -604,7 +607,7 @@
     ],
     "indication": "mMRC-skalaen (modified Medical Research Council) brukes primært hos pasienter med kols for å gradere grad av tungpust basert på hvilke aktiviteter som utløser den. Den inngår som en del av GOLD-vurderingen av symptombyrde og brukes til å understøtte behandlings- og oppfølgingsbeslutninger.",
     "aboutTest": "Skalaen går fra 0 til 4, der høyere grad tilsvarer mer uttalt funksjonsbegrensning på grunn av tungpust, fra ingen besvær ved anstrengelse (grad 0) til for tungpustet til å forlate huset eller tungpustet ved på- og avkledning (grad 4). Den er enkel og mye brukt i klinisk praksis og forskning, og skåren korrelerer med både livskvalitet og prognose ved kols. mMRC fanger imidlertid ikke opp hele symptombyrden ved kols like bredt som mer omfattende instrumenter som CAT, og bør derfor gjerne kombineres med disse.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "nextStepPlaceholder": "Grad 0–1 – Lite symptomatisk\nTungpust påvirker hverdagen i liten grad. Fortsett gjeldende behandling og oppfølging.\n\nGrad 2–4 – Mer symptomatisk\nTungpust påvirker aktivitet og funksjon betydelig. Vurder om behandlingen bør intensiveres, og se skåren i sammenheng med CAT og eksaserbasjonshistorikk (GOLD ABE-gruppering).\nVurder ikke-medikamentelle tiltak som lungerehabilitering ved grad ≥2.\n\nKombiner alltid med CAT for et mer helhetlig bilde av symptombyrde."
   },
   {
     "id": "cat",
@@ -742,7 +745,7 @@
     ],
     "indication": "COPD Assessment Test (CAT) er et pasientutfylt spørreskjema som brukes hos kolspasienter for å kartlegge hvordan sykdommen påvirker dagliglivet og velvære. Den brukes sammen med mMRC og eksaserbasjonshistorikk som del av GOLD-vurderingen, og til å følge endring i symptombyrde over tid.",
     "aboutTest": "Testen består av åtte spørsmål (hoste, slim, tetthet i brystet, tungpust ved trapp/bakke, aktivitetsbegrensning i hjemmet, trygghet ved å forlate hjemmet, søvn og energinivå) og gir en samleskår fra 0 til 40. Den er validert i flere land og korrelerer godt med etablerte livskvalitetsmål som St. George's Respiratory Questionnaire. CAT måler ikke lungefunksjon direkte og bør derfor tolkes sammen med spirometri og øvrig klinisk vurdering.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "nextStepPlaceholder": "Lav symptombelastning (<10): Kols har foreløpig begrenset innvirkning på hverdagen. Fortsett nåværende behandling og rutinemessig oppfølging.\n\nModerat symptombelastning (10–20): Vurder om inhalasjonsteknikk og etterlevelse er optimal, og om ikke-medikamentelle tiltak (røykeslutt, fysisk aktivitet, lungerehabilitering) er iverksatt.\n\nHøy til svært høy symptombelastning (>20): Symptombyrden er betydelig og bør føre til en grundigere gjennomgang av behandlingsplanen, gjerne i kombinasjon med mMRC-grad og eksaserbasjonshistorikk (GOLD ABE-gruppering). Vurder henvisning til lungelege ved vedvarende høy skår til tross for optimalisert behandling."
   },
   {
     "id": "crb65",
@@ -805,7 +808,7 @@
     ],
     "indication": "CRB-65 brukes til å vurdere alvorlighetsgrad og mortalitetsrisiko ved samfunnservervet pneumoni, særlig i allmennpraksis eller andre settinger uten umiddelbar tilgang til blodprøvesvar (urea). Den brukes til å understøtte beslutning om pasienten kan behandles hjemme eller bør henvises til sykehus.",
     "aboutTest": "Skåren er en forenklet variant av CURB-65 uten ureakomponenten, og inkluderer forvirring, respirasjonsfrekvens, blodtrykk og alder ≥65 år. Den er validert for bruk i primærhelsetjenesten som et raskt triageverktøy når laboratoriesvar ikke er tilgjengelig. Fordi ureakomponenten er utelatt, er CRB-65 noe mindre presis enn CURB-65, og bør ikke stå alene ved usikkerhet om alvorlighetsgrad — klinisk skjønn og eventuell henvisning til videre vurdering er fortsatt nødvendig.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "nextStepPlaceholder": "0 poeng – Lav risiko\nHjemmebehandling kan vanligvis vurderes, forutsatt at det ikke foreligger andre alvorlighetstegn (hypoksi, betydelig komorbiditet, sosiale forhold som vanskeliggjør hjemmebehandling).\n\n1–2 poeng – Moderat risiko\nVurder individuelt om pasienten kan behandles hjemme med tett oppfølging, eller bør innlegges – avhengig av komorbiditet, allmenntilstand og sosiale forhold.\n\n3–4 poeng – Høy risiko\nHasteinnleggelse må vurderes på grunn av betydelig mortalitetsrisiko.\n\nSkåren erstatter ikke klinisk skjønn – vurder alltid oksygenmetning, komorbiditet og sosiale forhold."
   },
   {
     "id": "act",
@@ -894,7 +897,7 @@
     ],
     "indication": "Asthma Control Test (ACT) er et pasientutfylt spørreskjema som brukes hos pasienter fra 12 år og oppover for å vurdere grad av astmakontroll de siste fire ukene. Det brukes i allmennpraksis og spesialisthelsetjeneste for å understøtte beslutninger om opp- eller nedtrapping av astmabehandling.",
     "aboutTest": "Testen består av fem spørsmål om symptomer, bruk av anfallsmedisin og påvirkning på daglig funksjon, og gir en samleskår fra 5 til 25. Lavere skår indikerer dårligere kontrollert astma. Testen er validert mot klinikervurdering og lungefunksjonsmål, og er mye brukt som et raskt, standardisert supplement i oppfølging av astmapasienter. Den erstatter ikke spirometri eller PEF-måling, men gir et strukturert bilde av pasientopplevd symptombyrde.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "nextStepPlaceholder": "Skår ≥20 – Godt kontrollert astma\nFortsett gjeldende behandling. Vurder nedtrapping ved stabil kontroll over tid, i tråd med trappetrinnsmodellen.\n\nSkår <20 – Ikke godt kontrollert astma\nKartlegg etterlevelse og inhalasjonsteknikk før behandlingen trappes opp.\nVurder opptrapping av behandling og/eller henvisning til lungelege ved manglende bedring til tross for optimalisert behandling.\n\nSuppler med spirometri/PEF-måling ved usikkerhet om alvorlighetsgrad."
   },
   {
     "id": "act-child",
@@ -1008,7 +1011,7 @@
     ],
     "indication": "Childhood Asthma Control Test (c-ACT) brukes hos barn i alderen 4–11 år for å vurdere grad av astmakontroll, og kombinerer barnets egen rapportering med foresattes vurdering. Den brukes til å understøtte behandlingsbeslutninger hos yngre pasienter der selvrapportering alene kan være mindre pålitelig.",
     "aboutTest": "Skjemaet kombinerer spørsmål besvart av barnet selv (med enkel visuell skala) og spørsmål besvart av foresatte, og gir en samlet skår som gjenspeiler symptombyrde og funksjonspåvirkning siste fire uker. Det er utviklet som en tilpasning av den voksne ACT-testen for å fange opp astmakontroll hos yngre barn som har begrenset evne til å rapportere symptomer presist. Testen er ment som et supplement til, ikke en erstatning for, klinisk vurdering og eventuell lungefunksjonstesting.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "nextStepPlaceholder": "Skår ≥20 – Godt kontrollert astma\nFortsett gjeldende behandling. Vurder nedtrapping ved stabil, godt kontrollert astma over tid, i tråd med gjeldende retningslinjer.\n\nSkår <20 – Ikke godt kontrollert astma\nVurder opptrapping av behandling, og kartlegg etterlevelse, inhalasjonsteknikk og eventuelle utløsende faktorer (allergener, røyking i hjemmet).\nVurder henvisning til barnelege/spesialist ved manglende bedring til tross for optimalisert behandling.\n\nSkåren bør ses i sammenheng med anfallshistorikk og eventuell lungefunksjonstesting der dette er gjennomførbart hos barnet."
   },
   {
     "id": "fib4",
@@ -1071,7 +1074,7 @@
   },
   {
     "id": "ipss",
-    "name": "💧 IPSS (prostata)",
+    "name": "💧 IPSS-8 (prostata)",
     "description": "International Prostate Symptom Score. Vannlatingsplager ved BPH.",
     "pdfUrl": "/pdfs/Utredningsskjema-IPSS.pdf",
     "layout": "horizontal",
@@ -1166,6 +1169,29 @@
           "4 – 4 ganger",
           "5 – 5 eller flere"
         ]
+      },
+      {
+        "id": "q8",
+        "label": "Livskvalitet: Hvordan ville du følt det hvis du måtte leve resten av livet med vannlatingsplagene slik de er nå?",
+        "type": "select",
+        "options": [
+          "0 – Strålende",
+          "1 – Fornøyd",
+          "2 – Stort sett fornøyd",
+          "3 – Blandet",
+          "4 – Stort sett misfornøyd",
+          "5 – Ulykkelig",
+          "6 – Forferdelig"
+        ],
+        "scores": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
       }
     ],
     "thresholds": [
@@ -1185,9 +1211,9 @@
         "color": "#f44336"
       }
     ],
-    "indication": "International Prostate Symptom Score (IPSS) brukes hos menn med mistenkt benign prostatahyperplasi for å kvantifisere alvorlighetsgrad av vannlatingsplager. Skåren brukes til å veilede valg mellom aktiv observasjon, medikamentell behandling og kirurgi, samt til å følge behandlingseffekt over tid.",
-    "aboutTest": "Skjemaet består av syv symptomspørsmål (blant annet ufullstendig tømming, hyppig vannlating, nykturi og svak stråle) pluss ett tilleggsspørsmål om livskvalitet, og gir en samleskår fra 0 til 35. Det er utviklet av American Urological Association og er den mest brukte standardiserte symptomskåren ved LUTS/BPH internasjonalt. IPSS korrelerer med opplevd symptombyrde, men ikke direkte med prostatavolum eller urodynamisk obstruksjonsgrad, og bør derfor kombineres med annen utredning som rektal eksplorasjon, uroflowmetri og PSA.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "indication": "Kvantifiserer alvorlighetsgrad av vannlatingsplager ved mistenkt benign prostatahyperplasi.",
+    "aboutTest": "De sju symptomspørsmålene dekker både lagrings- og tømmingssymptomer (hyppig vannlating og nykturi versus ufullstendig tømming og svak stråle), og gir samlet et bilde av hvor mye plagene påvirker hverdagen. Livskvalitetsspørsmålet på slutten fanger opp pasientens egen opplevelse, uavhengig av symptomskåren. IPSS sier ikke noe om prostatavolum eller obstruksjonsgrad alene.",
+    "nextStepPlaceholder": "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling for neste steg."
   },
   {
     "id": "wells-dvt",
@@ -1409,24 +1435,19 @@
     ],
     "thresholds": [
       {
-        "max": 1.5,
-        "label": "Lav sannsynlighet",
+        "max": 4,
+        "label": "LE lite sannsynlig",
         "color": "#4caf50"
       },
       {
-        "max": 6,
-        "label": "Moderat sannsynlighet",
-        "color": "#ff9800"
-      },
-      {
         "max": 999,
-        "label": "Høy sannsynlighet",
+        "label": "LE sannsynlig",
         "color": "#f44336"
       }
     ],
     "indication": "Wells' kriterier for lungeemboli brukes hos pasienter med mistenkt lungeemboli for å stratifisere pretest-sannsynlighet og styre videre utredning — fra D-dimer alene til CT-angiografi av lungearteriene. Verktøyet er ment å brukes når klinisk mistanke om lungeemboli allerede foreligger.",
     "aboutTest": "Skåren vekter kliniske tegn på DVT, alternativ diagnose mindre sannsynlig enn LE, takykardi, nylig immobilisering/kirurgi, tidligere DVT/LE, hemoptyse og malignitet, og deler pasienter inn i «LE lite sannsynlig» versus «LE sannsynlig» (to-nivå-modell, som nå foretrekkes fremfor tre-nivå-modellen). Ved lav sannsynlighet kan en negativ D-dimer (gjerne aldersjustert hos pasienter over 50 år) bidra til å utelukke lungeemboli uten videre bildediagnostikk, mens pasienter med høyere sannsynlighet bør utredes videre med bildediagnostikk. Verktøyet skal ikke erstatte klinisk vurdering eller forsinke stabilisering av ustabile pasienter.",
-    "nextStepPlaceholder": "Neste steg-veiledning for dette verktøyet er under utarbeidelse."
+    "nextStepPlaceholder": "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling for neste steg."
   },
   {
     "id": "homa-ir",
@@ -1524,7 +1545,8 @@
         "color": "#4caf50"
       }
     ],
-    "indication": "Vurdering av gjenværende betacellefunksjon.",
+    "indication": "Brukes primært for å vurdere om en diabetespasient trenger insulinbehandling, men har også andre nytteområder (se eksempler).",
+    "aboutTest": "C-peptid dannes når proinsulin spaltes til insulin, og skilles ut i blodet i like store mengder. Fordi C-peptid har lengre halveringstid (20–30 min) enn insulin (5–8 min) og ikke fjernes av leveren ved første passasje, gir det et mer stabilt mål på endogen insulinproduksjon enn insulin målt direkte.",
     "nextStepPlaceholder": "Fyll ut skjemaet over for å få en skåre-spesifikk anbefaling for neste steg."
   },
   {
@@ -1594,6 +1616,163 @@
     "nextStepPlaceholder": "Fyll ut skjemaet over for å få en preparatspesifikk doseringsanbefaling."
   },
   {
+    "id": "doac-score",
+    "name": "🩸 DOAC-score",
+    "description": "Estimerer individuell blødningsrisiko hos atrieflimmerpasienter som står på DOAK.",
+    "fields": [
+      {
+        "id": "age",
+        "label": "Alder",
+        "type": "select",
+        "options": [
+          "<65",
+          "65–69",
+          "70–74",
+          "75–79",
+          "≥80"
+        ],
+        "scores": [
+          0,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "id": "renal",
+        "label": "CrCl/eGFR (mL/min)",
+        "type": "select",
+        "options": [
+          ">60",
+          "30–60",
+          "<30"
+        ],
+        "scores": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "id": "underweight",
+        "label": "Undervekt (BMI <18,5)",
+        "type": "select",
+        "options": [
+          "Nei",
+          "Ja"
+        ],
+        "scores": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "stroke-history",
+        "label": "Tidligere slag/TIA/embolisme",
+        "type": "select",
+        "options": [
+          "Nei",
+          "Ja"
+        ],
+        "scores": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "diabetes",
+        "label": "Diabetes",
+        "type": "select",
+        "options": [
+          "Nei",
+          "Ja"
+        ],
+        "scores": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "hypertension",
+        "label": "Hypertensjon",
+        "type": "select",
+        "options": [
+          "Nei",
+          "Ja"
+        ],
+        "scores": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "antiplatelet",
+        "label": "Platehemmerbruk",
+        "type": "select",
+        "options": [
+          "Ingen",
+          "Acetylsalisylsyre",
+          "Dobbel platehemming"
+        ],
+        "scores": [
+          0,
+          2,
+          3
+        ]
+      },
+      {
+        "id": "nsaid",
+        "label": "NSAID-bruk",
+        "type": "select",
+        "options": [
+          "Nei",
+          "Ja"
+        ],
+        "scores": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "bleeding-history",
+        "label": "Tidligere blødning",
+        "type": "select",
+        "options": [
+          "Nei",
+          "Ja"
+        ],
+        "scores": [
+          0,
+          3
+        ]
+      },
+      {
+        "id": "liver-disease",
+        "label": "Leversykdom (ASAT/ALAT ≥3×ULN, ALP ≥2×ULN, eller cirrhose)",
+        "type": "select",
+        "options": [
+          "Nei",
+          "Ja"
+        ],
+        "scores": [
+          0,
+          2
+        ]
+      }
+    ],
+    "thresholds": [
+      {
+        "max": 999,
+        "label": "Se sum-skår",
+        "color": "#0891b2"
+      }
+    ],
+    "indication": "Brukes for å estimere individuell blødningsrisiko hos atrieflimmerpasienter som behandles med DOAK, som supplement til HAS-BLED ved beslutning om antikoagulasjon.",
+    "aboutTest": "DOAC-scoren summerer poeng for alder, nyrefunksjon, undervekt, tidligere slag/TIA/embolisme, diabetes, hypertensjon, platehemmerbruk, NSAID-bruk, tidligere blødning og leversykdom. Den er utviklet og validert spesifikt for pasienter på DOAK (i motsetning til HAS-BLED, som opprinnelig ble validert for warfarin), og har vist bedre prediktiv presisjon for blødningsrisiko i valideringskohorter.",
+    "nextStepPlaceholder": "Fyll ut skjemaet over for å få sumskåren."
+  },
+  {
     "id": "psa-age-adjusted",
     "name": "🧪 Aldersjustert PSA",
     "description": "Aldersjustert PSA-referanseverdi. OBS: PSA-stigning ved bruk av 5-alfa-reduktasehemmer (finasterid/dutasterid) - PSA-verdi skal dobles for korrekt tolkning.",
@@ -1635,8 +1814,6 @@
         "color": "#0891b2"
       }
     ],
-    "indication": "Aldersjusterte PSA-referanseområder brukes ved tolkning av PSA-verdi hos menn som utredes for risiko for prostatakreft, for å ta høyde for den fysiologiske økningen i PSA med alder (i hovedsak knyttet til benign prostatahyperplasi). Formålet er å redusere unødvendige biopsier hos eldre menn samtidig som sensitiviteten opprettholdes hos yngre menn.",
-    "aboutTest": "Aldersjusterte grenseverdier er basert på epidemiologiske studier av PSA-fordeling i normalbefolkningen ved ulik alder, og brukes som et supplement til (ikke erstatning for) en samlet klinisk vurdering. De er ikke universelt innført i alle retningslinjer, og bør tolkes sammen med fri/total PSA-ratio, PSA-utvikling over tid (PSA-hastighet/-tetthet) og øvrig klinisk bilde. Beslutning om biopsi bør alltid tas i en delt beslutningsprosess med pasienten.",
     "nextStepPlaceholder": "Fyll ut skjemaet over for å få aldersjusterte referanseverdier og vurdering."
   },
   {
