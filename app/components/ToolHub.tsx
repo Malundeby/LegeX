@@ -1926,29 +1926,71 @@ export default function ToolHub(
                     </>
                   )}
                 </div>
-                <div 
-                  style={{ 
-                    marginTop: 12,
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 12
-                  }}
-                >
-                  {activeTool.questions.map((q, i) => (
-                    <div key={q.id} className="question" style={{ fontSize: 13 }}>
-                      <strong style={{ fontSize: 13 }}>{i + 1}. {q.text}</strong>
-                      <div className="options" style={{ fontSize: 12 }}>
-                        {q.options.map((o, oi) => (
-                          <label key={o.label} style={{ fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                            <span><input type="radio" name={q.id} checked={answers[q.id]?.optionIndex === oi} onChange={() => handleAnswerChange(q.id, o.score, oi)} /> {o.label}</span>
-                            <span style={{ fontWeight: 600, color: 'var(--muted)' }}>{o.score > 0 ? `+${o.score}` : o.score}</span>
-                          </label>
-                        ))}
+                <div style={{ marginTop: 12, maxWidth: 1200 }}>
+                  {activeTool.questions.map((q, i) => {
+                    const prevPart = i > 0 ? activeTool.questions[i - 1].part : undefined;
+                    const showPartHeader = q.part && q.part !== prevPart;
+                    return (
+                    <div key={q.id}>
+                      {showPartHeader && (
+                        <div style={{
+                          marginTop: i > 0 ? 28 : 4,
+                          marginBottom: 14,
+                          paddingBottom: 6,
+                          borderBottom: '2px solid var(--border-soft)'
+                        }}>
+                          <h3 style={{ fontSize: 15, fontWeight: 600, color: '#0891b2', margin: 0 }}>
+                            Del {q.part!.toUpperCase()}
+                          </h3>
+                        </div>
+                      )}
+                    <div style={{ marginBottom: 20 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>{i + 1}. {q.text}</div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'nowrap',
+                          gap: 8,
+                          width: '100%',
+                          overflowX: 'auto',
+                          paddingBottom: 8
+                        }}
+                      >
+                        {q.options.map((o, oi) => {
+                          const isActive = answers[q.id]?.optionIndex === oi;
+                          return (
+                            <button
+                              key={o.label}
+                              type="button"
+                              onClick={() => handleAnswerChange(q.id, o.score, oi)}
+                              style={{
+                                padding: '8px 12px',
+                                border: isActive ? '2px solid #0891b2' : '1px solid #d9c6ab',
+                                background: isActive ? '#0891b2' : 'var(--panel)',
+                                color: isActive ? 'var(--primary-text)' : '#4a3527',
+                                fontWeight: isActive ? 600 : 400,
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                fontSize: 12,
+                                textAlign: 'center',
+                                transition: 'all 0.2s ease',
+                                boxShadow: isActive ? '0 2px 8px rgba(8, 145, 178, 0.25)' : 'none',
+                                flex: '1 1 auto',
+                                minWidth: 'fit-content',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {o.label}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-                  ))}
+                    </div>
+                    );
+                  })}
                 </div>
-                
+
                 {/* Visual score indicator - always show for scoring tools */}
                 {activeTool && (
                   <div style={{ margin: '20px 0' }}>
