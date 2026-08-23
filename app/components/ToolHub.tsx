@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState, useEffect, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useMemo, useState, useEffect, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import ComboBox from "./ComboBox";
 import DatePickerField from "./DatePickerField";
 import ModernWidgetDashboard from "./ModernWidgetDashboard";
@@ -75,6 +75,22 @@ interface ResourceCategory {
 interface ResourceSubcategory {
   title: string;
   items: ResourceCard[];
+}
+
+interface ResourcePdfGridItem {
+  key: string;
+  title: string;
+  subcategory: string;
+  resource: ResourceCard;
+}
+
+interface SearchEntry {
+  id: string;
+  tabKey: TabKey;
+  title: string;
+  description?: string;
+  tags: string[];
+  action: () => void;
 }
 
 interface PreviewPosition {
@@ -638,6 +654,7 @@ export default function ToolHub(
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [activeSpecialty, setActiveSpecialty] = useState<string | null>(null);
+  const [resourceViewMode, setResourceViewMode] = useState<"list" | "grid">("list");
   const [activePatientInfoSpecialty, setActivePatientInfoSpecialty] = useState<string | null>(null);
   const [linkBoxOrder, setLinkBoxOrder] = useState<string[]>([]);
   const [draggedBox, setDraggedBox] = useState<string | null>(null);
@@ -923,6 +940,32 @@ export default function ToolHub(
         ...category,
         items: [...category.items].sort((left, right) => left.title.localeCompare(right.title, "nb"))
       }));
+  }, [utredningsverktoySubcategories]);
+
+  const resourcePdfGridItems = useMemo<ResourcePdfGridItem[]>(() => {
+    const items: ResourcePdfGridItem[] = [];
+    utredningsverktoySubcategories.forEach((subcategory) => {
+      subcategory.items.forEach((item) => {
+        if (item.variants && item.variants.length > 0) {
+          item.variants.forEach((variant) => {
+            items.push({
+              key: `${subcategory.title}-${item.title}-${variant.label}`,
+              title: `${item.title} – ${variant.label}`,
+              subcategory: subcategory.title,
+              resource: { title: `${item.title} – ${variant.label}`, description: item.description, url: variant.url }
+            });
+          });
+          return;
+        }
+        items.push({
+          key: `${subcategory.title}-${item.title}`,
+          title: item.title,
+          subcategory: subcategory.title,
+          resource: item
+        });
+      });
+    });
+    return items;
   }, [utredningsverktoySubcategories]);
 
   const overviewCategories = useMemo<ResourceCategory[]>(() => [
@@ -1362,6 +1405,26 @@ export default function ToolHub(
     }
   }, [linkBoxOrder.length]);
 
+  // Load/persist the Verktøy view mode (rutevisning/rulletabell) per browser
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("toolhub-resource-view-mode");
+      if (stored === "grid" || stored === "list") {
+        setResourceViewMode(stored);
+      }
+    } catch {
+      // localStorage unavailable — keep default
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("toolhub-resource-view-mode", resourceViewMode);
+    } catch {
+      // localStorage unavailable — ignore
+    }
+  }, [resourceViewMode]);
+
   // Get ordered linkBoxes with custom labels
   const linkBoxes = useMemo(() => {
     const order = linkBoxOrder.length > 0 ? linkBoxOrder : defaultLinkBoxes.map((box) => box.id);
@@ -1439,7 +1502,20 @@ export default function ToolHub(
       if (!q.part) return;
       partScores[q.part] = (partScores[q.part] ?? 0) + (answers[q.id]?.score ?? 0);
     });
-    return { totalScore, maxScore, thresholdLabel: threshold?.label ?? "Uklassifisert", thresholdColor, partScores };
+    let thresholdLabel = threshold?.label ?? "Uklassifisert";
+    if (activeTool.id === "eular-pmr-2012") {
+      const mandatoryQuestionIds = ["pmr-mandatory-age", "pmr-mandatory-shoulder", "pmr-mandatory-crp"];
+      const mandatoryUnmet = mandatoryQuestionIds.some((qid) => {
+        const answer = answers[qid];
+        if (!answer) return true;
+        const question = activeTool.questions.find((q) => q.id === qid);
+        return question?.options[answer.optionIndex]?.label === "Nei";
+      });
+      if (mandatoryUnmet) {
+        thresholdLabel = "Alle obligate kriterier er ikke møtt. Vær skeptisk til diagnosen.";
+      }
+    }
+    return { totalScore, maxScore, thresholdLabel, thresholdColor, partScores };
   }, [activeTool, answers, manualScore]);
 
   const activeScoreTier = activeTool && scoreSummary
@@ -1682,6 +1758,191 @@ export default function ToolHub(
     setActiveTab(tab);
   };
 
+  const searchIndex = useMemo<SearchEntry[]>(() => {
+    const entries: SearchEntry[] = [];
+
+    sortedTools.forEach((tool) => {
+      entries.push({
+        id: `tool-${tool.id}`,
+        tabKey: "tools",
+        title: tool.name,
+        description: tool.description,
+        tags: [],
+        action: () => {
+          handleTabChange("tools");
+          handleToolChange(tool.id);
+        }
+      });
+    });
+
+    sortedCalcs.forEach((calc) => {
+      entries.push({
+        id: `calc-${calc.id}`,
+        tabKey: "tools",
+        title: calc.name,
+        description: calc.description,
+        tags: [],
+        action: () => {
+          handleTabChange("tools");
+          handleCalcChange(calc.id);
+        }
+      });
+    });
+
+    defaultLinkBoxes.forEach((box) => {
+      box.items.forEach((item) => {
+        entries.push({
+          id: `link-${item.id}`,
+          tabKey: "guides",
+          title: item.label,
+          description: box.title,
+          tags: [box.title],
+          action: () => {
+            handleTabChange("guides");
+            window.open(item.url, "_blank", "noopener,noreferrer");
+          }
+        });
+      });
+    });
+
+    utredningsverktoySubcategories.forEach((subcategory) => {
+      subcategory.items.forEach((item) => {
+        if (item.variants && item.variants.length > 0) {
+          item.variants.forEach((variant) => {
+            entries.push({
+              id: `resource-${subcategory.title}-${item.title}-${variant.label}`,
+              tabKey: "resources",
+              title: `${item.title} – ${variant.label}`,
+              description: item.description,
+              tags: [subcategory.title],
+              action: () => {
+                handleTabChange("resources");
+                setActiveSpecialty(subcategory.title);
+                window.open(variant.url, "_blank", "noopener,noreferrer");
+              }
+            });
+          });
+          return;
+        }
+        entries.push({
+          id: `resource-${subcategory.title}-${item.title}`,
+          tabKey: "resources",
+          title: item.title,
+          description: item.description,
+          tags: [subcategory.title],
+          action: () => {
+            handleTabChange("resources");
+            setActiveSpecialty(subcategory.title);
+            if (item.url !== "#") {
+              window.open(item.url, "_blank", "noopener,noreferrer");
+            }
+          }
+        });
+      });
+    });
+
+    patientInfoSubcategories.forEach((subcategory) => {
+      subcategory.items.forEach((item) => {
+        if (item.variants && item.variants.length > 0) {
+          item.variants.forEach((variant) => {
+            entries.push({
+              id: `patientinfo-${subcategory.title}-${item.title}-${variant.label}`,
+              tabKey: "patientinfo",
+              title: `${item.title} – ${variant.label}`,
+              description: item.description,
+              tags: [subcategory.title],
+              action: () => {
+                handleTabChange("patientinfo");
+                setActivePatientInfoSpecialty(subcategory.title);
+                window.open(variant.url, "_blank", "noopener,noreferrer");
+              }
+            });
+          });
+          return;
+        }
+        entries.push({
+          id: `patientinfo-${subcategory.title}-${item.title}`,
+          tabKey: "patientinfo",
+          title: item.title,
+          description: item.description,
+          tags: [subcategory.title],
+          action: () => {
+            handleTabChange("patientinfo");
+            setActivePatientInfoSpecialty(subcategory.title);
+            if (item.url !== "#") {
+              window.open(item.url, "_blank", "noopener,noreferrer");
+            }
+          }
+        });
+      });
+    });
+
+    overviewCategories.forEach((category) => {
+      category.items.forEach((item) => {
+        entries.push({
+          id: `overview-${category.title}-${item.title}`,
+          tabKey: "overviews",
+          title: item.title,
+          description: item.description,
+          tags: [category.title],
+          action: () => {
+            handleTabChange("overviews");
+            if (item.url !== "#") {
+              window.open(item.url, "_blank", "noopener,noreferrer");
+            }
+          }
+        });
+      });
+    });
+
+    return entries;
+  }, [sortedTools, sortedCalcs, utredningsverktoySubcategories, patientInfoSubcategories, overviewCategories]);
+
+  const normalizeSearchText = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const searchResults = useMemo(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return [];
+    const words = normalizeSearchText(trimmed).split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
+
+    return searchIndex.filter((entry) => {
+      const haystack = normalizeSearchText([entry.title, entry.description ?? "", ...entry.tags].join(" "));
+      return words.every((word) => haystack.includes(word));
+    });
+  }, [searchIndex, searchQuery]);
+
+  const groupedSearchResults = useMemo(() => {
+    const groups = new Map<TabKey, SearchEntry[]>();
+    searchResults.forEach((entry) => {
+      if (!groups.has(entry.tabKey)) groups.set(entry.tabKey, []);
+      groups.get(entry.tabKey)!.push(entry);
+    });
+    return tabOrder
+      .filter((tabKey) => groups.has(tabKey))
+      .map((tabKey) => ({ tabKey, label: tabs[tabKey], items: groups.get(tabKey)! }));
+  }, [searchResults]);
+
+  const handleSelectSearchResult = (entry: SearchEntry) => {
+    entry.action();
+    setSearchQuery("");
+    setShowSearch(false);
+  };
+
+  const handleSearchInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && searchResults.length > 0) {
+      handleSelectSearchResult(searchResults[0]);
+    }
+    if (event.key === "Escape") {
+      setSearchQuery("");
+      setShowSearch(false);
+    }
+  };
+
   const handleCopySpecialCalculatorText = () => {
     if (calcTab === "date") {
       if (!dateCalcResult) return;
@@ -1739,14 +2000,54 @@ export default function ToolHub(
       </div>
       {showSearch && (
         <div className="tool-search">
-          <input
-            className="tool-search-input"
-            type="text"
-            placeholder="Søk etter verktøy..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
-          />
+          <div className="tool-search-input-wrap">
+            <input
+              className="tool-search-input"
+              type="text"
+              placeholder="Søk etter navn, beskrivelse eller kategori..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchInputKeyDown}
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="tool-search-clear"
+                onClick={() => setSearchQuery("")}
+                aria-label="Tøm søkefelt"
+                title="Tøm søkefelt"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {searchQuery.trim() && (
+            <div className="tool-search-dropdown">
+              {groupedSearchResults.length === 0 ? (
+                <div className="tool-search-empty">Ingen treff for &quot;{searchQuery.trim()}&quot;</div>
+              ) : (
+                groupedSearchResults.map((group) => (
+                  <div key={group.tabKey} className="tool-search-group">
+                    <div className="tool-search-group-title">{group.label}</div>
+                    {group.items.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className="tool-search-result"
+                        onClick={() => handleSelectSearchResult(entry)}
+                      >
+                        <span className="tool-search-result-title">{entry.title}</span>
+                        {entry.description && (
+                          <span className="tool-search-result-desc">{entry.description}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1947,7 +2248,12 @@ export default function ToolHub(
                     <div style={{ marginBottom: 20 }}>
                       <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>{i + 1}. {q.text}</div>
                       <div
-                        style={{
+                        style={activeTool.id === 'ciwa-ar' ? {
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 8,
+                          width: '100%'
+                        } : {
                           display: 'flex',
                           flexWrap: 'nowrap',
                           gap: 8,
@@ -1975,7 +2281,7 @@ export default function ToolHub(
                                 textAlign: 'center',
                                 transition: 'all 0.2s ease',
                                 boxShadow: isActive ? '0 2px 8px rgba(8, 145, 178, 0.25)' : 'none',
-                                flex: '1 1 auto',
+                                flex: activeTool.id === 'ciwa-ar' ? '0 1 auto' : '1 1 auto',
                                 minWidth: 'fit-content',
                                 whiteSpace: 'nowrap'
                               }}
@@ -3495,8 +3801,20 @@ export default function ToolHub(
 
       {activeTab === "resources" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
-          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Verktøy</h2>
-          <p style={{ marginBottom: 22, color: '#7a5f4a' }}>Utredningsverktøy og skjemaressurser.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Verktøy</h2>
+              <p style={{ marginBottom: 22, color: '#7a5f4a' }}>Utredningsverktøy og skjemaressurser.</p>
+            </div>
+            <button
+              type="button"
+              className="tool-view-button"
+              onClick={() => setResourceViewMode(resourceViewMode === "grid" ? "list" : "grid")}
+              title={resourceViewMode === "grid" ? "Bytt til rulletabell" : "Bytt til rutevisning"}
+            >
+              {resourceViewMode === "grid" ? "☰ Rulletabell" : "▦ Rutevisning"}
+            </button>
+          </div>
 
           {resourceCategories.map((category) => {
             return (
@@ -3524,18 +3842,50 @@ export default function ToolHub(
                         </button>
                       ))}
                     </div>
-                    {utredningsverktoySubcategories
-                      .filter((subcategory) => activeSpecialty === null || subcategory.title === activeSpecialty)
-                      .map((subcategory) => (
-                        <div key={subcategory.title} className="resource-subcategory">
-                          <h4 className="resource-subcategory-title">{subcategory.title}</h4>
-                          <div className="resource-subcategory-list">
-                            {subcategory.items.map((resource) =>
-                              renderResourceRow(resource, `${category.title}-${subcategory.title}-${resource.title}`)
-                            )}
+                    {resourceViewMode === "grid" ? (
+                      <div className="resource-pdf-grid">
+                        {resourcePdfGridItems
+                          .filter((item) => activeSpecialty === null || item.subcategory === activeSpecialty)
+                          .map((item) => {
+                            const canOpen = item.resource.url !== "#";
+                            return canOpen ? (
+                              <a
+                                key={item.key}
+                                href={item.resource.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="resource-pdf-grid-card"
+                                onMouseEnter={(event) => schedulePdfPreview(item.resource, event.clientX, event.clientY)}
+                                onMouseMove={(event) => updatePreviewCursor(event.clientX, event.clientY)}
+                                onMouseLeave={hidePdfPreview}
+                              >
+                                <span className="resource-pdf-grid-icon" aria-hidden="true">📄</span>
+                                <span className="resource-pdf-grid-title">{item.title}</span>
+                                <span className="resource-pdf-grid-sub">{item.subcategory}</span>
+                              </a>
+                            ) : (
+                              <span key={item.key} className="resource-pdf-grid-card unavailable">
+                                <span className="resource-pdf-grid-icon" aria-hidden="true">📄</span>
+                                <span className="resource-pdf-grid-title">{item.title}</span>
+                                <span className="resource-pdf-grid-sub">{item.subcategory}</span>
+                              </span>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      utredningsverktoySubcategories
+                        .filter((subcategory) => activeSpecialty === null || subcategory.title === activeSpecialty)
+                        .map((subcategory) => (
+                          <div key={subcategory.title} className="resource-subcategory">
+                            <h4 className="resource-subcategory-title">{subcategory.title}</h4>
+                            <div className="resource-subcategory-list">
+                              {subcategory.items.map((resource) =>
+                                renderResourceRow(resource, `${category.title}-${subcategory.title}-${resource.title}`)
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                    )}
                   </div>
                 ) : category.items.length > 0 ? (
                   <div>
@@ -3738,6 +4088,63 @@ export default function ToolHub(
           color: #a08a6f;
           cursor: not-allowed;
           text-decoration: none;
+        }
+
+        .resource-pdf-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .resource-pdf-grid-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 6px;
+          padding: 16px 12px;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          background: var(--panel);
+          text-decoration: none;
+          color: var(--heading);
+          transition: all 0.2s ease;
+          box-shadow: 0 6px 12px rgba(74, 53, 39, 0.06);
+        }
+
+        .resource-pdf-grid-card:hover {
+          border-color: rgba(181, 87, 63, 0.4);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 18px rgba(74, 53, 39, 0.12);
+        }
+
+        .resource-pdf-grid-card.unavailable {
+          color: #a08a6f;
+          cursor: not-allowed;
+        }
+
+        .resource-pdf-grid-card.unavailable:hover {
+          transform: none;
+          box-shadow: 0 6px 12px rgba(74, 53, 39, 0.06);
+        }
+
+        .resource-pdf-grid-icon {
+          font-size: 26px;
+        }
+
+        .resource-pdf-grid-title {
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 1.25;
+        }
+
+        .resource-pdf-grid-sub {
+          font-size: 10.5px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--muted);
         }
 
         .resource-empty {
