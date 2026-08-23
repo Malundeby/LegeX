@@ -656,6 +656,7 @@ export default function ToolHub(
   const [activeSpecialty, setActiveSpecialty] = useState<string | null>(null);
   const [resourceViewMode, setResourceViewMode] = useState<"list" | "grid">("list");
   const [activePatientInfoSpecialty, setActivePatientInfoSpecialty] = useState<string | null>(null);
+  const [patientInfoViewMode, setPatientInfoViewMode] = useState<"list" | "grid">("list");
   const [linkBoxOrder, setLinkBoxOrder] = useState<string[]>([]);
   const [draggedBox, setDraggedBox] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ boxId: string; itemId: string } | null>(null);
@@ -1178,6 +1179,32 @@ export default function ToolHub(
     }))
     .sort((a, b) => a.title.localeCompare(b.title, "nb")), []);
 
+  const patientInfoPdfGridItems = useMemo<ResourcePdfGridItem[]>(() => {
+    const items: ResourcePdfGridItem[] = [];
+    patientInfoSubcategories.forEach((subcategory) => {
+      subcategory.items.forEach((item) => {
+        if (item.variants && item.variants.length > 0) {
+          item.variants.forEach((variant) => {
+            items.push({
+              key: `${subcategory.title}-${item.title}-${variant.label}`,
+              title: `${item.title} – ${variant.label}`,
+              subcategory: subcategory.title,
+              resource: { title: `${item.title} – ${variant.label}`, description: item.description, url: variant.url }
+            });
+          });
+          return;
+        }
+        items.push({
+          key: `${subcategory.title}-${item.title}`,
+          title: item.title,
+          subcategory: subcategory.title,
+          resource: item
+        });
+      });
+    });
+    return items;
+  }, [patientInfoSubcategories]);
+
   const clearPreviewHoverTimeout = () => {
     if (previewHoverTimeoutRef.current !== null) {
       window.clearTimeout(previewHoverTimeoutRef.current);
@@ -1424,6 +1451,26 @@ export default function ToolHub(
       // localStorage unavailable — ignore
     }
   }, [resourceViewMode]);
+
+  // Load/persist the Pasientinfo view mode (rutevisning/rulletabell) per browser
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("toolhub-patientinfo-view-mode");
+      if (stored === "grid" || stored === "list") {
+        setPatientInfoViewMode(stored);
+      }
+    } catch {
+      // localStorage unavailable — keep default
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("toolhub-patientinfo-view-mode", patientInfoViewMode);
+    } catch {
+      // localStorage unavailable — ignore
+    }
+  }, [patientInfoViewMode]);
 
   // Get ordered linkBoxes with custom labels
   const linkBoxes = useMemo(() => {
@@ -3843,32 +3890,41 @@ export default function ToolHub(
                       ))}
                     </div>
                     {resourceViewMode === "grid" ? (
-                      <div className="resource-pdf-grid">
-                        {resourcePdfGridItems
-                          .filter((item) => activeSpecialty === null || item.subcategory === activeSpecialty)
-                          .map((item) => {
-                            const canOpen = item.resource.url !== "#";
-                            return canOpen ? (
-                              <a
-                                key={item.key}
-                                href={item.resource.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="resource-pdf-grid-card"
-                                onMouseEnter={(event) => schedulePdfPreview(item.resource, event.clientX, event.clientY)}
-                                onMouseMove={(event) => updatePreviewCursor(event.clientX, event.clientY)}
-                                onMouseLeave={hidePdfPreview}
-                              >
-                                <span className="resource-pdf-grid-icon" aria-hidden="true">📄</span>
-                                <span className="resource-pdf-grid-title">{item.title}</span>
-                                <span className="resource-pdf-grid-sub">{item.subcategory}</span>
-                              </a>
-                            ) : (
-                              <span key={item.key} className="resource-pdf-grid-card unavailable">
-                                <span className="resource-pdf-grid-icon" aria-hidden="true">📄</span>
-                                <span className="resource-pdf-grid-title">{item.title}</span>
-                                <span className="resource-pdf-grid-sub">{item.subcategory}</span>
-                              </span>
+                      <div className="resource-pdf-groups">
+                        {utredningsverktoySubcategories
+                          .filter((subcategory) => activeSpecialty === null || subcategory.title === activeSpecialty)
+                          .map((subcategory) => {
+                            const groupItems = resourcePdfGridItems.filter(
+                              (item) => item.subcategory === subcategory.title
+                            );
+                            if (groupItems.length === 0) return null;
+                            return (
+                              <div key={subcategory.title} className="resource-pdf-group">
+                                <h4 className="resource-subcategory-title">{subcategory.title}</h4>
+                                <div className="resource-pdf-group-list">
+                                  {groupItems.map((item) => {
+                                    const canOpen = item.resource.url !== "#";
+                                    return canOpen ? (
+                                      <a
+                                        key={item.key}
+                                        href={item.resource.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="resource-pdf-group-link"
+                                        onMouseEnter={(event) => schedulePdfPreview(item.resource, event.clientX, event.clientY)}
+                                        onMouseMove={(event) => updatePreviewCursor(event.clientX, event.clientY)}
+                                        onMouseLeave={hidePdfPreview}
+                                      >
+                                        {item.title}
+                                      </a>
+                                    ) : (
+                                      <span key={item.key} className="resource-pdf-group-link unavailable">
+                                        {item.title}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             );
                           })}
                       </div>
@@ -4090,61 +4146,57 @@ export default function ToolHub(
           text-decoration: none;
         }
 
-        .resource-pdf-grid {
+        .resource-pdf-groups {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 12px;
-          margin-top: 14px;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          margin-top: 10px;
+          align-items: start;
         }
 
-        .resource-pdf-grid-card {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 6px;
-          padding: 16px 12px;
+        .resource-pdf-group {
+          padding: 14px 16px;
           border: 1px solid var(--border);
           border-radius: 12px;
           background: var(--panel);
-          text-decoration: none;
-          color: var(--heading);
-          transition: all 0.2s ease;
           box-shadow: 0 6px 12px rgba(74, 53, 39, 0.06);
         }
 
-        .resource-pdf-grid-card:hover {
-          border-color: rgba(181, 87, 63, 0.4);
-          transform: translateY(-2px);
-          box-shadow: 0 10px 18px rgba(74, 53, 39, 0.12);
+        .resource-pdf-group-list {
+          display: flex;
+          flex-direction: column;
+          margin-top: 6px;
         }
 
-        .resource-pdf-grid-card.unavailable {
+        .resource-pdf-group-link {
+          padding: 3px 0;
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 1.3;
+          color: var(--heading);
+          text-decoration: none;
+        }
+
+        .resource-pdf-group-link:hover {
+          color: var(--primary);
+          text-decoration: underline;
+        }
+
+        .resource-pdf-group-link.unavailable {
           color: #a08a6f;
           cursor: not-allowed;
         }
 
-        .resource-pdf-grid-card.unavailable:hover {
-          transform: none;
-          box-shadow: 0 6px 12px rgba(74, 53, 39, 0.06);
+        @media (max-width: 1100px) {
+          .resource-pdf-groups {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
 
-        .resource-pdf-grid-icon {
-          font-size: 26px;
-        }
-
-        .resource-pdf-grid-title {
-          font-size: 13px;
-          font-weight: 600;
-          line-height: 1.25;
-        }
-
-        .resource-pdf-grid-sub {
-          font-size: 10.5px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          color: var(--muted);
+        @media (max-width: 600px) {
+          .resource-pdf-groups {
+            grid-template-columns: 1fr;
+          }
         }
 
         .resource-empty {
@@ -4242,8 +4294,20 @@ export default function ToolHub(
 
       {activeTab === "patientinfo" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
-          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Pasientinformasjon</h2>
-          <p style={{ marginBottom: 22, color: '#7a5f4a' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Pasientinformasjon</h2>
+              <p style={{ marginBottom: 22, color: '#7a5f4a' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
+            </div>
+            <button
+              type="button"
+              className="tool-view-button"
+              onClick={() => setPatientInfoViewMode(patientInfoViewMode === "grid" ? "list" : "grid")}
+              title={patientInfoViewMode === "grid" ? "Bytt til rulletabell" : "Bytt til rutevisning"}
+            >
+              {patientInfoViewMode === "grid" ? "☰ Rulletabell" : "▦ Rutevisning"}
+            </button>
+          </div>
 
           <section className="resource-chapter">
             <h3 className="resource-chapter-title">Pasientinformasjon</h3>
@@ -4267,18 +4331,59 @@ export default function ToolHub(
                   </button>
                 ))}
               </div>
-              {patientInfoSubcategories
-                .filter((subcategory) => activePatientInfoSpecialty === null || subcategory.title === activePatientInfoSpecialty)
-                .map((subcategory) => (
-                  <div key={subcategory.title} className="resource-subcategory">
-                    <h4 className="resource-subcategory-title">{subcategory.title}</h4>
-                    <div className="resource-subcategory-list">
-                      {subcategory.items.map((resource) =>
-                        renderResourceRow(resource, `${subcategory.title}-${resource.title}`)
-                      )}
+              {patientInfoViewMode === "grid" ? (
+                <div className="resource-pdf-groups">
+                  {patientInfoSubcategories
+                    .filter((subcategory) => activePatientInfoSpecialty === null || subcategory.title === activePatientInfoSpecialty)
+                    .map((subcategory) => {
+                      const groupItems = patientInfoPdfGridItems.filter(
+                        (item) => item.subcategory === subcategory.title
+                      );
+                      if (groupItems.length === 0) return null;
+                      return (
+                        <div key={subcategory.title} className="resource-pdf-group">
+                          <h4 className="resource-subcategory-title">{subcategory.title}</h4>
+                          <div className="resource-pdf-group-list">
+                            {groupItems.map((item) => {
+                              const canOpen = item.resource.url !== "#";
+                              return canOpen ? (
+                                <a
+                                  key={item.key}
+                                  href={item.resource.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="resource-pdf-group-link"
+                                  onMouseEnter={(event) => schedulePdfPreview(item.resource, event.clientX, event.clientY)}
+                                  onMouseMove={(event) => updatePreviewCursor(event.clientX, event.clientY)}
+                                  onMouseLeave={hidePdfPreview}
+                                >
+                                  {item.title}
+                                </a>
+                              ) : (
+                                <span key={item.key} className="resource-pdf-group-link unavailable">
+                                  {item.title}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                patientInfoSubcategories
+                  .filter((subcategory) => activePatientInfoSpecialty === null || subcategory.title === activePatientInfoSpecialty)
+                  .map((subcategory) => (
+                    <div key={subcategory.title} className="resource-subcategory">
+                      <h4 className="resource-subcategory-title">{subcategory.title}</h4>
+                      <div className="resource-subcategory-list">
+                        {subcategory.items.map((resource) =>
+                          renderResourceRow(resource, `${subcategory.title}-${resource.title}`)
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+              )}
             </div>
           </section>
         </div>
