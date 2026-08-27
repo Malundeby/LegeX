@@ -824,6 +824,37 @@ header p {
   flex-wrap: wrap;
 }
 
+.calc-series-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.calc-series-count {
+  width: 70px;
+}
+
+.calc-series-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.calc-series-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(74, 53, 39, 0.05);
+}
+
+.calc-series-item strong {
+  color: #3c2a1f;
+}
+
 .calc-subgrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

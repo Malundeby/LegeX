@@ -113,6 +113,35 @@ export function calculateDateCalcResult(dateCalcStart: string, dateCalcOffset: M
   };
 }
 
+export function calculateDateCalcSeries(
+  dateCalcStart: string,
+  dateCalcOffset: MultiOffset | null,
+  count: number
+): DateCalcResult[] {
+  const baseDate = parseIsoDate(dateCalcStart);
+  if (!baseDate || !dateCalcOffset || count <= 0) return [];
+
+  const results: DateCalcResult[] = [];
+  for (let i = 1; i <= count; i++) {
+    const multipliedOffset: MultiOffset = {
+      sign: dateCalcOffset.sign,
+      days: dateCalcOffset.days * i,
+      weeks: dateCalcOffset.weeks * i,
+      months: dateCalcOffset.months * i,
+      years: dateCalcOffset.years * i
+    };
+    const resultDate = addOffset(baseDate, multipliedOffset);
+    results.push({
+      date: resultDate,
+      dateText: formatNorwegianDate(resultDate),
+      weekday: weekdayName(resultDate),
+      weekNumber: isoWeekNumber(resultDate),
+      dayDiff: daysBetweenUtc(baseDate, resultDate)
+    });
+  }
+  return results;
+}
+
 export function calculateMedDurationResult(
   medStartDate: string,
   medUnits: string,

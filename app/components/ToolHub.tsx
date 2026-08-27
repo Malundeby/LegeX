@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect, useRef, type MouseEvent as ReactMouseEven
 import ComboBox from "./ComboBox";
 import DatePickerField from "./DatePickerField";
 import ModernWidgetDashboard from "./ModernWidgetDashboard";
+import Takstkartotek from "./Takstkartotek";
 import PdfHoverPreview from "./PdfHoverPreview";
 import {
   formatNorwegianDate,
@@ -28,6 +29,7 @@ import {
   buildPregnancyReferralText,
   calculateAvgUsageResult,
   calculateDateCalcResult,
+  calculateDateCalcSeries,
   calculateMedDurationResult,
   calculatePregnancyBmi,
   calculatePregnancyResult,
@@ -44,16 +46,17 @@ import { calculateToolHubCalcResult, getFieldOptionScore } from "@/app/utils/too
 import { getScoreToolTier } from "@/app/utils/toolHubScoreEngine";
 import { defaultLinkBoxes, type LinkBox } from "@/app/utils/toolHubLinks";
 
-type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews";
+type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster";
 
 const tabs: Record<TabKey, string> = {
   tools: "Kalkulatorer",
   guides: "Lenker",
   resources: "Verktøy",
   patientinfo: "Pasientinformasjon",
-  overviews: "Oversikter"
+  overviews: "Oversikter",
+  takster: "Takster"
 };
-const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews"];
+const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews", "takster"];
 
 interface ResourceCardVariant {
   label: string;
@@ -669,6 +672,8 @@ export default function ToolHub(
   const [dateCalcStart, setDateCalcStart] = useState(() => getTodayIso());
   const [dateCalcDirection, setDateCalcDirection] = useState<DateCalcDirection>("forward");
   const [dateCalcInline, setDateCalcInline] = useState("");
+  const [dateCalcSeriesEnabled, setDateCalcSeriesEnabled] = useState(false);
+  const [dateCalcSeriesCount, setDateCalcSeriesCount] = useState("3");
   const [medStartDate, setMedStartDate] = useState(() => getTodayIso());
   const [medUnits, setMedUnits] = useState("0");
   const [showMedUnitsPicker, setShowMedUnitsPicker] = useState(false);
@@ -1104,6 +1109,16 @@ export default function ToolHub(
           title: "Psoriasis i hodebunn",
           description: "Behandlingsplan for psoriasis i hodebunn",
           url: "/pdfs/Behandlingsplaner-Psoriasis-i-hodebunn.pdf"
+        },
+        {
+          title: "Akne (Isotretionin)",
+          description: "Pasientinformasjon om behandling med isotretinoin",
+          url: "/pdfs/Akne-iso.pdf"
+        },
+        {
+          title: "Akne (lokalbehandling)",
+          description: "Pasientinformasjon om lokalbehandling av akne",
+          url: "/pdfs/Akne-lokalbehandling.pdf"
         }
       ]
     },
@@ -1362,6 +1377,13 @@ export default function ToolHub(
   const dateCalcResult = useMemo(() => {
     return calculateDateCalcResult(dateCalcStart, dateCalcOffset);
   }, [dateCalcStart, dateCalcOffset]);
+
+  const dateCalcSeriesResults = useMemo(() => {
+    if (!dateCalcSeriesEnabled) return [];
+    const count = parseInt(dateCalcSeriesCount, 10);
+    if (!Number.isFinite(count) || count <= 0) return [];
+    return calculateDateCalcSeries(dateCalcStart, dateCalcOffset, count);
+  }, [dateCalcSeriesEnabled, dateCalcSeriesCount, dateCalcStart, dateCalcOffset]);
 
   const medDurationResult = useMemo(() => {
     return calculateMedDurationResult(medStartDate, medUnits, medDosePerDay);
@@ -1992,8 +2014,12 @@ export default function ToolHub(
 
   const handleCopySpecialCalculatorText = () => {
     if (calcTab === "date") {
+      if (dateCalcSeriesEnabled && dateCalcSeriesResults.length > 0) {
+        handleCopy(dateCalcSeriesResults.map((result) => result.dateText).join("\n"));
+        return;
+      }
       if (!dateCalcResult) return;
-      handleCopy(`Resultatdato: ${dateCalcResult.dateText} (${dateCalcResult.weekday}), uke ${dateCalcResult.weekNumber}. Dager fra startdato: ${dateCalcResult.dayDiff}.`);
+      handleCopy(dateCalcResult.dateText);
       return;
     }
 
@@ -2663,6 +2689,30 @@ export default function ToolHub(
                             Nullstill
                           </button>
                         </div>
+                        <div className="calc-field">
+                          <label>Serie</label>
+                          <div className="calc-series-toggle">
+                            <label className="pregnancy-checkbox-label">
+                              <input
+                                type="checkbox"
+                                checked={dateCalcSeriesEnabled}
+                                onChange={(e) => setDateCalcSeriesEnabled(e.target.checked)}
+                              />
+                              Lag serie
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={52}
+                              className="calc-input calc-series-count"
+                              value={dateCalcSeriesCount}
+                              disabled={!dateCalcSeriesEnabled}
+                              onChange={(e) => setDateCalcSeriesCount(e.target.value)}
+                              aria-label="Antall i serie"
+                            />
+                          </div>
+                          <div className="calc-help">Gjentar intervallet valgt over. F.eks. 2u med serie 3 gir datoer etter 2, 4 og 6 uker.</div>
+                        </div>
                       </div>
                       <div className="calc-output">
                         <div className="calc-output-title">Resultat</div>
@@ -2674,6 +2724,17 @@ export default function ToolHub(
                             <span>{dateCalcResult.weekday}</span>
                             <span>Uke {dateCalcResult.weekNumber}</span>
                             <span>{`${dateCalcResult.dayDiff >= 0 ? "+" : ""}${dateCalcResult.dayDiff} dager`}</span>
+                          </div>
+                        )}
+                        {dateCalcSeriesEnabled && dateCalcSeriesResults.length > 0 && (
+                          <div className="calc-series-list">
+                            {dateCalcSeriesResults.map((result, index) => (
+                              <div key={index} className="calc-series-item">
+                                <span>{index + 1}. gang</span>
+                                <strong>{result.dateText}</strong>
+                                <span>{result.weekday}, uke {result.weekNumber}</span>
+                              </div>
+                            ))}
                           </div>
                         )}
                         <div className="calc-output-actions">
@@ -4404,6 +4465,12 @@ export default function ToolHub(
               </div>
             </section>
           ))}
+        </div>
+      )}
+
+      {activeTab === "takster" && (
+        <div style={{ marginTop: 20 }}>
+          <Takstkartotek />
         </div>
       )}
 
