@@ -1,9 +1,10 @@
 "use client";
 
 import { useParams, notFound } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import ToolHub from "../components/ToolHub";
 import { resolveToolSlug, toolAliasExists } from "@/app/utils/toolRegistry";
+import { trackOpen } from "@/app/utils/trackEvent";
 
 export default function ToolPage() {
   const params = useParams();
@@ -16,6 +17,10 @@ export default function ToolPage() {
   const toolExists = useMemo(() => {
     return toolInfo ? toolAliasExists(toolInfo) : false;
   }, [toolInfo]);
+
+  useEffect(() => {
+    if (toolSlug && toolExists) trackOpen({ slug: toolSlug });
+  }, [toolSlug, toolExists]);
 
   if (!toolInfo || !toolExists) {
     notFound();

@@ -18,6 +18,7 @@ import {
 } from "@/app/utils/quizMountain";
 import { MOUNTAIN_AVATARS } from "@/app/components/quiz/MountainAvatars";
 import MountainRace from "@/app/components/quiz/MountainRace";
+import { trackOpen } from "@/app/utils/trackEvent";
 
 const ROUND_SIZES = [10, 20] as const;
 
@@ -185,6 +186,7 @@ export default function TakstQuiz({
       20: loadLeaderboard(20),
     });
     getMountainStandings().then(setStandings);
+    trackOpen({ slug: "quiz" });
   }, []);
 
   function backToIntro() {

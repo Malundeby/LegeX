@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState, useEffect, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useMemo, useState, useEffect, useRef, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import Link from "next/link";
 import ComboBox from "./ComboBox";
 import DatePickerField from "./DatePickerField";
@@ -19,10 +19,6 @@ import {
   scoringToolRegistry,
   type ToolThreshold
 } from "@/app/utils/toolRegistry";
-import {
-  buildPostitSections,
-  defaultPostitBoxOrder
-} from "@/app/utils/toolHubPostit";
 import {
   buildDateCalcOffset,
   buildMedJournalMessage,
@@ -46,6 +42,8 @@ import {
 import { calculateToolHubCalcResult, getFieldOptionScore } from "@/app/utils/toolHubCalcEngine";
 import { getScoreToolTier } from "@/app/utils/toolHubScoreEngine";
 import { defaultLinkBoxes, type LinkBox } from "@/app/utils/toolHubLinks";
+import { getSectionContent, groupByCategory } from "@/app/utils/contentItems";
+import { trackOpen } from "@/app/utils/trackEvent";
 
 type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster";
 
@@ -65,6 +63,7 @@ interface ResourceCardVariant {
 }
 
 interface ResourceCard {
+  id?: string;
   title: string;
   description: string;
   url: string;
@@ -707,9 +706,37 @@ export default function ToolHub(
 
   const sortedCalcs = calculatorRegistry;
 
-  const scoringSections = useMemo(() => {
-    return buildPostitSections(defaultPostitBoxOrder, sortedCalcs, sortedTools);
-  }, [sortedCalcs, sortedTools]);
+  interface KalkulatorItem {
+    contentId: string;
+    label: string;
+    url: string;
+  }
+  interface KalkulatorSection {
+    boxId: string;
+    title: string;
+    items: KalkulatorItem[];
+  }
+
+  const [scoringSections, setScoringSections] = useState<KalkulatorSection[]>([]);
+  useEffect(() => {
+    getSectionContent("Kalkulatorer").then((rows) => {
+      setScoringSections(
+        groupByCategory(rows)
+          .filter((group) => group.categoryName)
+          .map((group) => ({
+            boxId: group.categoryName ?? "",
+            title: group.categoryName ?? "",
+            items: group.items
+              .filter((item) => item.url)
+              .map((item) => ({
+                contentId: item.id,
+                label: item.title,
+                url: item.url as string
+              }))
+          }))
+      );
+    });
+  }, []);
 
   const visibleScoringSections = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -724,214 +751,22 @@ export default function ToolHub(
   }, [scoringSections, searchQuery]);
 
 
-  const utredningsverktoySubcategories = useMemo<ResourceSubcategory[]>(() => [
-      {
-        title: "Lungemedisin",
-        items: [
-          {
-            title: "ACT (Astmakontrolltest)",
-            description: "Astmakontroll",
-            url: "#",
-            variants: [
-              { label: "Barn", url: "/pdfs/Utredningsskjema-ACT-barn.pdf" },
-              { label: "Voksne", url: "/pdfs/Utredningsskjema-ACT-voksne.pdf" }
-            ]
-          },
-          {
-            title: "KOLS (CAT)",
-            description: "Vurdering av KOLS-symptomer",
-            url: "/pdfs/Utredningsskjema-KOLS-(CAT).pdf"
-          }
-        ]
-      },
-      {
-        title: "Psykiatri",
-        items: [
-          {
-            title: "ASRS",
-            description: "Utredningsskjema for ADHD",
-            url: "/pdfs/Utredningsskjema-ASRS.pdf"
-          },
-          {
-            title: "AUDIT",
-            description: "Vurdering av alkoholbruk",
-            url: "/pdfs/TBR-AUDIT.pdf"
-          },
-          {
-            title: "GAD-7",
-            description: "Vurdering av angstsymptomer",
-            url: "/pdfs/TBR-GAD-7-pdf.pdf"
-          },
-          {
-            title: "MADRS",
-            description: "Vurdering av depresjon",
-            url: "#",
-            variants: [
-              { label: "Pasientutfylling", url: "/pdfs/Utredningsskjema-MADRS-pasientutgave.pdf" },
-              { label: "Klinikerutfylling", url: "/pdfs/Utredningsskjema-MADRS-klinikerutgave.pdf" }
-            ]
-          },
-          {
-            title: "PHQ-9",
-            description: "Vurdering av depresjon",
-            url: "/pdfs/TBR-PHQ-9.pdf"
-          },
-          {
-            title: "Y-BOCS",
-            description: "Vurdering av tvangssymptomer (OCD)",
-            url: "/pdfs/TBR-Y-BOCS.pdf"
-          },
-          {
-            title: "Adult ADHD Quality of Life",
-            description: "Livskvalitetsvurdering ved voksen ADHD",
-            url: "/pdfs/Skjema-ADHD-Adult-ADHD-Quality-of-Life.pdf"
-          },
-          {
-            title: "CIWA - alkohol",
-            description: "Vurdering av alkoholabstinens",
-            url: "/pdfs/Utredningsverktøy-CIWA-alkohol.pdf"
-          },
-          {
-            title: "CIWA - benzodiazepiner",
-            description: "Vurdering av benzodiazepinabstinens",
-            url: "/pdfs/Utredningsverk-CIWA-skjema benzodiazepiner.pdf"
-          }
-        ]
-      },
-      {
-        title: "Urologi",
-        items: [
-          {
-            title: "IPSS",
-            description: "Vurdering av vannlatningsplager",
-            url: "/pdfs/Utredningsskjema-IPSS.pdf"
-          }
-        ]
-      },
-      {
-        title: "Demens",
-        items: [
-          {
-            title: "I- og P-ADL",
-            description: "Kartlegging av instrumentelle og personlige daglige aktiviteter",
-            url: "/pdfs/Skjema-Demens-I-ADL%20og%20P-ADL.pdf"
-          },
-          {
-            title: "Trail Making Test (TMT)",
-            description: "Utredningsskjema for demens – TMT-3",
-            url: "#",
-            variants: [
-              { label: "Testark", url: "/pdfs/Utredningsskjema-Demens-TMT-NR3-testark.pdf" },
-              { label: "Instruksjoner", url: "/pdfs/Utredningsskjema-Demens-TMT-NR3-manual.pdf" }
-            ]
-          },
-          {
-            title: "Barthel ADL-index",
-            description: "Kartlegging av funksjonsnivå ved demens",
-            url: "/pdfs/Funksjonsnivå-Barthel-ADL-index.pdf"
-          },
-          {
-            title: "MMSE",
-            description: "Utredningsverktøy for demens",
-            url: "#",
-            variants: [
-              { label: "Testark", url: "/pdfs/Utredningsverktøy-MMSE-testark.pdf" },
-              { label: "Instruksjoner", url: "/pdfs/Utredningsverktøy-MMSE-veiledning.pdf" }
-            ]
-          }
-        ]
-      },
-      {
-        title: "Revmatologi",
-        items: [
-          {
-            title: "Fibromyalgi",
-            description: "Kartlegging av fibromyalgi",
-            url: "/pdfs/Skjema-Revma-Fibromyalgikartlegging.pdf"
-          }
-        ]
-      },
-      {
-        title: "Nevrologi",
-        items: [
-          {
-            title: "3x3 Triptan",
-            description: "Registrering av triptanbruk ved migrene",
-            url: "/pdfs/Skjema-Migrene-3x3-Triptan-.pdf"
-          },
-          {
-            title: "Hodepineutredning",
-            description: "Utredningsskjema for hodepine",
-            url: "/pdfs/Skjema-Nevro-Hodepineutredning.pdf"
-          },
-          {
-            title: "PIN-test",
-            description: "PIN-test ved migrene",
-            url: "/pdfs/Skjema-Migrene-PIN-test.pdf"
-          },
-          {
-            title: "HIT-6",
-            description: "Vurdering av hodepinebelastning",
-            url: "/pdfs/Skjema-Nevro-HIT-6.pdf"
-          }
-        ]
-      },
-      {
-        title: "Øvrig",
-        items: [
-          {
-            title: "Smertekartlegging",
-            description: "Kartlegging av smerte og symptomer (ESAS)",
-            url: "/pdfs/Skjema-ESAS-Smertekartlegging.pdf"
-          },
-          {
-            title: "Kostprovokasjon",
-            description: "Skjema for kostprovokasjon (Rikshospitalet)",
-            url: "/pdfs/Øvrig-Kostprovokasjon-(RIkshosp).pdf"
-          },
-          {
-            title: "Kostregistrering",
-            description: "Registrering av kosthold",
-            url: "/pdfs/Øvrig-TBR-Kostregistrering.pdf"
-          },
-          {
-            title: "Søvndagbok",
-            description: "Registrering av søvnmønster",
-            url: "/pdfs/Skjema-Øvrig-Søvndagbok.pdf"
-          },
-          {
-            title: "Canada-kriteriene for ME",
-            description: "Diagnostiske kriterier for ME/CFS",
-            url: "/pdfs/Skjema-ME-Canada-kriteriene.pdf"
-          },
-          {
-            title: "CFS",
-            description: "Utredningsverktøy for kronisk utmattelsessyndrom",
-            url: "/pdfs/Utredningsskjema-CFS-skjema.pdf"
-          }
-        ]
-      },
-      {
-        title: "Trygdemedisin",
-        items: [
-          {
-            title: "Norsk funksjonsskjema",
-            description: "Kartlegging av funksjonsnivå ved trygdemedisinske vurderinger",
-            url: "/pdfs/Skjema-Trygdemedisin-Norsk%20funksjonsskjema.pdf"
-          },
-          {
-            title: "Sykmeldingsoppfølgning",
-            description: "Veiledning for oppfølgning av sykmeldte pasienter",
-            url: "/pdfs/Trygdemedisin-Sykmeldingsoppf%C3%B8lgning.pdf"
-          }
-        ]
-      }
-    ]
-      .map((subcategory) => ({
-        ...subcategory,
-        items: [...subcategory.items].sort((a, b) => a.title.localeCompare(b.title, "nb"))
-      }))
-      .sort((a, b) => a.title.localeCompare(b.title, "nb")), []);
+  const [utredningsverktoySubcategories, setUtredningsverktoySubcategories] = useState<ResourceSubcategory[]>([]);
+  useEffect(() => {
+    getSectionContent("Verktøy").then((rows) => {
+      setUtredningsverktoySubcategories(
+        groupByCategory(rows).map((group) => ({
+          title: group.categoryName ?? "",
+          items: group.items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description ?? "",
+            url: item.url ?? "#"
+          }))
+        }))
+      );
+    });
+  }, []);
 
   const resourceCategories = useMemo<ResourceCategory[]>(() => {
     const categories: ResourceCategory[] = [
@@ -975,225 +810,39 @@ export default function ToolHub(
     return items;
   }, [utredningsverktoySubcategories]);
 
-  const overviewCategories = useMemo<ResourceCategory[]>(() => [
-    {
-      title: "Håndkort",
-      items: [
-        {
-          title: "Apotekkort",
-          description: "Håndkort for apotekrelatert oppfølging.",
-          url: "/pdfs/Håndkort-Apotekkort-ToppenLS.pdf"
-        },
-        {
-          title: "Henvisningskort",
-          description: "Håndkort for rask henvisningsstøtte.",
-          url: "/pdfs/Håndkort-Henvisningskort-ToppenLS.pdf"
-        },
-        {
-          title: "Sykedagskort",
-          description: "Håndkort for strukturert sykedagsvurdering.",
-          url: "/pdfs/Håndkort-Sykedagskort.pdf"
-        },
-        {
-          title: "Videre plan",
-          description: "Håndkort for planlegging av videre forløp.",
-          url: "/pdfs/Håndkort-Videre%20plan-ToppenLS.pdf"
-        }
-      ]
-    },
-    {
-      title: "Annet",
-      items: [
-        {
-          title: "Knuse-dele-listen",
-          description: "Knuse-dele-listen",
-          url: "/pdfs/KnuseDeleListen v16.pdf"
-        },
-        {
-          title: "Eldre (over 70 år)",
-          description: "Spesielle hensyn ved dosering til eldre pasienter",
-          url: "#"
-        },
-        {
-          title: "Nyresvikt",
-          description: "Dosejustering ved redusert nyrefunksjon",
-          url: "#"
-        },
-        {
-          title: "Vanligste interaksjoner",
-          description: "Viktige legemiddelinteraksjoner å vurdere",
-          url: "#"
-        },
-        {
-          title: "Osteoporose",
-          description: "Pasientinformasjon om osteoporose",
-          url: "/pdfs/Pasientinformasjon-Osteoporose.pdf"
-        }
-      ]
-    }
-  ], []);
+  const [overviewCategories, setOverviewCategories] = useState<ResourceCategory[]>([]);
+  useEffect(() => {
+    getSectionContent("Oversikter").then((rows) => {
+      setOverviewCategories(
+        groupByCategory(rows).map((group) => ({
+          title: group.categoryName ?? "",
+          items: group.items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description ?? "",
+            url: item.url ?? "#"
+          }))
+        }))
+      );
+    });
+  }, []);
 
-  const patientInfoSubcategories = useMemo<ResourceSubcategory[]>(() => [
-    {
-      title: "Lungemedisin",
-      items: [
-        {
-          title: "Egenbehandling KOLS",
-          description: "Egenbehandlingsplan for KOLS",
-          url: "/pdfs/Egenbehandlingsplan-KOLS.pdf"
-        },
-        {
-          title: "Egenbehandling astma",
-          description: "Egenbehandlingsplan for astma",
-          url: "/pdfs/Egenbehandlingsplan-Astma.pdf"
-        }
-      ]
-    },
-    {
-      title: "Kardiologi",
-      items: [
-        {
-          title: "Hjemmemåling BT",
-          description: "Hjemmemåling av blodtrykk",
-          url: "#",
-          variants: [
-            { label: "Instruksjoner og måleark", url: "/pdfs/HjemmeBT.pdf" },
-            { label: "Kun måleark", url: "/pdfs/HjemmeBT-kun-registrering.pdf" }
-          ]
-        }
-      ]
-    },
-    {
-      title: "Revmatologi",
-      items: [
-        {
-          title: "Polymyalgia revmatika",
-          description: "Behandlingsplan for polymyalgia revmatika",
-          url: "/pdfs/Behandlingsplan-Polymyalgia-rheumtica.pdf"
-        }
-      ]
-    },
-    {
-      title: "Gastroenterologi",
-      items: [
-        {
-          title: "Sure oppstøt (GERD)",
-          description: "Pasientinformasjon om sure oppstøt og gastroøsofageal reflukssykdom",
-          url: "/pdfs/Pasinfo-GERD.pdf"
-        },
-        {
-          title: "PPI-nedtrapping",
-          description: "Behandlingsplan for nedtrapping av PPI",
-          url: "/pdfs/Behandlingsplaner-PPI-nedtrapping.pdf"
-        }
-      ]
-    },
-    {
-      title: "Dermatologi",
-      items: [
-        {
-          title: "Eksembehandling",
-          description: "Pasientinformasjon om behandling av eksem",
-          url: "/pdfs/Pasinfo-Derma-Eksembehandling.pdf"
-        },
-        {
-          title: "Føflekksjekk egenbehandling",
-          description: "Pasientinformasjon om egensjekk av føflekker",
-          url: "/pdfs/Pasinfo-Derma-Føflekker-Egensjekk.pdf"
-        },
-        {
-          title: "Vortebehandling",
-          description: "Behandlingsplan for vortebehandling",
-          url: "/pdfs/Behandlingsplaner-Vortebehandling.pdf"
-        },
-        {
-          title: "Psoriasis i hodebunn",
-          description: "Behandlingsplan for psoriasis i hodebunn",
-          url: "/pdfs/Behandlingsplaner-Psoriasis-i-hodebunn.pdf"
-        },
-        {
-          title: "Akne (Isotretionin)",
-          description: "Pasientinformasjon om behandling med isotretinoin",
-          url: "/pdfs/Akne-iso.pdf"
-        },
-        {
-          title: "Akne (lokalbehandling)",
-          description: "Pasientinformasjon om lokalbehandling av akne",
-          url: "/pdfs/Akne-lokalbehandling.pdf"
-        }
-      ]
-    },
-    {
-      title: "Psyk",
-      items: [
-        {
-          title: "Prioriteringsmatrise",
-          description: "Prioriteringsmatrise for psykisk helsearbeid",
-          url: "/pdfs/Psyk-Prioriteringsmatrise.pdf"
-        },
-        {
-          title: "Trafikklysmodell – Psykisk helsearbeid",
-          description: "Trafikklysmodell for vurdering i psykisk helsearbeid",
-          url: "/pdfs/Trafikklysmodell%E2%80%93Psykisk-helsearbeid.pdf"
-        }
-      ]
-    },
-    {
-      title: "Muskel og skjelett",
-      items: [
-        {
-          title: "Start-øvelser",
-          description: "Øvelsesprogram for ulike kroppsdeler (ExorLive)",
-          url: "https://www.exorlive.com/no/start-ovelser"
-        },
-        {
-          title: "Øvelser ved ryggsmerter",
-          description: "Fysioterapiøvelser ved ryggsmerter",
-          url: "/pdfs/Fysio-Øvelser-ryggsmerter.pdf"
-        },
-        {
-          title: "Plantar fasciitt",
-          description: "Pasientinformasjon om øvelser ved plantar fasciitt",
-          url: "/pdfs/Pasinfo-Plantar%20fasciiti.pdf"
-        },
-        {
-          title: "Senebetennelse",
-          description: "Behandlingsplan for senebetennelse",
-          url: "/pdfs/Behandlingsplan-Senebetennelse.pdf"
-        }
-      ]
-    },
-    {
-      title: "Endokrinologi",
-      items: [
-        {
-          title: "Diabetisk fotsår",
-          description: "Pasientinformasjon om diabetisk fotsår, etter risikonivå",
-          url: "#",
-          variants: [
-            { label: "Lav risiko", url: "/pdfs/Diabetisk-fotsår-lav-risiko.pdf" },
-            { label: "Medium risiko", url: "/pdfs/Diabetisk-fotsår-medium-risiko.pdf" },
-            { label: "Høy risiko", url: "/pdfs/Diabetisk-fotsår-høy-risiko.pdf" }
-          ]
-        }
-      ]
-    },
-    {
-      title: "Øvrig",
-      items: [
-        {
-          title: "Sarotex",
-          description: "Behandlingsplan for sarotex",
-          url: "/pdfs/Behandlingsplaner-Sarotex.pdf"
-        }
-      ]
-    }
-  ]
-    .map((subcategory) => ({
-      ...subcategory,
-      items: [...subcategory.items].sort((a, b) => a.title.localeCompare(b.title, "nb"))
-    }))
-    .sort((a, b) => a.title.localeCompare(b.title, "nb")), []);
+  const [patientInfoSubcategories, setPatientInfoSubcategories] = useState<ResourceSubcategory[]>([]);
+  useEffect(() => {
+    getSectionContent("Pasientinformasjon").then((rows) => {
+      setPatientInfoSubcategories(
+        groupByCategory(rows).map((group) => ({
+          title: group.categoryName ?? "",
+          items: group.items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description ?? "",
+            url: item.url ?? "#"
+          }))
+        }))
+      );
+    });
+  }, []);
 
   const patientInfoPdfGridItems = useMemo<ResourcePdfGridItem[]>(() => {
     const items: ResourcePdfGridItem[] = [];
@@ -1345,11 +994,15 @@ export default function ToolHub(
         }
       : {};
 
+    const handleOpenClick = () => {
+      if (resource.id) trackOpen({ contentId: resource.id });
+    };
+
     return (
       <article key={key} className="resource-row">
         <div className="resource-row-main">
           {canOpen ? (
-            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title" {...previewHandlers}>
+            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title" onClick={handleOpenClick} {...previewHandlers}>
               {resource.title}
             </a>
           ) : (
@@ -1359,7 +1012,7 @@ export default function ToolHub(
         </div>
         <div className="resource-row-badge">
           {canOpen ? (
-            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge" {...previewHandlers}>
+            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge" onClick={handleOpenClick} {...previewHandlers}>
               {resource.url.startsWith("http") ? "Lenke" : "PDF"}
             </a>
           ) : (
@@ -2148,53 +1801,40 @@ export default function ToolHub(
                 >
                   <h3 style={{ margin: '0 0 10px 0', fontSize: 18, fontWeight: 700 }}>{section.title}</h3>
                   <div style={{ display: 'grid', gap: 8 }}>
-                    {section.items.map((item, index) => {
-                      const previousSubcategory = index > 0 ? section.items[index - 1].subcategory : undefined;
-                      const showSubcategoryHeading = item.subcategory && item.subcategory !== previousSubcategory;
+                    {section.items.map((item) => {
+                      const isExternal = item.url.startsWith("http");
+                      const buttonStyle: CSSProperties = {
+                        display: 'block',
+                        textAlign: 'left',
+                        width: '100%',
+                        border: '1px solid #d9c6ab',
+                        borderRadius: 10,
+                        background: 'var(--panel)',
+                        padding: '10px 14px',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: 'var(--heading)',
+                        cursor: 'pointer',
+                        textDecoration: 'none'
+                      };
+                      const handleClick = () => trackOpen({ contentId: item.contentId });
                       return (
-                        <div key={item.id}>
-                          {showSubcategoryHeading && (
-                            <div style={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              letterSpacing: 0.5,
-                              color: 'var(--muted)',
-                              margin: index === 0 ? '0 0 6px 0' : '12px 0 6px 0'
-                            }}>
-                              {item.subcategory}
-                            </div>
+                        <div key={item.contentId}>
+                          {isExternal ? (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={handleClick}
+                              style={buttonStyle}
+                            >
+                              {item.label}
+                            </a>
+                          ) : (
+                            <Link href={item.url} onClick={handleClick} style={buttonStyle}>
+                              {item.label}
+                            </Link>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (item.itemType === "calc") {
-                                handleCalcChange(item.id);
-                                return;
-                              }
-                              if (item.itemType === "tool") {
-                                handleToolChange(item.id);
-                                return;
-                              }
-                              if (item.url) {
-                                window.open(item.url, "_blank", "noopener,noreferrer");
-                              }
-                            }}
-                            style={{
-                              textAlign: 'left',
-                              width: '100%',
-                              border: '1px solid #d9c6ab',
-                              borderRadius: 10,
-                              background: 'var(--panel)',
-                              padding: '10px 14px',
-                              fontSize: 13,
-                              fontWeight: 600,
-                              color: 'var(--heading)',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {item.label}
-                          </button>
                         </div>
                       );
                     })}
@@ -3973,6 +3613,7 @@ export default function ToolHub(
                                         target="_blank"
                                         rel="noreferrer"
                                         className="resource-pdf-group-link"
+                                        onClick={() => item.resource.id && trackOpen({ contentId: item.resource.id })}
                                         onMouseEnter={(event) => schedulePdfPreview(item.resource, event.clientX, event.clientY)}
                                         onMouseMove={(event) => updatePreviewCursor(event.clientX, event.clientY)}
                                         onMouseLeave={hidePdfPreview}
@@ -4415,6 +4056,7 @@ export default function ToolHub(
                                   target="_blank"
                                   rel="noreferrer"
                                   className="resource-pdf-group-link"
+                                  onClick={() => item.resource.id && trackOpen({ contentId: item.resource.id })}
                                   onMouseEnter={(event) => schedulePdfPreview(item.resource, event.clientX, event.clientY)}
                                   onMouseMove={(event) => updatePreviewCursor(event.clientX, event.clientY)}
                                   onMouseLeave={hidePdfPreview}
@@ -4473,6 +4115,7 @@ export default function ToolHub(
         <div style={{ marginTop: 20 }}>
           <Link
             href="/quiz"
+            onClick={() => trackOpen({ slug: "quiz" })}
             style={{
               display: 'flex',
               alignItems: 'center',

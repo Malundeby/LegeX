@@ -1,6 +1,7 @@
 import scoringToolsData from "../../data/scoring-tools.json";
 import calculatorsData from "../../data/calculators.json";
 import calculatorsNewData from "../../data/calculators-new.json";
+import { specialCalcIdToTab } from "./specialCalculators";
 
 export interface ToolOption {
   label: string;
@@ -151,11 +152,19 @@ export const toolAliases: Record<string, ToolAlias> = {
   "anemia-assessment": { id: "anemia-assessment", type: "calc" },
   alvarado: { id: "alvarado", type: "score" },
   "homa-ir": { id: "homa-ir", type: "calc" },
-  "cpeptide-glucose": { id: "cpeptide-glucose", type: "calc" }
+  "cpeptide-glucose": { id: "cpeptide-glucose", type: "calc" },
+  "ciwa-ar": { id: "ciwa-ar", type: "score" },
+  "ciwa-b": { id: "ciwa-b", type: "score" },
+  cage: { id: "cage", type: "score" },
+  "date-calculator": { id: "date-calculator", type: "calc" },
+  "medication-calculator": { id: "medication-calculator", type: "calc" },
+  "tapering-plan": { id: "tapering-plan", type: "calc" },
+  "pregnancy-calculator": { id: "pregnancy-calculator", type: "calc" }
 };
 
 const scoringToolIds = new Set(scoringToolRegistry.map((tool) => tool.id));
 const calculatorIds = new Set(calculatorRegistry.map((calculator) => calculator.id));
+const specialCalcIds = new Set(Object.keys(specialCalcIdToTab));
 
 export function resolveToolSlug(toolSlug?: string | null): ToolAlias | null {
   if (!toolSlug) {
@@ -168,5 +177,5 @@ export function resolveToolSlug(toolSlug?: string | null): ToolAlias | null {
 export function toolAliasExists(toolAlias: ToolAlias): boolean {
   return toolAlias.type === "score"
     ? scoringToolIds.has(toolAlias.id)
-    : calculatorIds.has(toolAlias.id);
+    : calculatorIds.has(toolAlias.id) || specialCalcIds.has(toolAlias.id);
 }
