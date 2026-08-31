@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import Link from "next/link";
 import ComboBox from "./ComboBox";
 import DatePickerField from "./DatePickerField";
 import ModernWidgetDashboard from "./ModernWidgetDashboard";
@@ -4470,6 +4471,31 @@ export default function ToolHub(
 
       {activeTab === "takster" && (
         <div style={{ marginTop: 20 }}>
+          <Link
+            href="/quiz"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              marginBottom: 20,
+              padding: '16px 20px',
+              borderRadius: 14,
+              border: '1px solid var(--border-soft)',
+              background: 'var(--panel-2)',
+              textDecoration: 'none',
+              color: 'inherit'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 22 }} aria-hidden="true">🚩</span>
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--heading)' }}>Takstquiz for helsesekretærer</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>Test deg selv på takstkombinasjoner – 42 pasientcaser</div>
+              </div>
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Start quiz →</span>
+          </Link>
           <Takstkartotek />
         </div>
       )}

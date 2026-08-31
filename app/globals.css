@@ -27,6 +27,8 @@
   --warning: #f59e0b;
   --shadow-strong: 0 24px 40px rgba(74, 53, 39, 0.14);
   --shadow-soft: 0 12px 24px rgba(74, 53, 39, 0.1);
+  --mountain-blue: #5b9bd5;
+  --mountain-blue-dark: #3f7ab0;
 }
 
 * {
