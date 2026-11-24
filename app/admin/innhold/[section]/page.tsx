@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ContentManager from "./ContentManager";
 
@@ -12,15 +13,7 @@ export default async function AdminSectionPage({ params }: { params: Promise<{ s
   }
 
   if (section === "Lenker") {
-    return (
-      <div className="calc-card">
-        <h2>Lenker</h2>
-        <p>
-          "Lenker"-fanen er et brukerredigerbart widget-dashbord (bokmerker som brukeren selv drar/omorganiserer),
-          ikke database-drevet innhold. Den administreres derfor ikke herfra.
-        </p>
-      </div>
-    );
+    redirect("/admin/lenker");
   }
 
   const admin = createAdminClient();

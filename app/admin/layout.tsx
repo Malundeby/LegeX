@@ -34,7 +34,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           Nøkkeltall
         </Link>
         {SECTIONS.map((section) => (
-          <Link key={section} href={`/admin/innhold/${encodeURIComponent(section)}`} className="tool-action">
+          <Link
+            key={section}
+            href={section === "Lenker" ? "/admin/lenker" : `/admin/innhold/${encodeURIComponent(section)}`}
+            className="tool-action"
+          >
             {section}
           </Link>
         ))}

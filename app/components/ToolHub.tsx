@@ -5,7 +5,7 @@ import { useMemo, useState, useEffect, useRef, type CSSProperties, type MouseEve
 import Link from "next/link";
 import ComboBox from "./ComboBox";
 import DatePickerField from "./DatePickerField";
-import ModernWidgetDashboard from "./ModernWidgetDashboard";
+import LinkMenu from "./LinkMenu";
 import Takstkartotek from "./Takstkartotek";
 import PdfHoverPreview from "./PdfHoverPreview";
 import {
@@ -3546,7 +3546,7 @@ export default function ToolHub(
         </div>
       )}
 
-      {activeTab === "guides" && <ModernWidgetDashboard />}
+      {activeTab === "guides" && <LinkMenu />}
 
       {activeTab === "resources" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>

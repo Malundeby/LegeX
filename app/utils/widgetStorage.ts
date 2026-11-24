@@ -7,11 +7,19 @@ export interface BaseWidget {
   pinned: boolean;
   position: number;
   createdAt: string;
+  /** Collapsed to header only. Persisted so it survives reloads. */
+  collapsed?: boolean;
+}
+
+export interface BookmarkLink {
+  id: string;
+  label: string;
+  url: string;
 }
 
 export interface BookmarkWidget extends BaseWidget {
   type: "bookmark";
-  links: Array<{ id: string; label: string; url: string }>;
+  links: BookmarkLink[];
 }
 
 export interface NoteWidget extends BaseWidget {
