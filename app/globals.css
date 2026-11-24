@@ -2027,3 +2027,31 @@ ul li::marker {
   .adm-edit { margin-left: 0; }
 }
 .adm-modal-body { flex: 1; min-height: 0; }
+
+/* ===================== Telefon i stående (smal) visning ===================== */
+@media (max-width: 600px) and (orientation: portrait) {
+  main {
+    padding: 16px 12px 40px;
+  }
+
+  /* Fanemenyen brytes i et rutenett i stedet for å gjøre siden bredere enn skjermen. */
+  .tabbar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border-radius: 18px;
+  }
+
+  .tab {
+    padding: 9px 4px;
+    font-size: 13px;
+    line-height: 1.2;
+    text-align: center;
+    border-radius: 14px;
+    hyphens: manual;
+    overflow-wrap: anywhere;
+  }
+}

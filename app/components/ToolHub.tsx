@@ -51,7 +51,7 @@ const tabs: Record<TabKey, string> = {
   tools: "Kalkulatorer",
   guides: "Lenker",
   resources: "Verktøy",
-  patientinfo: "Pasientinformasjon",
+  patientinfo: "Pasient\u00ADinformasjon",
   overviews: "Oversikter",
   takster: "Takster"
 };
