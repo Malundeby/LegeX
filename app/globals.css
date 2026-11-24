@@ -1929,3 +1929,101 @@ ul li::marker {
   font-size: 15px;
 }
 
+
+/* ===================== Admin: innholdsadministrasjon ===================== */
+.adm { margin-top: 16px; padding-bottom: 96px; }
+.adm-hint { color: var(--muted); font-size: 13px; margin: 8px 0 16px; }
+.adm-error { color: #b91c1c; margin: 0; }
+.adm-flash { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; }
+.adm-flash.ok { background: #e3f4ea; color: #14532d; border: 1px solid #b7e1c6; }
+.adm-flash.error { background: #fdecec; color: #7f1d1d; border: 1px solid #f3c2c2; }
+.adm-flash button { margin-left: auto; background: none; border: 0; font-size: 18px; cursor: pointer; color: inherit; }
+.adm-link { background: none; border: 0; color: var(--primary); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: none; padding: 4px 6px; }
+.adm-link:hover { text-decoration: underline; }
+.adm-check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+
+.adm-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0 4px; }
+.adm-search { flex: 1 1 220px; min-width: 0; }
+
+/* Upload */
+.adm-upload { margin-bottom: 16px; }
+.adm-dropzone { border: 2px dashed var(--border); border-radius: 14px; padding: 22px 16px; text-align: center; display: grid; gap: 4px; justify-items: center; cursor: pointer; color: var(--muted); transition: background .15s, border-color .15s; }
+.adm-dropzone strong { color: var(--heading); font-size: 16px; }
+.adm-dropzone:hover, .adm-dropzone:focus-visible { border-color: var(--primary); background: var(--primary-bg); outline: none; }
+.adm-dropzone.over { border-color: var(--primary); background: var(--primary-bg); transform: scale(1.005); }
+.adm-dropzone-icon { font-size: 28px; }
+.adm-upload-defaults { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 14px 0 8px; font-size: 14px; }
+.adm-upload-defaults label:first-child { white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.adm-queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.adm-queue li { display: grid; grid-template-columns: auto minmax(0, 2fr) minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border-soft); }
+.adm-queue li.status-ferdig { background: #e3f4ea; border-color: #b7e1c6; }
+.adm-queue li.status-feil { background: #fdecec; border-color: #f3c2c2; }
+.adm-qstatus { font-size: 12px; color: var(--muted); white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.adm-upload-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+/* Groups and rows */
+.adm-group { background: var(--card); border: 1px solid var(--border-soft); border-radius: 14px; padding: 10px 12px 12px; margin-bottom: 14px; transition: border-color .15s, box-shadow .15s; }
+.adm-group.drop-target { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-bg); }
+.adm-group-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.adm-group-head h3 { margin: 0; font-size: 16px; color: var(--heading); }
+.adm-group-actions { display: flex; align-items: center; gap: 4px; }
+.adm-count { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--panel-2); border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
+.adm-empty { color: var(--faint); font-size: 13px; padding: 12px; text-align: center; border: 1px dashed var(--border); border-radius: 10px; }
+.adm-list { list-style: none; margin: 0; padding: 0; }
+.adm-row { display: flex; align-items: center; gap: 10px; padding: 8px 8px; border-radius: 10px; background: #fff8; border: 1px solid transparent; margin: 3px 0; }
+.adm-row:hover { border-color: var(--border); background: #fff; }
+.adm-row.is-hidden .adm-title { color: var(--faint); }
+.adm-row.is-dragging { opacity: .4; }
+.adm-handle { cursor: grab; color: var(--faint); font-size: 18px; user-select: none; padding: 0 2px; }
+.adm-row:active .adm-handle { cursor: grabbing; }
+.adm-pos { width: 22px; text-align: right; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.adm-main { flex: 1; min-width: 0; }
+.adm-title { font-weight: 600; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-meta { display: flex; gap: 10px; font-size: 12px; color: var(--muted); overflow: hidden; white-space: nowrap; }
+.adm-desc { overflow: hidden; text-overflow: ellipsis; }
+.adm-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.adm-icon { width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent; background: none; cursor: pointer; color: var(--muted); font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+.adm-icon:hover:not(:disabled) { background: var(--panel-2); color: var(--heading); }
+.adm-icon:disabled { opacity: .3; cursor: default; }
+.adm-pill { border-radius: 999px; font-size: 12px; font-weight: 600; padding: 4px 10px; border: 1px solid; cursor: pointer; margin-right: 4px; min-width: 64px; }
+.adm-pill.on { background: #e3f4ea; color: #14532d; border-color: #b7e1c6; }
+.adm-pill.off { background: var(--panel-2); color: var(--muted); border-color: var(--border); }
+.adm-drop-line { height: 3px; background: var(--primary); border-radius: 2px; margin: 2px 8px; }
+
+.adm-edit { display: grid; gap: 10px; padding: 12px; margin: 4px 0 10px 36px; border-radius: 12px; background: var(--panel-2); }
+.adm-edit label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--heading); }
+.adm-edit label.adm-check { display: flex; font-weight: 400; }
+.adm-url-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.adm-url-row .calc-input { flex: 1 1 240px; }
+.adm-edit-actions { display: flex; gap: 8px; align-items: center; }
+.adm-danger { background: none; border: 0; color: #b91c1c; font-weight: 600; cursor: pointer; padding: 6px 4px; }
+
+/* Sticky save bar */
+.adm-savebar { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 18px; background: var(--heading); color: var(--primary-text); border-radius: 14px; box-shadow: var(--shadow-strong); max-width: calc(100vw - 24px); }
+.adm-savebar span { font-size: 14px; }
+
+/* Public preview */
+.adm-public-group h4 { margin: 18px 0 8px; color: var(--heading); }
+.adm-public-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.adm-public-card { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); cursor: pointer; font: inherit; color: var(--text); }
+.adm-public-card:hover { border-color: var(--primary); }
+.adm-public-card span:last-child:not(.adm-public-badge) { font-size: 12px; color: var(--muted); }
+.adm-public-badge { justify-self: start; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--primary-bg); border-radius: 6px; padding: 1px 6px; }
+
+/* Modal */
+.adm-modal-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(40, 28, 20, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.adm-modal { width: min(960px, 100%); height: min(90vh, 1100px); background: var(--card); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow-strong); }
+.adm-modal-head { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-bottom: 1px solid var(--border); }
+.adm-modal-head strong { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-modal iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+
+@media (max-width: 640px) {
+  .adm-handle, .adm-pos { display: none; }
+  .adm-row { flex-wrap: wrap; }
+  .adm-actions { width: 100%; justify-content: flex-end; }
+  .adm-queue li { grid-template-columns: auto 1fr auto; }
+  .adm-queue li select { grid-column: 2 / 4; }
+  .adm-queue li .adm-qstatus { grid-column: 2; }
+  .adm-edit { margin-left: 0; }
+}
+.adm-modal-body { flex: 1; min-height: 0; }

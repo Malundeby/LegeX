@@ -22,6 +22,12 @@ Appen kjører på http://localhost:3001
   - NotesWidget: Rich text-redigering, fargevalg, pin-funksjon
   - TodoListWidget: Oppgaver med checkboxes og progress tracking
 
+## Administrasjonspanel (/admin)
+
+- Dra PDF-er rett inn på en fane (Verktøy, Pasientinformasjon, Oversikter). Tittel foreslås fra filnavnet, og kategori velges for alle eller per fil. Filene lastes direkte til Supabase Storage (bøtta `files`, mappe per fane) via signert opplastingslenke fra [app/api/admin/upload-url/route.ts](app/api/admin/upload-url/route.ts), så store filer går ikke gjennom Vercel.
+- Rekkefølge: dra i ⠿ (også mellom kategorier), eller bruk pilene. Kategorier flyttes med pilene ved kategorinavnet. Alt lagres samlet med «Lagre rekkefølge» via [app/api/admin/content/reorder/route.ts](app/api/admin/content/reorder/route.ts).
+- Forhåndsvisning: 👁 viser PDF-en (også før opplasting), og «Slik ser brukerne det» viser fanen slik den publiseres.
+
 ## Arkitekturstatus
 
 - Rute- og registerlogikk for verktøy er sentralisert i [app/utils/toolRegistry.ts](app/utils/toolRegistry.ts)

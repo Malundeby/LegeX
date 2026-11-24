@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import ContentTable from "./ContentTable";
+import ContentManager from "./ContentManager";
 
 const KNOWN_SECTIONS = ["Lenker", "Kalkulatorer", "Verktøy", "Pasientinformasjon", "Oversikter", "Takster"];
 
@@ -28,7 +28,7 @@ export default async function AdminSectionPage({ params }: { params: Promise<{ s
   const [{ data: items }, { data: categories }] = await Promise.all([
     admin
       .from("content_items")
-      .select("*, content_categories(name)")
+      .select("*")
       .eq("section", section)
       .order("sort_order"),
     admin.from("content_categories").select("id, name, sort_order").eq("section", section).order("sort_order"),
@@ -53,15 +53,23 @@ export default async function AdminSectionPage({ params }: { params: Promise<{ s
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2>{section}</h2>
-        <a href={`/admin/innhold/${encodeURIComponent(section)}/kategorier`} className="tool-action">
-          Administrer kategorier →
+        <a href={`/admin/innhold/${encodeURIComponent(section)}/kategorier`} className="adm-link">
+          Gi nytt navn til eller slett kategorier →
         </a>
       </div>
-      <ContentTable
+      <ContentManager
         section={section}
         initialItems={(items ?? []).map((item) => ({
-          ...item,
-          category_name: (item as any).content_categories?.name ?? null,
+          id: item.id,
+          type: item.type,
+          slug: item.slug,
+          title: item.title,
+          description: item.description ?? null,
+          url: item.url ?? null,
+          category_id: item.category_id ?? null,
+          sort_order: item.sort_order ?? 0,
+          published_at: item.published_at ?? null,
+          archived_at: item.archived_at ?? null,
           open_count: openCounts[item.id] ?? 0,
         }))}
         categories={categories ?? []}
