@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/supabase/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { slugify } from "@/app/utils/slugify";
 
 export async function POST(request: NextRequest) {
   const user = await requireAdmin();
@@ -9,30 +10,49 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { section, category_id, type, slug, title, description, url, icon_url, sort_order, published } = body;
 
-  if (!section || !type || !slug || !title) {
+  if (!section || !type || !title) {
     return NextResponse.json({ error: "Mangler påkrevde felt" }, { status: 400 });
   }
 
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("content_items")
-    .insert({
-      section,
-      category_id: category_id ?? null,
-      type,
-      slug,
-      title,
-      description: description ?? null,
-      url: url ?? null,
-      icon_url: icon_url ?? null,
-      sort_order: sort_order ?? 0,
-      published_at: published ? new Date().toISOString() : null,
-    })
-    .select()
-    .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ item: data });
+  // Default: place new items last in their category.
+  let order = typeof sort_order === "number" ? sort_order : null;
+  if (order === null) {
+    let q = admin.from("content_items").select("sort_order").eq("section", section);
+    q = category_id ? q.eq("category_id", category_id) : q.is("category_id", null);
+    const { data: last } = await q.order("sort_order", { ascending: false }).limit(1);
+    order = last && last.length > 0 ? (last[0].sort_order ?? 0) + 1 : 0;
+  }
+
+  const baseSlug = slugify(slug || title) || "element";
+  let lastError: string | null = null;
+  // Retry with a suffix if the slug is already taken.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+    const { data, error } = await admin
+      .from("content_items")
+      .insert({
+        section,
+        category_id: category_id ?? null,
+        type,
+        slug: candidate,
+        title,
+        description: description || null,
+        url: url || null,
+        icon_url: icon_url ?? null,
+        sort_order: order,
+        published_at: published ? new Date().toISOString() : null,
+      })
+      .select()
+      .single();
+
+    if (!error) return NextResponse.json({ item: data });
+    lastError = error.message;
+    if (error.code !== "23505") break;
+  }
+
+  return NextResponse.json({ error: lastError ?? "Lagring feilet" }, { status: 500 });
 }
 
 export async function PATCH(request: NextRequest) {

@@ -1013,7 +1013,7 @@ export default function ToolHub(
         <div className="resource-row-badge">
           {canOpen ? (
             <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge" onClick={handleOpenClick} {...previewHandlers}>
-              {resource.url.startsWith("http") ? "Lenke" : "PDF"}
+              {!resource.url.startsWith("http") || /\.pdf($|\?)/i.test(resource.url) ? "PDF" : "Lenke"}
             </a>
           ) : (
             <span className="resource-pdf-badge unavailable">PDF</span>
