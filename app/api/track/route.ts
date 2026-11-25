@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * IP-adresser lagres noe sted — IP leses inn i en lokal variabel og brukes
  * KUN til å bygge hash-strengen nedenfor, i samme funksjonskall. Anonyme
  * besøkende identifiseres kun via en daglig/månedlig roterende hash.
- * Innlogging kreves ikke for noe innhold.
+ * Ruten er åpen også uten innlogging, slik at innloggingssidene kan spores.
  */
 
 const VALID_EVENT_TYPES = new Set(["page_view", "open", "click", "download"]);
