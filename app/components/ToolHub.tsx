@@ -6,6 +6,8 @@ import Link from "next/link";
 import ComboBox from "./ComboBox";
 import DatePickerField from "./DatePickerField";
 import ModernWidgetDashboard from "./ModernWidgetDashboard";
+import Telefonrad from "./Telefonrad";
+import Kasuistikker from "./Kasuistikker";
 import Takstkartotek from "./Takstkartotek";
 import PdfHoverPreview from "./PdfHoverPreview";
 import {
@@ -44,8 +46,10 @@ import { getScoreToolTier } from "@/app/utils/toolHubScoreEngine";
 import { defaultLinkBoxes } from "@/app/utils/toolHubLinks";
 import { getSectionContent, groupByCategory } from "@/app/utils/contentItems";
 import { trackOpen } from "@/app/utils/trackEvent";
+import { TELEFONRAD } from "@/app/utils/telefonrad";
+import { KASUISTIKKER, KASUISTIKK_SECTIONS } from "@/app/utils/kasuistikker";
 
-type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster";
+type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster" | "helsesekretaer" | "kasuistikker";
 
 const tabs: Record<TabKey, string> = {
   tools: "Kalkulatorer",
@@ -53,9 +57,11 @@ const tabs: Record<TabKey, string> = {
   resources: "Verktøy",
   patientinfo: "Pasient\u00ADinformasjon",
   overviews: "Oversikter",
-  takster: "Takster"
+  takster: "Takster",
+  helsesekretaer: "Helse\u00ADsekretær",
+  kasuistikker: "Kasuistikker"
 };
-const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews", "takster"];
+const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews", "takster", "helsesekretaer", "kasuistikker"];
 
 interface ResourceCardVariant {
   label: string;
@@ -645,6 +651,8 @@ export default function ToolHub(
   } = {}
 ) {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? "guides");
+  // Item to open when arriving from search in the Helsesekretær or Kasuistikker tab.
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   const [activeToolId, setActiveToolId] = useState(initialTool ?? "");
   const [activeCalcId, setActiveCalcId] = useState(initialTool ? "" : (initialCalc ?? ""));
   const [answers, setAnswers] = useState<Record<string, { score: number; optionIndex: number }>>({});
@@ -1511,6 +1519,35 @@ export default function ToolHub(
       });
     });
 
+    TELEFONRAD.forEach((rad) => {
+      entries.push({
+        id: `telefonrad-${rad.id}`,
+        tabKey: "helsesekretaer",
+        title: rad.title,
+        description: "Telefonråd med takst og taksttekst",
+        tags: [rad.category, ...rad.keywords],
+        action: () => {
+          setFocusedItemId(rad.id);
+          handleTabChange("helsesekretaer");
+        }
+      });
+    });
+
+    KASUISTIKKER.forEach((kasus) => {
+      const section = KASUISTIKK_SECTIONS.find((s) => s.id === kasus.section)?.label ?? "";
+      entries.push({
+        id: `kasus-${kasus.id}`,
+        tabKey: "kasuistikker",
+        title: kasus.title,
+        description: `Kasuistikk, ${section.toLowerCase()}`,
+        tags: [section, ...kasus.tags],
+        action: () => {
+          setFocusedItemId(kasus.id);
+          handleTabChange("kasuistikker");
+        }
+      });
+    });
+
     return entries;
   }, [sortedTools, sortedCalcs, utredningsverktoySubcategories, patientInfoSubcategories, overviewCategories]);
 
@@ -1613,7 +1650,7 @@ export default function ToolHub(
           </button>
           <div className="tabbar" role="tablist">
             {tabOrder.map((tabKey) => (
-              <button key={tabKey} type="button" className={`tab ${activeTab === tabKey ? "active" : ""}`} onClick={() => handleTabChange(tabKey)} role="tab" aria-selected={activeTab === tabKey}>{tabs[tabKey]}</button>
+              <button key={tabKey} type="button" className={`tab ${activeTab === tabKey ? "active" : ""}`} onClick={() => { setFocusedItemId(null); handleTabChange(tabKey); }} role="tab" aria-selected={activeTab === tabKey}>{tabs[tabKey]}</button>
             ))}
           </div>
         </div>
@@ -4002,6 +4039,14 @@ export default function ToolHub(
             </section>
           ))}
         </div>
+      )}
+
+      {activeTab === "helsesekretaer" && (
+        <Telefonrad key={`telefonrad-${focusedItemId ?? ""}`} initialOpenId={focusedItemId} />
+      )}
+
+      {activeTab === "kasuistikker" && (
+        <Kasuistikker key={`kasus-${focusedItemId ?? ""}`} initialOpenId={focusedItemId} />
       )}
 
       {activeTab === "takster" && (
