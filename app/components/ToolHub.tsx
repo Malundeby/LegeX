@@ -41,7 +41,7 @@ import {
 } from "@/app/utils/specialCalculators";
 import { calculateToolHubCalcResult, getFieldOptionScore } from "@/app/utils/toolHubCalcEngine";
 import { getScoreToolTier } from "@/app/utils/toolHubScoreEngine";
-import { defaultLinkBoxes, type LinkBox } from "@/app/utils/toolHubLinks";
+import { defaultLinkBoxes } from "@/app/utils/toolHubLinks";
 import { getSectionContent, groupByCategory } from "@/app/utils/contentItems";
 import { trackOpen } from "@/app/utils/trackEvent";
 
@@ -660,9 +660,6 @@ export default function ToolHub(
   const [resourceViewMode, setResourceViewMode] = useState<"list" | "grid">("list");
   const [activePatientInfoSpecialty, setActivePatientInfoSpecialty] = useState<string | null>(null);
   const [patientInfoViewMode, setPatientInfoViewMode] = useState<"list" | "grid">("list");
-  const [linkBoxOrder, setLinkBoxOrder] = useState<string[]>([]);
-  const [draggedBox, setDraggedBox] = useState<string | null>(null);
-  const [draggedItem, setDraggedItem] = useState<{ boxId: string; itemId: string } | null>(null);
   const [showClinicalTip, setShowClinicalTip] = useState(false);
   const [showCPeptideExamples, setShowCPeptideExamples] = useState(false);
   const [showChadsvascMore, setShowChadsvascMore] = useState(false);
@@ -695,8 +692,6 @@ export default function ToolHub(
   const [pregnancyMentalHealth, setPregnancyMentalHealth] = useState("");
   const [pregnancyRiskPregnancy, setPregnancyRiskPregnancy] = useState(false);
 
-  const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
-  const [customItemOrder, setCustomItemOrder] = useState<Record<string, string[]>>({});
   const [previewResource, setPreviewResource] = useState<ResourceCard | null>(null);
   const [previewPosition, setPreviewPosition] = useState<PreviewPosition>({ left: 24, top: 24 });
   const previewHoverTimeoutRef = useRef<number | null>(null);
@@ -1101,13 +1096,6 @@ export default function ToolHub(
     });
   }, [pregnancyPara, pregnancyResult, pregnancyWeightKg, pregnancyHeightCm, pregnancyBmi, pregnancyOtherConditions, pregnancyMedicalHistory, pregnancyMedications, pregnancyMentalHealth, pregnancyRiskPregnancy]);
 
-  // Initialize linkBoxOrder if empty
-  useEffect(() => {
-    if (linkBoxOrder.length === 0 && defaultLinkBoxes.length > 0) {
-      setLinkBoxOrder(defaultLinkBoxes.map((box) => box.id));
-    }
-  }, [linkBoxOrder.length]);
-
   // Load/persist the Verktøy view mode (rutevisning/rulletabell) per browser
   useEffect(() => {
     try {
@@ -1147,38 +1135,6 @@ export default function ToolHub(
       // localStorage unavailable — ignore
     }
   }, [patientInfoViewMode]);
-
-  // Get ordered linkBoxes with custom labels
-  const linkBoxes = useMemo(() => {
-    const order = linkBoxOrder.length > 0 ? linkBoxOrder : defaultLinkBoxes.map((box) => box.id);
-
-    return order.map((id) => {
-      const box = defaultLinkBoxes.find((baseBox) => baseBox.id === id);
-      if (!box) return null;
-
-      const originalItems = box.items.map((item) => ({
-        ...item,
-        label: customLabels[`${box.id}-${item.id}`] || item.label
-      }));
-      let items = originalItems;
-      
-      // Apply custom item order if exists
-      const orderedIds = customItemOrder[box.id];
-      if (orderedIds) {
-        const itemMap = new Map(originalItems.map((item) => [item.id, item]));
-        const orderedItems = orderedIds
-          .map((itemId) => itemMap.get(itemId))
-          .filter(Boolean) as LinkBox["items"];
-        const missingItems = originalItems.filter((item) => !orderedIds.includes(item.id));
-        items = [...orderedItems, ...missingItems];
-      }
-      
-      return {
-        ...box,
-        items
-      };
-    }).filter(Boolean) as LinkBox[];
-  }, [linkBoxOrder, customLabels, customItemOrder]);
 
   const activeTool = useMemo(() => sortedTools.find(t => t.id === activeToolId), [activeToolId, sortedTools]);
   const activeCalc = useMemo(() => sortedCalcs.find(c => c.id === activeCalcId), [activeCalcId, sortedCalcs]);
@@ -1388,69 +1344,6 @@ export default function ToolHub(
     handleCopy(message);
   };
   
-  const handleDragStart = (boxId: string) => {
-    setDraggedBox(boxId);
-  };
-
-  const handleDragOver = (e: React.DragEvent, boxId: string) => {
-    e.preventDefault();
-    if (!draggedBox || draggedBox === boxId) return;
-    
-    const currentOrder = [...linkBoxOrder];
-    const draggedIdx = currentOrder.indexOf(draggedBox);
-    const targetIdx = currentOrder.indexOf(boxId);
-    
-    if (draggedIdx !== -1 && targetIdx !== -1) {
-      currentOrder.splice(draggedIdx, 1);
-      currentOrder.splice(targetIdx, 0, draggedBox);
-      setLinkBoxOrder(currentOrder);
-    }
-  };
-
-  const handleDragEnd = () => {
-    setDraggedBox(null);
-  };
-
-  const handleItemDragStart = (e: React.DragEvent, boxId: string, itemId: string) => {
-    setDraggedItem({ boxId, itemId });
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleItemDragOver = (e: React.DragEvent, boxId: string, targetItemId: string) => {
-    e.preventDefault();
-    if (!draggedItem || draggedItem.boxId !== boxId || draggedItem.itemId === targetItemId) return;
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  const handleItemDrop = (e: React.DragEvent, boxId: string, targetItemId: string) => {
-    e.preventDefault();
-    if (!draggedItem || draggedItem.boxId !== boxId || draggedItem.itemId === targetItemId) return;
-    
-    const box = linkBoxes.find(b => b.id === boxId);
-    if (!box) return;
-    
-    const items = [...box.items];
-    const draggedIdx = items.findIndex(item => item.id === draggedItem.itemId);
-    const targetIdx = items.findIndex(item => item.id === targetItemId);
-    
-    if (draggedIdx !== -1 && targetIdx !== -1) {
-      const draggedItem_ = items[draggedIdx];
-      items.splice(draggedIdx, 1);
-      items.splice(targetIdx, 0, draggedItem_);
-      
-      // Store the reordered items
-      setCustomItemOrder(prev => ({
-        ...prev,
-        [boxId]: items.map(item => item.id)
-      }));
-    }
-    setDraggedItem(null);
-  };
-
-  const handleItemDragEnd = () => {
-    setDraggedItem(null);
-  };
-
   // Determine if higher score is better based on thresholds color pattern
   const isHigherScoreBetter = (thresholds: CalcThreshold[] | ToolThreshold[]) => {
     if (thresholds.length < 2) return false;
@@ -2987,7 +2880,7 @@ export default function ToolHub(
                         <input className="calc-number-input" type="number" min={f.min} max={f.max} step={f.step ?? 1} value={calcInputs[f.id] ?? ""} onChange={e => handleInputChange(f.id, e.target.value)} />
                       ) : isVerticalSelect ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-                          {f.options?.map((option, idx) => {
+                          {f.options?.map((option) => {
                             const isActive = calcInputs[f.id] === option;
                             return (
                               <button
@@ -3022,7 +2915,7 @@ export default function ToolHub(
                           overflowX: 'auto',
                           paddingBottom: 8
                         }}>
-                          {f.options?.map((option, idx) => {
+                          {f.options?.map((option) => {
                             const isActive = calcInputs[f.id] === option;
                             return (
                               <button

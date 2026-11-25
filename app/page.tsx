@@ -19,7 +19,7 @@ export default function HomePage() {
       </header>
       <ToolHub />
       <p className="footer-note">
-        Ingen persondata lagres. Resultater kan kopieres direkte inn i journal.
+        Ingen pasientdata lagres. Resultater kan kopieres direkte inn i journal.
       </p>
       <FeedbackButton />
     </main>

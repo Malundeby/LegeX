@@ -16,11 +16,9 @@ Appen kjører på http://localhost:3001
 - Skåringsverktøy definert i JSON (se [data/scoring-tools.json](data/scoring-tools.json))
 - Automatisk skåring og oppsummering
 - Kopier oppsummering til journal
-- PDF-ressurser med åpne / last ned / skriv ut (se [data/pdf-resources.json](data/pdf-resources.json))
+- PDF-ressurser med åpne / last ned / skriv ut, styrt fra /admin (Supabase)
 - PWA (manifest + service worker)
-- **Widget-system** - Moderne widget-dashboard for bokmerker, notater og huskelister (se [/widgets](app/widgets/page.tsx))
-  - NotesWidget: Rich text-redigering, fargevalg, pin-funksjon
-  - TodoListWidget: Oppgaver med checkboxes og progress tracking
+- **Lenkesiden** - widget-dashboard for bokmerker, notater og huskelister ([app/components/ModernWidgetDashboard.tsx](app/components/ModernWidgetDashboard.tsx)), også på [/widgets](app/widgets/page.tsx)
 
 ## Innlogging (valgfri)
 
@@ -44,5 +42,4 @@ Appen kjører på http://localhost:3001
 
 - Legg til flere skjemaer ved å utvide JSON-filer.
 - Juster layout og farger i [app/globals.css](app/globals.css).
-- Se [docs/WIDGETS_QUICKSTART.md](docs/WIDGETS_QUICKSTART.md) for å bruke widget-systemet.
 - Se [docs/DEBUG_SMOKE_CHECKLIST.md](docs/DEBUG_SMOKE_CHECKLIST.md) for rask regresjonssjekk etter endringer.
