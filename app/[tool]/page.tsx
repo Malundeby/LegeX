@@ -39,7 +39,7 @@ export default function ToolPage() {
         noSectionBackground
       />
       <p className="footer-note">
-        Ingen persondata lagres. Resultater kan kopieres direkte inn i journal.
+        Ingen pasientdata lagres. Resultater kan kopieres direkte inn i journal.
       </p>
     </main>
   );
