@@ -4,12 +4,11 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { authErrorMessage, safeNextPath } from "@/lib/auth";
+import { authErrorMessage } from "@/lib/auth";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = safeNextPath(searchParams.get("next"));
   const callbackError = searchParams.get("error") === "auth";
   const passwordChanged = searchParams.get("melding") === "passord-endret";
 
@@ -33,7 +32,7 @@ function LoginForm() {
       setStatus("error");
       setErrorMsg(authErrorMessage(error.message));
     } else {
-      router.replace(next);
+      router.replace("/");
       router.refresh();
     }
   }
@@ -41,7 +40,7 @@ function LoginForm() {
   return (
     <div className="auth-card">
       <h1>Logg inn</h1>
-      <p className="auth-lead">Legeverktøy krever innlogging.</p>
+      <p className="auth-lead">Med konto får du din egen lenkeside, lagret på alle enhetene dine. Resten av appen kan brukes uten innlogging.</p>
 
       {callbackError && (
         <p className="auth-error" role="alert">

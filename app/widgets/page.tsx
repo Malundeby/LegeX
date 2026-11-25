@@ -10,7 +10,7 @@ export default function WidgetsPage() {
       </header>
       <ModernWidgetDashboard />
       <p className="footer-note">
-        Alle data lagres lokalt i nettleseren. Ingen persondata sendes til server.
+        Uten innlogging lagres siden bare i nettleseren. Innlogget lagres den på kontoen din.
       </p>
     </main>
   );

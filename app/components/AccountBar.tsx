@@ -2,43 +2,39 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const HIDDEN_ON = ["/login", "/signup", "/glemt-passord", "/nytt-passord"];
 
-/** Small "logged in as … / Logg ut" bar shown on every page behind login. */
+/** "Logg inn" for visitors, "e-post · Endre passord · Logg ut" for users. */
 export default function AccountBar() {
-  const router = useRouter();
   const pathname = usePathname();
-  const [email, setEmail] = useState<string | null>(null);
-  const [signingOut, setSigningOut] = useState(false);
+  // undefined until we know, so the bar doesn't flicker between states.
+  const [email, setEmail] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setEmail(session?.user?.email ?? null);
     });
     return () => data.subscription.unsubscribe();
   }, []);
 
-  if (!email || HIDDEN_ON.includes(pathname)) return null;
+  if (email === undefined || HIDDEN_ON.includes(pathname)) return null;
+
+  if (!email) {
+    return (
+      <div className="account-bar">
+        <Link href="/login">Logg inn</Link>
+      </div>
+    );
+  }
 
   async function handleSignOut() {
-    setSigningOut(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-
-    // Pages cached by the service worker for offline use must not stay
-    // readable on a shared computer after logout.
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
-    }
-
-    router.replace("/login");
-    router.refresh();
+    await createClient().auth.signOut();
+    // Full reload so the link page switches back to the anonymous version.
+    window.location.assign("/");
   }
 
   return (
@@ -47,8 +43,8 @@ export default function AccountBar() {
         {email}
       </span>
       <Link href="/nytt-passord">Endre passord</Link>
-      <button type="button" onClick={handleSignOut} disabled={signingOut}>
-        {signingOut ? "Logger ut …" : "Logg ut"}
+      <button type="button" onClick={handleSignOut}>
+        Logg ut
       </button>
     </div>
   );

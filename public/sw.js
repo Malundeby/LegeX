@@ -5,24 +5,18 @@
 //     Users always get the newest deploy without a hard refresh.
 //   * /_next/static/* and icons: cache first. These files have content hashes
 //     in their names, so a new deploy uses new URLs and never hits stale cache.
-//   * Everything else (API, admin, login/auth pages, other origins such as Supabase):
+//   * Everything else (API, admin, auth, other origins such as Supabase):
 //     not touched by the service worker at all.
 //
 // Bump CACHE_NAME when the strategy changes; old caches are deleted on activate.
-const CACHE_NAME = "legeassistent-v3";
+const CACHE_NAME = "legeassistent-v2";
 const OFFLINE_URL = "/";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then(async (cache) => {
-        await cache.add("/manifest.webmanifest");
-        // "/" redirects to /login when logged out. Only keep it as the
-        // offline page when we got the real start page.
-        const response = await fetch(OFFLINE_URL);
-        if (response.ok && !response.redirected) await cache.put(OFFLINE_URL, response);
-      })
+      .then((cache) => cache.addAll([OFFLINE_URL, "/manifest.webmanifest"]))
       .catch(() => undefined)
   );
   self.skipWaiting();
@@ -97,9 +91,7 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Skip redirects (e.g. to /login after the session expired) so a
-        // login page is never cached in place of a PDF.
-        if (response.ok && !response.redirected) {
+        if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         }
