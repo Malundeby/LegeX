@@ -8,6 +8,7 @@ import DatePickerField from "./DatePickerField";
 import ModernWidgetDashboard from "./ModernWidgetDashboard";
 import Telefonrad from "./Telefonrad";
 import Kasuistikker from "./Kasuistikker";
+import Taksthjelp from "./Taksthjelp";
 import Takstkartotek from "./Takstkartotek";
 import PdfHoverPreview from "./PdfHoverPreview";
 import {
@@ -49,7 +50,7 @@ import { trackOpen } from "@/app/utils/trackEvent";
 import { TELEFONRAD } from "@/app/utils/telefonrad";
 import { KASUISTIKKER, KASUISTIKK_SECTIONS } from "@/app/utils/kasuistikker";
 
-type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster" | "helsesekretaer" | "kasuistikker";
+type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster" | "taksthjelp" | "helsesekretaer" | "kasuistikker";
 
 const tabs: Record<TabKey, string> = {
   tools: "Kalkulatorer",
@@ -58,10 +59,11 @@ const tabs: Record<TabKey, string> = {
   patientinfo: "Pasient\u00ADinformasjon",
   overviews: "Oversikter",
   takster: "Takster",
+  taksthjelp: "Takst\u00ADhjelp",
   helsesekretaer: "Helse\u00ADsekretær",
   kasuistikker: "Kasuistikker"
 };
-const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews", "takster", "helsesekretaer", "kasuistikker"];
+const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews", "takster", "taksthjelp", "helsesekretaer", "kasuistikker"];
 
 interface ResourceCardVariant {
   label: string;
@@ -1517,6 +1519,15 @@ export default function ToolHub(
           }
         });
       });
+    });
+
+    entries.push({
+      id: "taksthjelp",
+      tabKey: "taksthjelp",
+      title: "Taksthjelp",
+      description: "Forslag til takster fra journaltekst, diagnosekode eller skjermbilde",
+      tags: ["takst", "takster", "normaltariffen", "regning", "regningskort", "journal", "diagnose", "icpc"],
+      action: () => handleTabChange("taksthjelp")
     });
 
     TELEFONRAD.forEach((rad) => {
@@ -4040,6 +4051,8 @@ export default function ToolHub(
           ))}
         </div>
       )}
+
+      {activeTab === "taksthjelp" && <Taksthjelp />}
 
       {activeTab === "helsesekretaer" && (
         <Telefonrad key={`telefonrad-${focusedItemId ?? ""}`} initialOpenId={focusedItemId} />
