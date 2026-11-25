@@ -92,7 +92,7 @@ const externalPostitItemsByBox: Record<string, Array<{ id: string; label: string
   ]
 };
 
-export function cleanToolDisplayName(name: string): string {
+function cleanToolDisplayName(name: string): string {
   return name.replace(/\s*\([^)]*\)\s*/g, "").trim();
 }
 

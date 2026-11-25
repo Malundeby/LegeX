@@ -116,7 +116,7 @@ export const calculatorRegistry = (() => {
   return [...byId.values()];
 })();
 
-export const toolAliases: Record<string, ToolAlias> = {
+const toolAliases: Record<string, ToolAlias> = {
   madrs: { id: "madrs", type: "score" },
   "gad-7": { id: "gad-7", type: "score" },
   gad7: { id: "gad-7", type: "score" },

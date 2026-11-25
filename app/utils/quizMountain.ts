@@ -59,7 +59,7 @@ export async function getMountainStandings(): Promise<MountainStanding[]> {
   }
 }
 
-export async function resetMountainProgress(): Promise<void> {
+async function resetMountainProgress(): Promise<void> {
   if (typeof window === "undefined") return;
   try {
     const supabase = createClient();
@@ -72,7 +72,7 @@ export async function resetMountainProgress(): Promise<void> {
   }
 }
 
-export async function recordMountainWin(player: MountainPlayer): Promise<void> {
+async function recordMountainWin(player: MountainPlayer): Promise<void> {
   if (typeof window === "undefined") return;
   try {
     const supabase = createClient();

@@ -81,7 +81,7 @@ function SmurfAvatar({
   );
 }
 
-export function AnkeAvatar(props: MountainAvatarProps) {
+function AnkeAvatar(props: MountainAvatarProps) {
   return (
     <SmurfAvatar
       {...props}
@@ -96,7 +96,7 @@ export function AnkeAvatar(props: MountainAvatarProps) {
   );
 }
 
-export function JoAvatar(props: MountainAvatarProps) {
+function JoAvatar(props: MountainAvatarProps) {
   return (
     <SmurfAvatar
       {...props}
@@ -105,7 +105,7 @@ export function JoAvatar(props: MountainAvatarProps) {
   );
 }
 
-export function AnetteAvatar(props: MountainAvatarProps) {
+function AnetteAvatar(props: MountainAvatarProps) {
   return (
     <SmurfAvatar
       {...props}
@@ -120,7 +120,7 @@ export function AnetteAvatar(props: MountainAvatarProps) {
   );
 }
 
-export function ValborgAvatar(props: MountainAvatarProps) {
+function ValborgAvatar(props: MountainAvatarProps) {
   return (
     <SmurfAvatar
       {...props}
