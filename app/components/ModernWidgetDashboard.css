@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 12px;
   max-width: 1400px;
   margin: 0 auto 20px;
   padding: 0 8px;
@@ -685,4 +686,15 @@
 
 .widget-content::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+.dashboard-storage-note {
+  margin: 0 auto 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dashboard-storage-note a {
+  color: var(--primary-dark);
+  font-weight: 600;
 }

@@ -46,7 +46,9 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/admin") ||
     url.pathname.startsWith("/auth") ||
     url.pathname.startsWith("/login") ||
-    url.pathname.startsWith("/signup")
+    url.pathname.startsWith("/signup") ||
+    url.pathname.startsWith("/glemt-passord") ||
+    url.pathname.startsWith("/nytt-passord")
   ) {
     return;
   }

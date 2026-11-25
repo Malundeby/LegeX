@@ -22,6 +22,12 @@ Appen kjører på http://localhost:3001
   - NotesWidget: Rich text-redigering, fargevalg, pin-funksjon
   - TodoListWidget: Oppgaver med checkboxes og progress tracking
 
+## Innlogging (valgfri)
+
+- Hele appen kan brukes uten innlogging.
+- Med konto (/signup, e-postbekreftelse) lagres lenkesiden i Supabase-tabellen `user_dashboards` (se [sql/0005_user_dashboards.sql](sql/0005_user_dashboards.sql)), slik at den følger brukeren på alle enheter. Uten konto lagres den i nettleseren.
+- /glemt-passord sender lenke via `/auth/callback?next=/nytt-passord`. Legg `<domene>/auth/callback**` inn under Redirect URLs i Supabase.
+
 ## Administrasjonspanel (/admin)
 
 - Dra PDF-er rett inn på en fane (Verktøy, Pasientinformasjon, Oversikter). Tittel foreslås fra filnavnet, og kategori velges for alle eller per fil. Filene lastes direkte til Supabase Storage (bøtta `files`, mappe per fane) via signert opplastingslenke fra [app/api/admin/upload-url/route.ts](app/api/admin/upload-url/route.ts), så store filer går ikke gjennom Vercel.

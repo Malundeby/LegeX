@@ -8,6 +8,9 @@ import {
   type DashboardWidget as Widget
 } from "@/app/utils/widgetStorage";
 import { createDefaultBookmarkWidgets } from "@/app/utils/toolHubLinks";
+import { loadUserDashboard, saveUserDashboard } from "@/app/utils/dashboardSync";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 /**
  * ModernWidgetDashboard - Advanced dashboard with grid layout and context menus
@@ -16,7 +19,7 @@ import { createDefaultBookmarkWidgets } from "@/app/utils/toolHubLinks";
  * - Right-click context menu (rename, color, delete, pin)
  * - Three widget types: Bookmark, Note, Todo
  * - Drag & drop between grid cells
- * - localStorage persistence
+ * - Saved to the user's account when logged in, otherwise to localStorage
  */
 
 type TodoWidget = Extract<Widget, { type: "todo" }>;
@@ -52,40 +55,72 @@ export default function ModernWidgetDashboard() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dragOverTargetRef = useRef<number | null>(null);
 
-  // Load widgets from localStorage
+  // Logged in: the page lives in the user's account. Anonymous: localStorage.
+  // undefined = not checked yet, null = anonymous.
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
+  const [saveError, setSaveError] = useState(false);
+
   useEffect(() => {
-    try {
-      const { source, widgets: loadedWidgets } = loadDashboardWidgets(localStorage);
+    let cancelled = false;
 
-      if (source !== "none") {
-        setWidgets(loadedWidgets);
-        setHasLoadedWidgets(true);
-        return;
+    async function load() {
+      const local = () => {
+        const { source, widgets: stored } = loadDashboardWidgets(localStorage);
+        return source !== "none" ? stored : createDefaultBookmarkWidgets(Date.now());
+      };
+
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          if (cancelled) return;
+          setUserId(null);
+          setWidgets(local());
+        } else {
+          // First login: start from whatever this browser already had.
+          const saved = await loadUserDashboard(supabase, user.id);
+          if (cancelled) return;
+          setUserId(user.id);
+          setWidgets(saved ?? local());
+        }
+      } catch (error) {
+        console.error("Failed to load widgets:", error);
+        if (cancelled) return;
+        setUserId(null);
+        setWidgets(local());
       }
-
-      const defaultWidgets = createDefaultBookmarkWidgets(Date.now());
-      setWidgets(defaultWidgets);
-      setHasLoadedWidgets(true);
-    } catch (error) {
-      console.error("Failed to load widgets:", error);
       setHasLoadedWidgets(true);
     }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Persist widgets with a small debounce to reduce write pressure while editing.
   useEffect(() => {
     if (!hasLoadedWidgets) return;
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = window.setTimeout(async () => {
       try {
-        localStorage.setItem(MODERN_WIDGET_STORAGE_KEY, JSON.stringify(widgets));
+        if (userId) {
+          await saveUserDashboard(createClient(), userId, widgets);
+        } else {
+          localStorage.setItem(MODERN_WIDGET_STORAGE_KEY, JSON.stringify(widgets));
+        }
+        setSaveError(false);
       } catch (error) {
         console.error("Failed to save widgets:", error);
+        setSaveError(true);
       }
-    }, 350);
+    }, userId ? 800 : 350);
 
     return () => window.clearTimeout(timeoutId);
-  }, [widgets, hasLoadedWidgets]);
+  }, [widgets, hasLoadedWidgets, userId]);
 
   // Close context menu on click outside
   useEffect(() => {
@@ -313,6 +348,20 @@ export default function ModernWidgetDashboard() {
     <div className="modern-widget-dashboard">
       {/* Layout toggle header */}
       <div className="dashboard-header">
+        {hasLoadedWidgets && (
+          <p className="dashboard-storage-note" role={saveError ? "alert" : undefined}>
+            {saveError
+              ? "Kunne ikke lagre endringene. Sjekk nettforbindelsen."
+              : userId
+                ? "Siden lagres på kontoen din. Ikke skriv pasientopplysninger her."
+                : (
+                  <>
+                    Endringer lagres bare i denne nettleseren.{" "}
+                    <Link href="/login">Logg inn</Link> for å ha din egen side på alle enheter.
+                  </>
+                )}
+          </p>
+        )}
         <button 
           className="layout-toggle-btn"
           onClick={() => setLayoutMode(layoutMode === "grid" ? "masonry" : "grid")}

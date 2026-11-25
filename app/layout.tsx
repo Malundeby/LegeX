@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 import PageViewTracker from "./components/PageViewTracker";
+import AccountBar from "./components/AccountBar";
 
 export const metadata: Metadata = {
   title: "Legeassistent",
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body>
         <ServiceWorkerRegister />
         <PageViewTracker />
+        <AccountBar />
         {children}
       </body>
     </html>

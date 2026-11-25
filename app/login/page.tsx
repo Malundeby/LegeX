@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { authErrorMessage } from "@/lib/auth";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackError = searchParams.get("error") === "auth";
+  const passwordChanged = searchParams.get("melding") === "passord-endret";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
@@ -19,65 +24,86 @@ export default function LoginPage() {
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
 
     if (error) {
       setStatus("error");
-      setErrorMsg(error.message);
+      setErrorMsg(authErrorMessage(error.message));
     } else {
-      router.push("/");
+      router.replace("/");
       router.refresh();
     }
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: "80px auto", padding: 24 }}>
-      <h1 style={{ fontSize: 24, marginBottom: 16 }}>Logg inn</h1>
+    <div className="auth-card">
+      <h1>Logg inn</h1>
+      <p className="auth-lead">Med konto får du din egen lenkeside, lagret på alle enhetene dine. Resten av appen kan brukes uten innlogging.</p>
+
+      {callbackError && (
+        <p className="auth-error" role="alert">
+          Lenken er ugyldig eller utløpt. Prøv å logge inn, eller be om en ny lenke.
+        </p>
+      )}
+      {passwordChanged && (
+        <p className="auth-info" role="status">
+          Passordet er endret. Logg inn med det nye passordet.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          required
-          placeholder="din@epost.no"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 12,
-            boxSizing: "border-box",
-          }}
-        />
-        <input
-          type="password"
-          required
-          placeholder="Passord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 12,
-            boxSizing: "border-box",
-          }}
-        />
-        <button
-          type="submit"
-          disabled={status === "sending"}
-          style={{ width: "100%", padding: 10 }}
-        >
-          {status === "sending" ? "Logger inn..." : "Logg inn"}
+        <label className="auth-field">
+          <span>E-post</span>
+          <input
+            type="email"
+            name="email"
+            autoComplete="email"
+            inputMode="email"
+            required
+            placeholder="din@epost.no"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </label>
+        <label className="auth-field">
+          <span>Passord</span>
+          <input
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+        <button type="submit" className="auth-button" disabled={status === "sending"}>
+          {status === "sending" ? "Logger inn …" : "Logg inn"}
         </button>
         {status === "error" && (
-          <p style={{ color: "red", marginTop: 8 }}>{errorMsg}</p>
+          <p className="auth-error" role="alert">
+            {errorMsg}
+          </p>
         )}
       </form>
 
-      <p style={{ marginTop: 16 }}>
-        Ny bruker? <Link href="/signup">Opprett konto</Link>
-      </p>
+      <div className="auth-links">
+        <Link href="/glemt-passord">Glemt passord?</Link>
+        <span>
+          Ny bruker? <Link href="/signup">Opprett konto</Link>
+        </span>
+      </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <main className="auth-page">
+      <Suspense fallback={<div className="auth-card" />}>
+        <LoginForm />
+      </Suspense>
+    </main>
   );
 }
