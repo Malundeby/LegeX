@@ -46,6 +46,9 @@ create table if not exists public.phrase_suggestions (
   resolved_at timestamptz
 );
 create index if not exists phrase_suggestions_status_idx on public.phrase_suggestions (status, created_at desc);
+create index if not exists phrase_suggestions_phrase_idx on public.phrase_suggestions (phrase_id);
+create index if not exists phrase_suggestions_category_idx on public.phrase_suggestions (category_id);
+create index if not exists phrase_suggestions_user_idx on public.phrase_suggestions (user_id);
 
 create table if not exists public.user_phrases (
   id uuid primary key default gen_random_uuid(),
@@ -63,6 +66,7 @@ create table if not exists public.user_phrase_favorites (
   created_at timestamptz not null default now(),
   primary key (user_id, phrase_id)
 );
+create index if not exists user_phrase_favorites_phrase_idx on public.user_phrase_favorites (phrase_id);
 
 alter table public.phrase_categories enable row level security;
 alter table public.phrases enable row level security;
