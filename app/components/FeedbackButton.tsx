@@ -16,6 +16,9 @@ export default function FeedbackButton() {
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [website, setWebsite] = useState("");
 
   const closeModal = () => {
     setIsOpen(false);
@@ -23,12 +26,32 @@ export default function FeedbackButton() {
     setCategory("feil");
     setMessage("");
     setEmail("");
+    setError(null);
+    setWebsite("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    setIsSubmitted(true);
+    if (!message.trim() || isSending) return;
+    setIsSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/tilbakemelding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, message, email, website, page: window.location.pathname })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Tilbakemeldingen kunne ikke sendes. Prøv igjen senere.");
+        return;
+      }
+      setIsSubmitted(true);
+    } catch {
+      setError("Tilbakemeldingen kunne ikke sendes. Sjekk nettverket og prøv igjen.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -104,8 +127,25 @@ export default function FeedbackButton() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
 
-                <button type="submit" className="feedback-submit" disabled={!message.trim()}>
-                  Send tilbakemelding
+                <input
+                  type="text"
+                  name="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+                />
+
+                {error && (
+                  <p role="alert" style={{ margin: 0, color: "#b42318", fontSize: 13 }}>
+                    {error}
+                  </p>
+                )}
+
+                <button type="submit" className="feedback-submit" disabled={!message.trim() || isSending}>
+                  {isSending ? "Sender…" : "Send tilbakemelding"}
                 </button>
               </form>
             )}

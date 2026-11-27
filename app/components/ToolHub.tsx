@@ -8,6 +8,7 @@ import DatePickerField from "./DatePickerField";
 import ModernWidgetDashboard from "./ModernWidgetDashboard";
 import Telefonrad from "./Telefonrad";
 import Kasuistikker from "./Kasuistikker";
+import Frasekatalog from "./fraser/Frasekatalog";
 import Takstkartotek from "./Takstkartotek";
 import PdfHoverPreview from "./PdfHoverPreview";
 import {
@@ -49,7 +50,7 @@ import { trackOpen } from "@/app/utils/trackEvent";
 import { TELEFONRAD } from "@/app/utils/telefonrad";
 import { KASUISTIKKER, KASUISTIKK_SECTIONS } from "@/app/utils/kasuistikker";
 
-type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster" | "helsesekretaer" | "kasuistikker";
+type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster" | "helsesekretaer" | "kasuistikker" | "fraser";
 
 const tabs: Record<TabKey, string> = {
   tools: "Kalkulatorer",
@@ -59,9 +60,10 @@ const tabs: Record<TabKey, string> = {
   overviews: "Oversikter",
   takster: "Takster",
   helsesekretaer: "Helse\u00ADsekretær",
-  kasuistikker: "Kasuistikker"
+  kasuistikker: "Kasuistikker",
+  fraser: "Fraser"
 };
-const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews", "takster", "helsesekretaer", "kasuistikker"];
+const tabOrder: TabKey[] = ["guides", "tools", "resources", "patientinfo", "overviews", "takster", "helsesekretaer", "kasuistikker", "fraser"];
 
 interface ResourceCardVariant {
   label: string;
@@ -651,6 +653,11 @@ export default function ToolHub(
   } = {}
 ) {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? "guides");
+  // Keep the phrase catalog mounted once opened, so its floating window survives tab switches.
+  const [fraserMounted, setFraserMounted] = useState(initialTab === "fraser");
+  useEffect(() => {
+    if (activeTab === "fraser") setFraserMounted(true);
+  }, [activeTab]);
   // Item to open when arriving from search in the Helsesekretær or Kasuistikker tab.
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   const [activeToolId, setActiveToolId] = useState(initialTool ?? "");
@@ -4047,6 +4054,12 @@ export default function ToolHub(
 
       {activeTab === "kasuistikker" && (
         <Kasuistikker key={`kasus-${focusedItemId ?? ""}`} initialOpenId={focusedItemId} />
+      )}
+
+      {fraserMounted && (
+        <div hidden={activeTab !== "fraser"}>
+          <Frasekatalog />
+        </div>
       )}
 
       {activeTab === "takster" && (

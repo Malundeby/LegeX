@@ -20,6 +20,16 @@ Appen kjører på http://localhost:3001
 - PWA (manifest + service worker)
 - **Lenkesiden** - widget-dashboard for bokmerker, notater og huskelister ([app/components/ModernWidgetDashboard.tsx](app/components/ModernWidgetDashboard.tsx)), også på [/widgets](app/widgets/page.tsx)
 
+- **Frasekatalog** - ferdigskrevne fraser i en kategoritre med fleksibel dybde, på fanen Fraser og på [/fraser](app/fraser/page.tsx). I Chrome, Edge, Brave og Vivaldi kan katalogen åpnes som et flytende vindu (Document Picture-in-Picture) som ligger over journalsystemet. Se [app/components/fraser](app/components/fraser).
+
+## Frasekatalog
+
+- Kjør [sql/0007_frasekatalog.sql](sql/0007_frasekatalog.sql) og eventuelt testinnholdet i [sql/0008_frasekatalog_testdata.sql](sql/0008_frasekatalog_testdata.sql) i Supabase SQL Editor. Testinnhold er merket (T) og slettes med spørringen øverst i filen.
+- Alle kan lese og kopiere fraser uten innlogging. Innloggede brukere kan lagre favoritter og egne fraser.
+- Admin (ADMIN_EMAIL) redigerer innhold og rekkefølge direkte i katalogen. Sortering er alfabetisk til admin flytter noe.
+- Andre kan foreslå endringer og nye fraser. Forslag havner på /admin/fraser og varsles på e-post.
+- E-post (forslag og tilbakemeldingsknappen) sendes via Resend: sett `RESEND_API_KEY` og eventuelt `EMAIL_FROM` på Vercel.
+
 ## Innlogging (valgfri)
 
 - Hele appen kan brukes uten innlogging.

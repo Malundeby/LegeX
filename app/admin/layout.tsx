@@ -38,6 +38,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {section}
           </Link>
         ))}
+        <Link href="/admin/fraser" className="tool-action">
+          Fraser
+        </Link>
         <Link href="/admin/statistikk" className="tool-action">
           Statistikk
         </Link>
