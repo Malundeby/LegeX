@@ -122,16 +122,14 @@ export default function Frasekatalog() {
       )}
       {openError && <p className="fk-page-info">Kunne ikke åpne flytende vindu ({openError}).</p>}
 
-      {pip ? (
+      {pip && (
         <p className="fk-page-info">
-          Frasekatalogen er åpen i et flytende vindu. Dra det dit du vil ha det, og bruk ▁ for å gjøre det til en liten
-          fane. Vinduet lukkes hvis du lukker denne fanen.
+          Frasekatalogen er også åpen i et flytende vindu. Vinduet lukkes hvis du lukker denne fanen.
         </p>
-      ) : (
-        <div className="fk-page-frame">
-          <FrasePanel store={store} mode="page" />
-        </div>
       )}
+      <div className="fk-page-frame">
+        <FrasePanel store={store} mode="page" />
+      </div>
 
       {pip &&
         createPortal(
