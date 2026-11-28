@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PREFS, cleanPrefs, cleanSignature, fillSignature, profileName, profileSignature } from "./profile";
+import { DEFAULT_PREFS, cleanPhone, cleanPrefs, cleanSignature, fillSignature, profileName, profilePhone, profileSignature } from "./profile";
 
 describe("profile", () => {
   it("keeps only known preference values", () => {
@@ -33,5 +33,12 @@ describe("profile", () => {
     expect(profileSignature({ user_metadata: { signature: " A \n B " } })).toBe("A\nB");
     expect(profileSignature({ user_metadata: { signature: 3 } })).toBe("");
     expect(profileSignature(null)).toBe("");
+  });
+
+  it("cleans the phone number", () => {
+    expect(cleanPhone("  +47  22 33 44 55 ")).toBe("+47 22 33 44 55");
+    expect(cleanPhone("tlf. 22-33-44-55")).toBe("22-33-44-55");
+    expect(profilePhone({ user_metadata: { phone: "22 33 44 55" } })).toBe("22 33 44 55");
+    expect(profilePhone(null)).toBe("");
   });
 });

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "pdfjs-dist/web/pdf_viewer.css";
 import { createClient } from "@/lib/supabase/client";
-import { profileName, profileSignature } from "@/lib/profile";
+import { profileName, profilePhone, profileSignature } from "@/lib/profile";
 import {
   findLabels,
   formatNorwegianDate,
@@ -37,7 +37,15 @@ interface Mark {
   h?: number;
 }
 
-type Tool = "none" | "text" | "kryss" | "navn" | "signatur";
+type Quick = "navn" | "signatur" | "dato" | "telefon";
+const QUICK_BUTTONS: { kind: Quick; label: string; noun: string; missing: string }[] = [
+  { kind: "navn", label: "Navn", noun: "navnet", missing: "Legg inn navnet ditt først" },
+  { kind: "signatur", label: "Signatur", noun: "signaturen", missing: "Legg inn signatur på profilsiden" },
+  { kind: "dato", label: "Dato", noun: "datoen", missing: "" },
+  { kind: "telefon", label: "Telefon", noun: "telefonnummeret", missing: "Legg inn telefonnummer på profilsiden" }
+];
+type Tool = "none" | "text" | "kryss" | Quick;
+const isQuick = (t: Tool): t is Quick => t === "navn" || t === "signatur" || t === "dato" || t === "telefon";
 
 const LINE_HEIGHT = 1.15;
 const MARK_FONT = "Helvetica, Arial, sans-serif";
@@ -120,6 +128,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
   const [userName, setUserName] = useState("");
   const [userSignature, setUserSignature] = useState("");
+  const [userPhone, setUserPhone] = useState("");
   const [nameDraft, setNameDraft] = useState("");
   const [nameSaved, setNameSaved] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
@@ -147,6 +156,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         setUserId(user?.id ?? null);
         setUserName(name);
         setUserSignature(profileSignature(user));
+        setUserPhone(profilePhone(user));
         setNameDraft(name);
         return { id: user?.id ?? null, name };
       })
@@ -342,13 +352,13 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
     const size = tool === "kryss" ? 12 : 11;
     const x = (e.clientX - rect.left - (tool === "kryss" ? size * 0.33 * pxPerPt : 0)) / rect.width;
     const y = (e.clientY - rect.top - size * 0.55 * pxPerPt) / rect.height;
-    const text = tool === "kryss" ? "X" : tool === "navn" ? userName : tool === "signatur" ? userSignature : "";
+    const text = tool === "kryss" ? "X" : isQuick(tool) ? quickValue(tool) : "";
     const mark: Mark = { id: newId(), page, x, y, size, text };
     dirtyRef.current = true;
     setMarks((ms) => [...ms, mark]);
     if (tool === "text") setFocusId(mark.id);
     // Name and signature are placed once per click on the button.
-    if (tool === "navn" || tool === "signatur") setTool("none");
+    if (isQuick(tool)) setTool("none");
   };
 
   const startDrag = (mark: Mark, e: React.PointerEvent<HTMLElement>) => {
@@ -405,8 +415,11 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
    * Name or signature button: typed into the field that has focus (a form field
    * in the PDF or one of our text boxes), otherwise placed where the user clicks next.
    */
-  const quickInsert = (kind: "navn" | "signatur") => {
-    const value = kind === "navn" ? userName : userSignature;
+  const quickValue = (kind: Quick): string =>
+    kind === "navn" ? userName : kind === "signatur" ? userSignature : kind === "telefon" ? userPhone : formatNorwegianDate(new Date());
+
+  const quickInsert = (kind: Quick) => {
+    const value = quickValue(kind);
     if (!value) return;
     const el = document.activeElement;
     const inViewer = el instanceof HTMLElement && containerRef.current?.contains(el);
@@ -566,28 +579,23 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
             ✕ Kryss
           </button>
           <span className="pu-sep" />
-          <button
-            type="button"
-            className={`pu-btn${tool === "navn" ? " on" : ""}`}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => quickInsert("navn")}
-            disabled={!userName}
-            aria-pressed={tool === "navn"}
-            title={userName ? `Sett inn «${userName}» i feltet du står i, eller klikk der det skal stå` : "Legg inn navnet ditt først"}
-          >
-            Navn
-          </button>
-          <button
-            type="button"
-            className={`pu-btn${tool === "signatur" ? " on" : ""}`}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => quickInsert("signatur")}
-            disabled={!userSignature}
-            aria-pressed={tool === "signatur"}
-            title={userSignature ? "Sett inn signaturen i feltet du står i, eller klikk der den skal stå" : "Legg inn signatur på profilsiden"}
-          >
-            Signatur
-          </button>
+          {QUICK_BUTTONS.map(({ kind, label, missing }) => {
+            const value = quickValue(kind);
+            return (
+              <button
+                key={kind}
+                type="button"
+                className={`pu-btn${tool === kind ? " on" : ""}`}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => quickInsert(kind)}
+                disabled={!value}
+                aria-pressed={tool === kind}
+                title={value ? `Sett inn «${value.replace(/\n/g, ", ")}» i feltet du står i, eller klikk der det skal stå` : missing}
+              >
+                {label}
+              </button>
+            );
+          })}
           <span className="pu-sep" />
           <button type="button" className="pu-btn" onClick={() => zoom(1 / 1.15)} aria-label="Zoom ut">−</button>
           <span className="pu-zoom">{Math.round(scale * 100)} %</span>
@@ -606,12 +614,10 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
       <div className="pu-sub">
         {status === "ready" && (
           <span>
-            {tool === "navn"
-              ? "Klikk der navnet skal stå."
-              : tool === "signatur"
-                ? "Klikk der signaturen skal stå."
+            {isQuick(tool)
+              ? `Klikk der ${QUICK_BUTTONS.find((q) => q.kind === tool)!.noun} skal stå.`
                 : hasForm && tool === "none"
-                  ? "Klikk i feltene for å fylle ut. Navn og Signatur settes inn i feltet du står i."
+                  ? "Klikk i feltene for å fylle ut. Hurtigvalgene settes inn i feltet du står i."
                   : tool === "none"
                     ? "Velg Tekst eller Kryss og klikk der du vil skrive. Dra i ⠿ for å flytte og i ◢ for å gjøre boksen større."
                     : tool === "text"
@@ -635,9 +641,9 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
             <a href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/skjema")}`}>Logg inn</a> for å få navnet ditt fylt inn.
           </span>
         ) : null}
-        {userId && !userSignature && (
+        {userId && (!userSignature || !userPhone) && (
           <span className="pu-muted">
-            <a href="/profil">Legg inn signatur</a> for hurtigvalg.
+            <a href="/profil">Legg inn {!userSignature && !userPhone ? "signatur og telefon" : !userSignature ? "signatur" : "telefon"}</a> for hurtigvalg.
           </span>
         )}
       </div>
@@ -650,7 +656,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         </p>
       )}
 
-      <div className={`pu-stage${tool !== "none" ? ` pu-tool-${tool}` : ""}`}>
+      <div className={`pu-stage${isQuick(tool) ? " pu-tool-quick" : tool !== "none" ? ` pu-tool-${tool}` : ""}`}>
         <div ref={containerRef} className="pu-container">
           <div ref={viewerDivRef} className="pdfViewer" />
         </div>
@@ -872,7 +878,7 @@ const CSS = `
 .pu-marks{position:absolute;inset:0}
 .pu-tool-text .pu-marks{pointer-events:auto;cursor:text}
 .pu-tool-kryss .pu-marks{pointer-events:auto;cursor:crosshair}
-.pu-tool-navn .pu-marks,.pu-tool-signatur .pu-marks{pointer-events:auto;cursor:copy}
+.pu-tool-quick .pu-marks{pointer-events:auto;cursor:copy}
 .pu-mark{position:absolute;pointer-events:auto;display:flex}
 .pu-mark textarea{display:block;box-sizing:border-box;border:1px dashed transparent;background:rgba(255,255,255,.01);padding:0 1px;margin:0;font-family:Helvetica,Arial,sans-serif;color:#000;outline:none;border-radius:2px;resize:none;overflow:hidden;white-space:pre;min-width:1ch}
 .pu-mark.fixed textarea{white-space:pre-wrap;overflow-wrap:anywhere}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { PROFILE_EVENT, cleanPrefs, profileName, profileSignature, storePrefs } from "@/lib/profile";
+import { PROFILE_EVENT, cleanPrefs, profileName, profilePhone, profileSignature, storePrefs } from "@/lib/profile";
 
 /**
  * The signed-in user (undefined while loading, null when signed out) and
@@ -30,7 +30,7 @@ export function useProfile() {
     };
   }, []);
 
-  return { user, name: profileName(user), signature: profileSignature(user) };
+  return { user, name: profileName(user), signature: profileSignature(user), phone: profilePhone(user) };
 }
 
 /** Tell other components on the page that the profile changed. */

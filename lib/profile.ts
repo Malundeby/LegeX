@@ -82,6 +82,21 @@ export function profileName(user: { user_metadata?: Record<string, unknown> } | 
   return String(m.full_name ?? m.name ?? "").trim();
 }
 
+/** The phone number from the profile, as the user typed it. */
+export function profilePhone(user: { user_metadata?: Record<string, unknown> } | null | undefined): string {
+  const raw = user?.user_metadata?.phone;
+  return typeof raw === "string" ? cleanPhone(raw) : "";
+}
+
+/** Trims and collapses spaces; keeps only characters that belong in a phone number. At most 30. */
+export function cleanPhone(text: string): string {
+  return text
+    .replace(/[^0-9+()\-\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 30);
+}
+
 /** The signature block from the profile, e.g. name, title and clinic on separate lines. */
 export function profileSignature(user: { user_metadata?: Record<string, unknown> } | null | undefined): string {
   const raw = user?.user_metadata?.signature;
