@@ -11,6 +11,7 @@ import {
   isDateFieldName,
   isSignerFieldName,
   pdfFetchUrl,
+  pdfWorkerSrc,
   standaloneLabel,
   wrapLines,
   type LabelKind
@@ -50,7 +51,37 @@ function textWidthPx(text: string, fontPx: number): number {
   return measureCtx.measureText(text).width;
 }
 
-const WORKER_SRC = "https://unpkg.com/pdfjs-dist@6.2.108/legacy/build/pdf.worker.min.mjs";
+
+/**
+ * The pdf.js worker is started as soon as the page runs, in parallel with
+ * downloading pdf.js itself, and reused for every document opened.
+ */
+let workerPort: Worker | null = null;
+function startWorker(src: string) {
+  if (workerPort || typeof Worker === "undefined") return;
+  try {
+    workerPort = new Worker(src, { type: "module" });
+  } catch {
+    workerPort = null;
+  }
+}
+
+/** Starts downloading pdf.js as early as possible; the same promise is reused. */
+let pdfjsPromise: Promise<[any, any]> | null = null;
+function loadPdfJs() {
+  // pdf_viewer.mjs reads globalThis.pdfjsLib when it loads, so it must come second.
+  pdfjsPromise ??= import("pdfjs-dist/legacy/build/pdf.mjs").then(async (pdfjs) => {
+    pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc(pdfjs.version);
+    if (workerPort) pdfjs.GlobalWorkerOptions.workerPort = workerPort;
+    (globalThis as any).pdfjsLib = pdfjs;
+    const viewerLib = await import("pdfjs-dist/legacy/web/pdf_viewer.mjs");
+    return [pdfjs, viewerLib] as [any, any];
+  });
+  pdfjsPromise.catch(() => {
+    pdfjsPromise = null;
+  });
+  return pdfjsPromise;
+}
 const PT_TO_PX = 96 / 72;
 let nextId = 1;
 const newId = () => `m${nextId++}`;
@@ -62,7 +93,13 @@ function fileName(url: string, title?: string) {
   return `${base || "skjema"} utfylt.pdf`;
 }
 
-export default function PdfUtfyller({ url, title }: { url: string; title?: string }) {
+export default function PdfUtfyller({ url, title, workerSrc }: { url: string; title?: string; workerSrc?: string }) {
+  // Before anything else: start the worker and the pdf.js download.
+  if (typeof window !== "undefined") {
+    if (workerSrc) startWorker(workerSrc);
+    void loadPdfJs().catch(() => undefined);
+  }
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewerDivRef = useRef<HTMLDivElement | null>(null);
   const pdfjsRef = useRef<PdfJs>(null);
@@ -99,16 +136,25 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
   }, []);
 
   // Signed-in user's name (stored in the Supabase user profile, never in the PDF).
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data.user;
-      setUserId(user?.id ?? null);
-      const name = profileName(user);
-      setUserName(name);
-      setUserSignature(profileSignature(user));
-      setNameDraft(name);
-    });
+  // Looked up once, at the same time as the PDF loads, instead of before it.
+  const userPromiseRef = useRef<Promise<{ id: string | null; name: string }> | null>(null);
+  const userInfo = useCallback(() => {
+    userPromiseRef.current ??= createClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        const user = data.user;
+        const name = profileName(user);
+        setUserId(user?.id ?? null);
+        setUserName(name);
+        setUserSignature(profileSignature(user));
+        setNameDraft(name);
+        return { id: user?.id ?? null, name };
+      })
+      .catch(() => {
+        setUserId(null);
+        return { id: null, name: "" };
+      });
+    return userPromiseRef.current;
   }, []);
 
   // Warn before closing the tab when something has been filled in, since nothing is saved.
@@ -134,9 +180,9 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
     if (layer.parentElement !== pageDiv) pageDiv.appendChild(layer);
   }, []);
 
-  // Load the PDF and set up the viewer. Waits for the user lookup so the name can be prefilled.
+  // Load the PDF and set up the viewer. pdf.js, the PDF itself and the user lookup
+  // run at the same time; pages are shown before the whole file has arrived.
   useEffect(() => {
-    if (userId === undefined) return;
     let cancelled = false;
     let loadingTask: any = null;
 
@@ -155,36 +201,37 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
         return;
       }
 
+      const userP = userInfo();
       try {
-        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        pdfjs.GlobalWorkerOptions.workerSrc = WORKER_SRC;
-        (globalThis as any).pdfjsLib = pdfjs;
-        const viewerLib: any = await import("pdfjs-dist/legacy/web/pdf_viewer.mjs");
+        const [pdfjs, viewerLib] = await loadPdfJs();
+        if (cancelled) return;
         pdfjsRef.current = pdfjs;
 
-        const res = await fetch(source);
-        if (!res.ok) {
-          let msg = `Kunne ikke hente PDF-en (${res.status}).`;
-          try {
-            const j = await res.json();
-            if (j?.error) msg = `Kunne ikke hente PDF-en: ${j.error}.`;
-          } catch {
-            /* not json */
-          }
-          throw new Error(msg);
+        loadingTask = pdfjs.getDocument({
+          url: new URL(source, window.location.origin).toString(),
+          enableXfa: false,
+          // Our forms are small; one streamed download (which the page already
+          // preloaded) is faster than many range requests.
+          disableRange: true
+        });
+        let doc: any;
+        try {
+          doc = await loadingTask.promise;
+        } catch (e: any) {
+          if (cancelled) return;
+          throw new Error(await loadErrorMessage(source, e));
         }
-        const data = new Uint8Array(await res.arrayBuffer());
-        loadingTask = pdfjs.getDocument({ data, enableXfa: false });
-        const doc = await loadingTask.promise;
         if (cancelled) return;
         docRef.current = doc;
 
         const today = formatNorwegianDate(new Date());
-        const name = userName;
         const storage = doc.annotationStorage;
 
-        // 1) Fillable PDFs: put the date and the doctor's name in matching fields.
-        const fields: Record<string, any[]> = (await doc.getFieldObjects()) ?? {};
+        // 1) Fillable PDFs: put the date and the doctor's name in matching fields before the form is drawn.
+        const [fieldObjects, user] = await Promise.all([doc.getFieldObjects(), userP]);
+        if (cancelled) return;
+        const name = user.name;
+        const fields: Record<string, any[]> = fieldObjects ?? {};
         const fieldNames = Object.keys(fields);
         const formPdf = fieldNames.some((n) => fields[n].some((f) => f.editable !== false && f.type && f.type !== "button"));
         hasFormRef.current = formPdf;
@@ -196,63 +243,6 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
             else if (name && isSignerFieldName(n)) storage.setValue(f.id, { value: name });
           }
         }
-
-        // 2) Flat PDFs: find printed "Dato: ____" labels and place text after them.
-        const auto: Mark[] = [];
-        if (!formPdf) {
-          for (let p = 1; p <= doc.numPages; p++) {
-            const page = await doc.getPage(p);
-            const vp = page.getViewport({ scale: 1 });
-            const content = await page.getTextContent();
-            const boxes = (content.items as any[])
-              .filter((it) => it.str && it.str.trim())
-              .map((it) => {
-                const tx = pdfjs.Util.transform(vp.transform, it.transform);
-                const h = Math.hypot(tx[2], tx[3]) || 10;
-                return { item: it, left: tx[4], right: tx[4] + it.width, base: tx[5], h };
-              });
-            const found: Mark[] = [];
-            for (const box of boxes) {
-              const { item, base, h } = box;
-              const str: string = item.str;
-              const size = Math.min(12, Math.max(9, h));
-              const text = (kind: LabelKind) => (kind === "date" ? today : name);
-
-              // "Dato: ______"
-              for (const hit of findLabels(str)) {
-                if (hit.kind === "signer" && !name) continue;
-                const atEnd = hit.index >= str.trimEnd().length;
-                if (atEnd) {
-                  // "Dato:" at the end of a text run: only if what follows on the line is a blank to write on.
-                  const next = boxes
-                    .filter((o) => o !== box && Math.abs(o.base - base) < h * 0.5 && o.left >= box.right - 1)
-                    .sort((a, b) => a.left - b.left)[0];
-                  if (next && /^\//.test(next.item.str.trim())) continue;
-                  if (next && next.left - box.right < 55 && !/^[_.…]/.test(next.item.str.trim())) continue;
-                }
-                const x = box.left + (item.width * Math.min(hit.index, str.length)) / str.length + (atEnd ? 4 : 1);
-                found.push({ id: newId(), page: p, x: x / vp.width, y: (base - size * 1.05) / vp.height, size, text: text(hit.kind), auto: hit.kind });
-              }
-
-              // "Dato" printed under an empty space near the bottom of the page: write above it.
-              const kind = standaloneLabel(str);
-              if (!kind || (kind === "signer" && !name) || base < vp.height * 0.55) continue;
-              const top = base - h - size * 1.6;
-              const blocked = boxes.some(
-                (o) => o !== box && o.base < base - h * 0.5 && o.base > top - 2 && o.right > box.left && o.left < box.left + Math.max(item.width, 80)
-              );
-              if (blocked) continue;
-              found.push({ id: newId(), page: p, x: (box.left + 1) / vp.width, y: top / vp.height, size, text: text(kind), auto: kind });
-            }
-            // Many date blanks on one page is a diary; leave those for the patient.
-            const dates = found.filter((m) => m.auto === "date").length;
-            auto.push(...(dates >= 3 ? found.filter((m) => m.auto !== "date") : found));
-          }
-          // Later "Dato" blanks are usually for something else (e.g. an earlier test); fill only the first.
-          const firstDate = auto.find((m) => m.auto === "date");
-          for (let i = auto.length - 1; i >= 0; i--) if (auto[i].auto === "date" && auto[i] !== firstDate) auto.splice(i, 1);
-        }
-        if (cancelled) return;
 
         // Viewer with pdf.js' own form layer, so fillable fields can be typed in directly.
         const container = containerRef.current!;
@@ -293,8 +283,15 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
 
         viewer.setDocument(doc);
         linkService.setDocument(doc, null);
-        setMarks(auto);
         setStatus("ready");
+
+        // 2) Flat PDFs: find printed "Dato: ____" labels and place text after them.
+        // Runs after the pages are on screen, so it does not delay showing the form.
+        if (!formPdf) {
+          const auto = await findAutoMarks(doc, pdfjs, today, name, () => cancelled);
+          if (cancelled || auto.length === 0) return;
+          setMarks((ms) => [...auto, ...ms]);
+        }
       } catch (e) {
         if (cancelled) return;
         setStatus("error");
@@ -314,9 +311,8 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
       docRef.current = null;
       loadingTask?.destroy?.();
     };
-    // userName is read once per load on purpose; saving a new name triggers a reload via loadKey.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, userId, loadKey, attachLayer]);
+    // Saving a new name triggers a reload via loadKey.
+  }, [url, loadKey, attachLayer, userInfo]);
 
   // Keep the viewer sized to the window.
   useEffect(() => {
@@ -542,6 +538,7 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
       return;
     }
     setUserName(name);
+    userPromiseRef.current = Promise.resolve({ id: userId ?? null, name });
     setNameSaved(true);
     setTimeout(() => setNameSaved(false), 2500);
     if (!dirtyRef.current) setLoadKey((k) => k + 1);
@@ -686,6 +683,81 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
       })}
     </div>
   );
+}
+
+/** A readable message when pdf.js cannot load the file. Our /api/pdf proxy explains why in JSON. */
+async function loadErrorMessage(source: string, e: any): Promise<string> {
+  const status = typeof e?.status === "number" ? e.status : 0;
+  if (status) {
+    try {
+      const res = await fetch(source);
+      const j = await res.json();
+      if (j?.error) return `Kunne ikke hente PDF-en: ${j.error}.`;
+    } catch {
+      /* not json */
+    }
+    return `Kunne ikke hente PDF-en (${status}).`;
+  }
+  if (e?.name === "InvalidPDFException") return "Filen er ikke en gyldig PDF.";
+  if (e?.name === "PasswordException") return "PDF-en er passordbeskyttet og kan ikke åpnes her.";
+  return e instanceof Error && e.message ? `Kunne ikke åpne PDF-en: ${e.message}` : "Kunne ikke åpne PDF-en.";
+}
+
+/** Finds "Dato" and doctor's name blanks in a flat PDF and returns text to place there. */
+async function findAutoMarks(doc: any, pdfjs: any, today: string, name: string, isCancelled: () => boolean): Promise<Mark[]> {
+  const auto: Mark[] = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    if (isCancelled()) return [];
+    const page = await doc.getPage(p);
+    const vp = page.getViewport({ scale: 1 });
+    const content = await page.getTextContent();
+    const boxes = (content.items as any[])
+      .filter((it) => it.str && it.str.trim())
+      .map((it) => {
+        const tx = pdfjs.Util.transform(vp.transform, it.transform);
+        const h = Math.hypot(tx[2], tx[3]) || 10;
+        return { item: it, left: tx[4], right: tx[4] + it.width, base: tx[5], h };
+      });
+    const found: Mark[] = [];
+    for (const box of boxes) {
+      const { item, base, h } = box;
+      const str: string = item.str;
+      const size = Math.min(12, Math.max(9, h));
+      const text = (kind: LabelKind) => (kind === "date" ? today : name);
+
+      // "Dato: ______"
+      for (const hit of findLabels(str)) {
+        if (hit.kind === "signer" && !name) continue;
+        const atEnd = hit.index >= str.trimEnd().length;
+        if (atEnd) {
+          // "Dato:" at the end of a text run: only if what follows on the line is a blank to write on.
+          const next = boxes
+            .filter((o) => o !== box && Math.abs(o.base - base) < h * 0.5 && o.left >= box.right - 1)
+            .sort((a, b) => a.left - b.left)[0];
+          if (next && /^\//.test(next.item.str.trim())) continue;
+          if (next && next.left - box.right < 55 && !/^[_.…]/.test(next.item.str.trim())) continue;
+        }
+        const x = box.left + (item.width * Math.min(hit.index, str.length)) / str.length + (atEnd ? 4 : 1);
+        found.push({ id: newId(), page: p, x: x / vp.width, y: (base - size * 1.05) / vp.height, size, text: text(hit.kind), auto: hit.kind });
+      }
+
+      // "Dato" printed under an empty space near the bottom of the page: write above it.
+      const kind = standaloneLabel(str);
+      if (!kind || (kind === "signer" && !name) || base < vp.height * 0.55) continue;
+      const top = base - h - size * 1.6;
+      const blocked = boxes.some(
+        (o) => o !== box && o.base < base - h * 0.5 && o.base > top - 2 && o.right > box.left && o.left < box.left + Math.max(item.width, 80)
+      );
+      if (blocked) continue;
+      found.push({ id: newId(), page: p, x: (box.left + 1) / vp.width, y: top / vp.height, size, text: text(kind), auto: kind });
+    }
+    // Many date blanks on one page is a diary; leave those for the patient.
+    const dates = found.filter((m) => m.auto === "date").length;
+    auto.push(...(dates >= 3 ? found.filter((m) => m.auto !== "date") : found));
+  }
+  // Later "Dato" blanks are usually for something else (e.g. an earlier test); fill only the first.
+  const firstDate = auto.find((m) => m.auto === "date");
+  return auto.filter((m) => m.auto !== "date" || m === firstDate);
 }
 
 /** One text box on the page. Without a set width it grows with the text; once resized, text wraps. */

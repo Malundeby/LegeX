@@ -3,6 +3,9 @@
  * types stays in the browser; only the blank PDF is fetched.
  */
 
+/** The pdf.js worker, copied into public/ at build time (scripts/copy-pdf-worker.mjs) and cached for a year. */
+export const pdfWorkerSrc = (version: string) => `/pdfjs/pdf.worker-${version}.min.mjs`;
+
 /** True for links that point at a PDF file. */
 export function isPdfUrl(url: string | null | undefined): boolean {
   if (!url) return false;

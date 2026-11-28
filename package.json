@@ -3,7 +3,9 @@
   "version": "2.9.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-pdf-worker.mjs",
     "dev": "next dev -H 0.0.0.0 -p 3001",
+    "prebuild": "node scripts/copy-pdf-worker.mjs",
     "build": "next build",
     "start": "next start",
     "test": "vitest"
