@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -13,17 +13,23 @@ import {
   type Prefs,
   cleanPhone,
   cleanSignature,
+  cleanStamp,
+  suggestStamp,
   readLocalPrefs,
   storePrefs
 } from "@/lib/profile";
 import { announceProfile, useProfile } from "@/app/components/useProfile";
 import Logo from "@/app/components/Logo";
+import SignaturePad, { InkPicker, SIGPAD_CSS } from "@/app/components/SignaturePad";
+import StampView, { STAMP_CSS } from "@/app/components/StampView";
+import { INKS, isInk, type Drawing, type Ink } from "@/lib/drawing";
+import { deleteDrawnSignature, loadDrawnSignature, saveDrawnSignature } from "@/app/utils/signatureStore";
 
 type Status = { kind: "ok" | "error"; text: string } | null;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, name, signature, phone } = useProfile();
+  const { user, name, signature, phone, stamp } = useProfile();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsStatus, setPrefsStatus] = useState<Status>(null);
 
@@ -38,6 +44,18 @@ export default function ProfilePage() {
   const [sigDraft, setSigDraft] = useState("");
   const [sigStatus, setSigStatus] = useState<Status>(null);
   const [savingSig, setSavingSig] = useState(false);
+
+  const [drawing, setDrawing] = useState<Drawing | null>(null);
+  const [savedDrawing, setSavedDrawing] = useState<Drawing | null>(null);
+  const [drawInk, setDrawInk] = useState<Ink>("blaa");
+  const [drawStatus, setDrawStatus] = useState<Status>(null);
+  const [savingDraw, setSavingDraw] = useState(false);
+  const drawTouchedRef = useRef(false);
+
+  const [stampDraft, setStampDraft] = useState("");
+  const [stampInk, setStampInk] = useState<Ink>("blaa");
+  const [stampStatus, setStampStatus] = useState<Status>(null);
+  const [savingStamp, setSavingStamp] = useState(false);
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -55,6 +73,27 @@ export default function ProfilePage() {
   useEffect(() => {
     setPhoneDraft(phone);
   }, [phone]);
+
+  useEffect(() => {
+    setStampDraft(stamp);
+  }, [stamp]);
+
+  useEffect(() => {
+    const ink = user?.user_metadata?.stamp_ink;
+    if (isInk(ink)) setStampInk(ink);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    loadDrawnSignature(user.id).then((d) => {
+      setSavedDrawing(d);
+      // Never replace something the user has started drawing while this loaded.
+      if (d && !drawTouchedRef.current) {
+        setDrawing(d);
+        setDrawInk(d.ink);
+      }
+    });
+  }, [user?.id]);
 
   useEffect(() => {
     setSigDraft(signature);
@@ -105,6 +144,53 @@ export default function ProfilePage() {
     setPhoneDraft(clean);
     if (data.user) announceProfile(data.user);
     setPhoneStatus({ kind: "ok", text: "Telefonnummeret er lagret." });
+  }
+
+  async function saveDrawing() {
+    if (!user || !drawing) return;
+    setSavingDraw(true);
+    setDrawStatus(null);
+    const next = { ...drawing, ink: drawInk };
+    const err = await saveDrawnSignature(user.id, next);
+    setSavingDraw(false);
+    if (err) {
+      setDrawStatus({ kind: "error", text: authErrorMessage(err) });
+      return;
+    }
+    setSavedDrawing(next);
+    setDrawStatus({ kind: "ok", text: "Den håndskrevne signaturen er lagret." });
+  }
+
+  async function removeDrawing() {
+    if (!user) return;
+    if (savedDrawing && !window.confirm("Slette den lagrede håndskrevne signaturen?")) return;
+    setDrawStatus(null);
+    if (savedDrawing) {
+      const err = await deleteDrawnSignature(user.id);
+      if (err) {
+        setDrawStatus({ kind: "error", text: authErrorMessage(err) });
+        return;
+      }
+      setDrawStatus({ kind: "ok", text: "Den håndskrevne signaturen er slettet." });
+    }
+    setSavedDrawing(null);
+    setDrawing(null);
+  }
+
+  async function saveStamp(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingStamp(true);
+    setStampStatus(null);
+    const clean = cleanStamp(stampDraft);
+    const { data, error } = await createClient().auth.updateUser({ data: { stamp: clean, stamp_ink: stampInk } });
+    setSavingStamp(false);
+    if (error) {
+      setStampStatus({ kind: "error", text: authErrorMessage(error.message) });
+      return;
+    }
+    setStampDraft(clean);
+    if (data.user) announceProfile(data.user);
+    setStampStatus({ kind: "ok", text: "Stempelet er lagret." });
   }
 
   async function saveSignature(e: React.FormEvent) {
@@ -160,6 +246,7 @@ export default function ProfilePage() {
 
   return (
     <main className="profile-page">
+      <style dangerouslySetInnerHTML={{ __html: SIGPAD_CSS + STAMP_CSS }} />
       <div className="profile-head">
         <Logo size={34} />
         <h1>Profil</h1>
@@ -244,6 +331,88 @@ export default function ProfilePage() {
           </div>
         </form>
         {sigStatus && <p className={`profile-status ${sigStatus.kind}`} role="status">{sigStatus.text}</p>}
+      </section>
+
+      <section className="profile-card" aria-labelledby="handskrift-h">
+        <h2 id="handskrift-h">Håndskrevet signatur</h2>
+        <p>
+          Tegn med mus, styreflate, penn eller finger. Signaturen kan legges på PDF-skjemaer. Den lagres bare på kontoen din,
+          og bare du kan se den.
+        </p>
+        <SignaturePad
+          value={drawing}
+          ink={drawInk}
+          onChange={(d) => {
+            drawTouchedRef.current = true;
+            setDrawing(d);
+            setDrawStatus(null);
+          }}
+        />
+        <div className="profile-row sig-actions">
+          <InkPicker
+            value={drawInk}
+            inks={INKS}
+            onChange={(i) => {
+              setDrawInk(i);
+              setDrawing((d) => (d ? { ...d, ink: i } : d));
+            }}
+          />
+          <button type="button" className="profile-button secondary" onClick={() => setDrawing(null)} disabled={!drawing}>
+            Tøm
+          </button>
+          <button
+            type="button"
+            className="profile-button"
+            onClick={saveDrawing}
+            disabled={savingDraw || !drawing || JSON.stringify({ ...drawing, ink: drawInk }) === JSON.stringify(savedDrawing)}
+          >
+            {savingDraw ? "Lagrer …" : "Lagre håndskrift"}
+          </button>
+          {savedDrawing && (
+            <button type="button" className="profile-button secondary" onClick={removeDrawing}>
+              Slett lagret
+            </button>
+          )}
+        </div>
+        {drawStatus && <p className={`profile-status ${drawStatus.kind}`} role="status">{drawStatus.text}</p>}
+      </section>
+
+      <section className="profile-card" aria-labelledby="stempel-h">
+        <h2 id="stempel-h">Stempel</h2>
+        <p>Legges på PDF-skjemaer som et stempel med ramme. Første linje skrives med fet skrift.</p>
+        <form className="profile-form" onSubmit={saveStamp}>
+          <label>
+            Stempeltekst (inntil 6 linjer)
+            <textarea
+              className="profile-textarea"
+              value={stampDraft}
+              onChange={(e) => setStampDraft(e.target.value)}
+              rows={5}
+              placeholder={"Legefornavn Legeetternavn\nLege\nHPR-nr. 1234567\nLegesenter A\nTlf. 22 33 44 55"}
+            />
+          </label>
+          <div className="profile-row">
+            <InkPicker value={stampInk} inks={INKS} onChange={setStampInk} />
+            {!stampDraft.trim() && (name || signature) && (
+              <button type="button" className="profile-button secondary" onClick={() => setStampDraft(suggestStamp(name, signature, phone))}>
+                Lag forslag
+              </button>
+            )}
+            <button
+              type="submit"
+              className="profile-button"
+              disabled={savingStamp || (cleanStamp(stampDraft) === stamp && stampInk === (isInk(user.user_metadata?.stamp_ink) ? user.user_metadata.stamp_ink : "blaa"))}
+            >
+              {savingStamp ? "Lagrer …" : "Lagre stempel"}
+            </button>
+          </div>
+        </form>
+        {stampDraft.trim() && (
+          <div className="stamp-preview" aria-label="Forhåndsvisning av stempelet">
+            <StampView text={cleanStamp(stampDraft)} ink={stampInk} scale={1.6} />
+          </div>
+        )}
+        {stampStatus && <p className={`profile-status ${stampStatus.kind}`} role="status">{stampStatus.text}</p>}
       </section>
 
       <section className="profile-card" aria-labelledby="visning-h">

@@ -97,6 +97,29 @@ export function cleanPhone(text: string): string {
     .slice(0, 30);
 }
 
+/** The stamp text from the profile: name, title, HPR number, clinic and so on, one per line. */
+export function profileStamp(user: { user_metadata?: Record<string, unknown> } | null | undefined): string {
+  const raw = user?.user_metadata?.stamp;
+  return typeof raw === "string" ? cleanStamp(raw) : "";
+}
+
+/** Like the signature, at most 6 lines, and each line short enough to fit in a stamp. */
+export function cleanStamp(text: string): string {
+  return cleanSignature(text)
+    .split("\n")
+    .map((l) => l.slice(0, 60))
+    .join("\n");
+}
+
+/** A first draft of the stamp from what the profile already has. */
+export function suggestStamp(name: string, signature: string, phone: string): string {
+  const lines = (signature || name).split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0 && name) lines.push(name);
+  if (!lines.some((l) => /hpr/i.test(l))) lines.splice(Math.min(2, lines.length), 0, "HPR-nr. ");
+  if (phone && !lines.some((l) => l.includes(phone))) lines.push(`Tlf. ${phone}`);
+  return cleanStamp(lines.join("\n"));
+}
+
 /** The signature block from the profile, e.g. name, title and clinic on separate lines. */
 export function profileSignature(user: { user_metadata?: Record<string, unknown> } | null | undefined): string {
   const raw = user?.user_metadata?.signature;

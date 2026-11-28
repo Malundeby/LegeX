@@ -24,7 +24,10 @@ function syncTheme(target: Document) {
   }
 }
 
-const COLLAPSED_SIZE = { width: 170, height: 90 };
+/** Chrome keeps floating windows above a minimum size; it shrinks as far as it allows. */
+const COLLAPSED_SIZE = { width: 110, height: 110 };
+/** The floating window turns into a small circle after this long without use. */
+const IDLE_MS = 10_000;
 const DEFAULT_SIZE = { width: 420, height: 580 };
 
 export default function Frasekatalog() {
@@ -34,6 +37,7 @@ export default function Frasekatalog() {
   const [collapsed, setCollapsed] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const savedSize = useRef(DEFAULT_SIZE);
+  const collapsedRef = useRef(false);
 
   useEffect(() => setSupported(Boolean(getPiP())), []);
 
@@ -96,7 +100,8 @@ export default function Frasekatalog() {
 
   const collapse = useCallback(() => {
     if (!pip) return;
-    savedSize.current = { width: pip.win.outerWidth, height: pip.win.outerHeight };
+    if (!collapsedRef.current) savedSize.current = { width: pip.win.outerWidth, height: pip.win.outerHeight };
+    collapsedRef.current = true;
     setCollapsed(true);
     try {
       pip.win.resizeTo(COLLAPSED_SIZE.width, COLLAPSED_SIZE.height);
@@ -107,6 +112,7 @@ export default function Frasekatalog() {
 
   const expand = useCallback(() => {
     if (!pip) return;
+    collapsedRef.current = false;
     setCollapsed(false);
     try {
       pip.win.resizeTo(savedSize.current.width, savedSize.current.height);
@@ -114,6 +120,44 @@ export default function Frasekatalog() {
       /* ignore */
     }
   }, [pip]);
+
+  // Shrink to the circle after IDLE_MS without use. Not while the pointer is over the
+  // window (someone reading) or while a suggestion form is open (nothing gets lost
+  // either way, the panel keeps its state when collapsed).
+  useEffect(() => {
+    if (!pip || collapsed) return;
+    const doc = pip.win.document;
+    let inside = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const schedule = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (inside || doc.querySelector(".fk-form")) return schedule();
+        collapse();
+      }, IDLE_MS);
+    };
+    const onActivity = () => schedule();
+    const onEnter = () => {
+      inside = true;
+      clearTimeout(timer);
+    };
+    const onLeave = () => {
+      inside = false;
+      schedule();
+    };
+    const activity = ["pointerdown", "keydown", "wheel", "input", "focusin"] as const;
+    activity.forEach((t) => doc.addEventListener(t, onActivity, true));
+    doc.documentElement.addEventListener("mouseenter", onEnter);
+    doc.documentElement.addEventListener("mouseleave", onLeave);
+    inside = doc.documentElement.matches(":hover");
+    if (!inside) schedule();
+    return () => {
+      clearTimeout(timer);
+      activity.forEach((t) => doc.removeEventListener(t, onActivity, true));
+      doc.documentElement.removeEventListener("mouseenter", onEnter);
+      doc.documentElement.removeEventListener("mouseleave", onLeave);
+    };
+  }, [pip, collapsed, collapse]);
 
   return (
     <section className="fk-page">

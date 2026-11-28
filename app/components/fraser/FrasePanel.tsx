@@ -456,14 +456,23 @@ export default function FrasePanel({ store, mode, collapsed, onCollapse, onExpan
 
   if (collapsed) {
     return (
-      <div className="fk" ref={rootRef}>
-        <button className="fk-mini" onClick={onExpand} title="Åpne frasekatalogen">☰ Fraser</button>
+      <div className="fk fk-mini-wrap" ref={rootRef}>
+        <button className="fk-round" onClick={onExpand} title="Åpne frasekatalogen" aria-label="Åpne frasekatalogen">
+          <span aria-hidden="true">☰</span>
+          <small>Fraser</small>
+        </button>
       </div>
     );
   }
 
   return (
     <div className="fk" ref={rootRef}>
+      {mode === "pip" && (
+        <button type="button" className="fk-titlebar" onClick={onCollapse} title="Minimer til en liten runding (Esc)">
+          <span>Fraser</span>
+          <span aria-hidden="true">▁</span>
+        </button>
+      )}
       <div className="fk-top">
         <input
           ref={searchRef}
@@ -486,9 +495,6 @@ export default function FrasePanel({ store, mode, collapsed, onCollapse, onExpan
             }
           }}
         />
-        {mode === "pip" && (
-          <button className="fk-btn" onClick={onCollapse} title="Kollaps til en liten fane (Esc)">▁</button>
-        )}
       </div>
       <div className="fk-crumb">
         {crumbs()}

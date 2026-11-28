@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "pdfjs-dist/web/pdf_viewer.css";
 import { createClient } from "@/lib/supabase/client";
-import { profileName, profilePhone, profileSignature } from "@/lib/profile";
+import { profileName, profilePhone, profileSignature, profileStamp } from "@/lib/profile";
+import { INKS, PEN_WIDTH, drawingBounds, drawingPath, inkHex, inkRgb, isInk, type Drawing, type Ink } from "@/lib/drawing";
+import SignaturePad, { InkPicker, SIGPAD_CSS } from "@/app/components/SignaturePad";
+import StampView, { STAMP, STAMP_CSS } from "@/app/components/StampView";
+import { loadDrawnSignature, saveDrawnSignature } from "@/app/utils/signatureStore";
 import {
   findLabels,
   formatNorwegianDate,
@@ -31,8 +35,10 @@ interface Mark {
   size: number;
   text: string;
   auto?: LabelKind;
-  /** A drawn circle around something on the page instead of text. Uses x, y, w and h. */
-  shape?: "ring";
+  /** Not text: a circle, a hand-drawn signature or a stamp. These use x, y, w and h. */
+  shape?: "ring" | "sign" | "stamp";
+  drawing?: Drawing;
+  ink?: Ink;
   /** Box width as a fraction of the page, once the user has resized it. Text then wraps inside. */
   w?: number;
   /** Minimum box height as a fraction of the page. */
@@ -46,7 +52,11 @@ const QUICK_BUTTONS: { kind: Quick; label: string; noun: string; missing: string
   { kind: "dato", label: "Dato", noun: "datoen", missing: "" },
   { kind: "telefon", label: "Telefon", noun: "telefonnummeret", missing: "Legg inn telefonnummer på profilsiden" }
 ];
-type Tool = "none" | "text" | "kryss" | "ring" | Quick;
+type Tool = "none" | "text" | "kryss" | "ring" | "sign" | "stamp" | Quick;
+
+/** Width of a placed signature at first, in points. */
+const SIGN_WIDTH_PT = 130;
+const SIGN_MAX_HEIGHT_PT = 48;
 
 /** Default circle: about the size of a short word or a number in a form. */
 const RING_PT = { w: 34, h: 20 };
@@ -57,11 +67,11 @@ const LINE_HEIGHT = 1.15;
 const MARK_FONT = "Helvetica, Arial, sans-serif";
 let measureCtx: CanvasRenderingContext2D | null = null;
 /** Width in CSS pixels of one line of mark text at the given font size. */
-function textWidthPx(text: string, fontPx: number): number {
+function textWidthPx(text: string, fontPx: number, bold = false): number {
   if (typeof document === "undefined") return text.length * fontPx * 0.55;
   measureCtx ??= document.createElement("canvas").getContext("2d");
   if (!measureCtx) return text.length * fontPx * 0.55;
-  measureCtx.font = `${fontPx}px ${MARK_FONT}`;
+  measureCtx.font = `${bold ? "700 " : ""}${fontPx}px ${MARK_FONT}`;
   return measureCtx.measureText(text).width;
 }
 
@@ -126,6 +136,10 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [marks, setMarks] = useState<Mark[]>([]);
+  const marksRef = useRef<Mark[]>([]);
+  const undoRef = useRef<Mark[][]>([]);
+  const redoRef = useRef<Mark[][]>([]);
+  const lastStepRef = useRef<{ key: string | null; at: number }>({ key: null, at: 0 });
   const [pages, setPages] = useState<number[]>([]);
   const [tool, setTool] = useState<Tool>("none");
   const [scale, setScale] = useState(1);
@@ -135,6 +149,13 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
   const [userName, setUserName] = useState("");
   const [userSignature, setUserSignature] = useState("");
   const [userPhone, setUserPhone] = useState("");
+  const [userStamp, setUserStamp] = useState("");
+  const [ink, setInk] = useState<Ink>("blaa");
+  const [savedDrawing, setSavedDrawing] = useState<Drawing | null>(null);
+  const [padOpen, setPadOpen] = useState(false);
+  const [padDrawing, setPadDrawing] = useState<Drawing | null>(null);
+  const [padSave, setPadSave] = useState(true);
+  const pendingDrawingRef = useRef<Drawing | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [nameSaved, setNameSaved] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
@@ -163,6 +184,9 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         setUserName(name);
         setUserSignature(profileSignature(user));
         setUserPhone(profilePhone(user));
+        setUserStamp(profileStamp(user));
+        if (isInk(user?.user_metadata?.stamp_ink)) setInk(user.user_metadata.stamp_ink);
+        if (user?.id) loadDrawnSignature(user.id).then(setSavedDrawing);
         setNameDraft(name);
         return { id: user?.id ?? null, name };
       })
@@ -206,6 +230,9 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
       setStatus("loading");
       setError("");
       setMarks([]);
+      marksRef.current = [];
+      undoRef.current = [];
+      redoRef.current = [];
       setPages([]);
       dirtyRef.current = false;
       layersRef.current = new Map();
@@ -306,7 +333,10 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         if (!formPdf) {
           const auto = await findAutoMarks(doc, pdfjs, today, name, () => cancelled);
           if (cancelled || auto.length === 0) return;
-          setMarks((ms) => [...auto, ...ms]);
+          // Prefilled text is part of every state, so undo never removes it unasked.
+          undoRef.current = undoRef.current.map((snap) => [...auto, ...snap]);
+          redoRef.current = redoRef.current.map((snap) => [...auto, ...snap]);
+          setSilently((ms) => [...auto, ...ms]);
         }
       } catch (e) {
         if (cancelled) return;
@@ -342,19 +372,136 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const updateMark = (id: string, patch: Partial<Mark>) => {
+  /**
+   * Every change to the marks goes through here, so Ctrl+Z / Cmd+Z can step back.
+   * Changes with the same key are one step: a whole drag or resize, or typing in
+   * one box without a pause of more than 1.5 seconds.
+   */
+  const change = (fn: (ms: Mark[]) => Mark[], key?: string, gesture = false) => {
+    const prev = marksRef.current;
+    const next = fn(prev);
+    if (next === prev) return;
+    const now = Date.now();
+    const sameStep = key && key === lastStepRef.current.key && (gesture || now - lastStepRef.current.at < 1500);
+    if (!sameStep) {
+      undoRef.current.push(prev);
+      if (undoRef.current.length > 200) undoRef.current.shift();
+    }
+    lastStepRef.current = { key: key ?? null, at: now };
+    redoRef.current = [];
+    marksRef.current = next;
     dirtyRef.current = true;
-    setMarks((ms) => ms.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+    setMarks(next);
+  };
+  /** Changes that are not a user step (prefill, tidying away an empty box). */
+  const setSilently = (fn: (ms: Mark[]) => Mark[]) => {
+    marksRef.current = fn(marksRef.current);
+    setMarks(marksRef.current);
+  };
+
+  const visible = (ms: Mark[]) => ms.filter((m) => m.shape || m.text.trim());
+  const sameMarks = (a: Mark[], b: Mark[]) => JSON.stringify(visible(a)) === JSON.stringify(visible(b));
+  const step = (from: React.MutableRefObject<Mark[][]>, to: React.MutableRefObject<Mark[][]>) => {
+    const current = marksRef.current;
+    while (from.current.length) {
+      const snap = from.current.pop()!;
+      if (sameMarks(snap, current)) continue;
+      to.current.push(current);
+      const restored = visible(snap);
+      marksRef.current = restored;
+      lastStepRef.current = { key: null, at: 0 };
+      dirtyRef.current = true;
+      setMarks(restored);
+      return true;
+    }
+    return false;
+  };
+  const undo = () => step(undoRef, redoRef);
+  const redo = () => step(redoRef, undoRef);
+
+  const updateMark = (id: string, patch: Partial<Mark>, key?: string, gesture = false) => {
+    change((ms) => ms.map((m) => (m.id === id ? { ...m, ...patch } : m)), key, gesture);
   };
   const removeMark = (id: string) => {
-    dirtyRef.current = true;
-    setMarks((ms) => ms.filter((m) => m.id !== id));
+    change((ms) => ms.filter((m) => m.id !== id));
   };
+  /** An empty text box that loses focus just disappears; that is not a step to undo. */
+  const dropIfEmpty = (id: string) => {
+    setSilently((ms) => ms.filter((m) => m.id !== id || m.shape || m.text.trim()));
+  };
+
+  // Ctrl+Z / Cmd+Z undoes the last change, Shift+Ctrl+Z / Ctrl+Y redoes it.
+  // In the PDF's own form fields and in other inputs the browser's undo is used.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k !== "z" && k !== "y") return;
+      const t = e.target as HTMLElement | null;
+      const field = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
+      if (field && !(t as HTMLElement).dataset.mark) return;
+      e.preventDefault();
+      if (k === "y" || e.shiftKey) redoRef.current.length && redo();
+      else undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const onLayerClick = (page: number, e: React.MouseEvent<HTMLDivElement>) => {
     if (tool === "none" || e.target !== e.currentTarget) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pxPerPt = scale * PT_TO_PX;
+    if (tool === "sign" && pendingDrawingRef.current) {
+      const d = pendingDrawingRef.current;
+      const b = drawingBounds(d);
+      let wPt = SIGN_WIDTH_PT;
+      let hPt = (wPt * b.h) / b.w;
+      if (hPt > SIGN_MAX_HEIGHT_PT) {
+        wPt *= SIGN_MAX_HEIGHT_PT / hPt;
+        hPt = SIGN_MAX_HEIGHT_PT;
+      }
+      const wPx = wPt * pxPerPt;
+      const hPx = hPt * pxPerPt;
+      const mark: Mark = {
+        id: newId(),
+        page,
+        x: (e.clientX - rect.left - wPx / 2) / rect.width,
+        y: (e.clientY - rect.top - hPx / 2) / rect.height,
+        w: wPx / rect.width,
+        h: hPx / rect.height,
+        size: 12,
+        text: "",
+        shape: "sign",
+        drawing: d,
+        ink
+      };
+      change((ms) => [...ms, mark]);
+      setTool("none");
+      return;
+    }
+    if (tool === "stamp") {
+      const lines = userStamp.split("\n");
+      const fontPx = STAMP.size * pxPerPt;
+      const textW = Math.max(...lines.map((l, i) => textWidthPx(l, fontPx, i === 0)));
+      const wPx = textW + 2 * (STAMP.pad + STAMP.border) * pxPerPt + 2;
+      const hPx = lines.length * STAMP.size * STAMP.line * pxPerPt + 2 * (STAMP.pad + STAMP.border) * pxPerPt;
+      const mark: Mark = {
+        id: newId(),
+        page,
+        x: (e.clientX - rect.left - wPx / 2) / rect.width,
+        y: (e.clientY - rect.top - hPx / 2) / rect.height,
+        w: wPx / rect.width,
+        h: hPx / rect.height,
+        size: STAMP.size,
+        text: userStamp,
+        shape: "stamp",
+        ink
+      };
+      change((ms) => [...ms, mark]);
+      setTool("none");
+      return;
+    }
     if (tool === "ring") {
       // Centred on the click, so you click on what you want to circle.
       const wPx = RING_PT.w * pxPerPt;
@@ -370,8 +517,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         text: "",
         shape: "ring"
       };
-      dirtyRef.current = true;
-      setMarks((ms) => [...ms, ring]);
+      change((ms) => [...ms, ring]);
       return;
     }
     const size = tool === "kryss" ? 12 : 11;
@@ -379,8 +525,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
     const y = (e.clientY - rect.top - size * 0.55 * pxPerPt) / rect.height;
     const text = tool === "kryss" ? "X" : isQuick(tool) ? quickValue(tool) : "";
     const mark: Mark = { id: newId(), page, x, y, size, text };
-    dirtyRef.current = true;
-    setMarks((ms) => [...ms, mark]);
+    change((ms) => [...ms, mark]);
     if (tool === "text") setFocusId(mark.id);
     // Name and signature are placed once per click on the button.
     if (isQuick(tool)) setTool("none");
@@ -393,11 +538,17 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
     const rect = layer.getBoundingClientRect();
     const startX = e.clientX;
     const startY = e.clientY;
+    const key = `drag:${mark.id}:${Date.now()}`;
     const move = (ev: PointerEvent) => {
-      updateMark(mark.id, {
-        x: mark.x + (ev.clientX - startX) / rect.width,
-        y: mark.y + (ev.clientY - startY) / rect.height
-      });
+      updateMark(
+        mark.id,
+        {
+          x: mark.x + (ev.clientX - startX) / rect.width,
+          y: mark.y + (ev.clientY - startY) / rect.height
+        },
+        key,
+        true
+      );
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -418,11 +569,24 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
     const start = box.getBoundingClientRect();
     const startX = e.clientX;
     const startY = e.clientY;
+    const key = `resize:${mark.id}:${Date.now()}`;
+    const keepShape = mark.shape === "sign" || mark.shape === "stamp";
     const move = (ev: PointerEvent) => {
-      updateMark(mark.id, {
-        w: Math.max(24, start.width + ev.clientX - startX) / rect.width,
-        h: Math.max(8, start.height + ev.clientY - startY) / rect.height
-      });
+      if (keepShape && mark.w && mark.h) {
+        // Signatures and stamps grow and shrink as a whole, text included.
+        const f = Math.max(0.3, Math.min(4, (start.width + ev.clientX - startX) / start.width));
+        updateMark(mark.id, { w: mark.w * f, h: mark.h * f, size: mark.size * f }, key, true);
+        return;
+      }
+      updateMark(
+        mark.id,
+        {
+          w: Math.max(24, start.width + ev.clientX - startX) / rect.width,
+          h: Math.max(8, start.height + ev.clientY - startY) / rect.height
+        },
+        key,
+        true
+      );
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -455,7 +619,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
       const endPos = el.selectionEnd ?? el.value.length;
       const next = el.value.slice(0, startPos) + text + el.value.slice(endPos);
       if (markId) {
-        updateMark(markId, { text: next });
+        updateMark(markId, { text: next }, `quick:${markId}:${Date.now()}`);
       } else {
         // A pdf.js form field: setting the value and firing "input" stores it in the form.
         el.value = next;
@@ -474,10 +638,11 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
   const buildPdf = async (): Promise<Uint8Array> => {
     const doc = docRef.current;
     const bytes: Uint8Array = hasFormRef.current ? await doc.saveDocument() : await doc.getData();
-    const live = marks.filter((m) => m.shape !== "ring" && m.text.trim());
+    const live = marks.filter((m) => !m.shape && m.text.trim());
     const rings = marks.filter((m) => m.shape === "ring" && m.w && m.h);
-    if (live.length === 0 && rings.length === 0) return bytes;
-    const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+    const shapes = marks.filter((m) => (m.shape === "sign" || m.shape === "stamp") && m.w && m.h);
+    if (live.length === 0 && rings.length === 0 && shapes.length === 0) return bytes;
+    const { PDFDocument, StandardFonts, rgb, LineCapStyle } = await import("pdf-lib");
     const out = await PDFDocument.load(bytes, { ignoreEncryption: true });
     const font = await out.embedFont(StandardFonts.Helvetica);
     const safe = (s: string) =>
@@ -517,6 +682,54 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         yScale: Math.max(1, (quarterTurn ? wPt : hPt) / 2 - RING_LINE_PT / 2),
         borderColor: rgb(0, 0, 0),
         borderWidth: RING_LINE_PT
+      });
+    }
+    let bold: any = null;
+    for (const m of shapes) {
+      const page = await doc.getPage(m.page);
+      const vp = page.getViewport({ scale: 1 });
+      const target = out.getPage(m.page - 1);
+      const wPt = m.w! * vp.width;
+      const hPt = m.h! * vp.height;
+      const color = rgb(...inkRgb(m.ink));
+      if (m.shape === "sign" && m.drawing) {
+        const b = drawingBounds(m.drawing);
+        const [px, py] = vp.convertToPdfPoint(m.x * vp.width, m.y * vp.height);
+        target.drawSvgPath(drawingPath(m.drawing, b.x, b.y), {
+          x: px,
+          y: py,
+          scale: wPt / b.w,
+          borderColor: color,
+          borderWidth: PEN_WIDTH,
+          borderLineCap: LineCapStyle.Round
+        });
+        continue;
+      }
+      // Stamp: frame, then the lines centred, the first in bold.
+      const k = m.size / STAMP.size;
+      const [lx, ly] = vp.convertToPdfPoint(m.x * vp.width, (m.y + m.h!) * vp.height);
+      const bw = STAMP.border * k;
+      target.drawRectangle({ x: lx + bw / 2, y: ly + bw / 2, width: wPt - bw, height: hPt - bw, borderColor: color, borderWidth: bw });
+      bold ??= await out.embedFont(StandardFonts.HelveticaBold);
+      const lines = m.text.split("\n");
+      const lineH = m.size * STAMP.line;
+      const top = m.y * vp.height + (hPt - lines.length * lineH) / 2;
+      lines.forEach((raw, i) => {
+        const f = i === 0 ? bold : font;
+        const line = Array.from(raw)
+          .map((ch) => {
+            try {
+              f.encodeText(ch);
+              return ch;
+            } catch {
+              return "?";
+            }
+          })
+          .join("");
+        if (!line.trim()) return;
+        const tw = f.widthOfTextAtSize(line, m.size);
+        const [px, py] = vp.convertToPdfPoint(m.x * vp.width + (wPt - tw) / 2, top + i * lineH + m.size * 0.9);
+        target.drawText(line, { x: px, y: py, size: m.size, font: f, color });
       });
     }
     return out.save();
@@ -607,7 +820,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
 
   return (
     <div className="pu" ref={rootRef} style={{ height: `calc(100dvh - ${top}px)` }}>
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: CSS + SIGPAD_CSS + STAMP_CSS }} />
       <div className="pu-bar">
         <div className="pu-title">
           <strong>{title || "Skjema"}</strong>
@@ -623,6 +836,33 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
           <button type="button" className={`pu-btn${tool === "ring" ? " on" : ""}`} onClick={() => setTool(tool === "ring" ? "none" : "ring")} aria-pressed={tool === "ring"} title="Klikk på det du vil sette ring rundt">
             ◯ Runding
           </button>
+          <span className="pu-sep" />
+          <button
+            type="button"
+            className={`pu-btn${tool === "sign" || padOpen ? " on" : ""}`}
+            onClick={() => {
+              if (tool === "sign") return setTool("none");
+              setPadDrawing(savedDrawing ? { ...savedDrawing, ink } : null);
+              setPadSave(!savedDrawing && Boolean(userId));
+              setPadOpen((o) => !o);
+            }}
+            aria-pressed={tool === "sign" || padOpen}
+            aria-expanded={padOpen}
+            title="Tegn signaturen og legg den på arket"
+          >
+            ✍ Håndskrift
+          </button>
+          <button
+            type="button"
+            className={`pu-btn${tool === "stamp" ? " on" : ""}`}
+            onClick={() => setTool(tool === "stamp" ? "none" : "stamp")}
+            disabled={!userStamp}
+            aria-pressed={tool === "stamp"}
+            title={userStamp ? "Klikk der stempelet skal stå" : "Lag stempel på profilsiden"}
+          >
+            ▭ Stempel
+          </button>
+          <InkPicker value={ink} inks={INKS} onChange={(i) => { setInk(i); setPadDrawing((d) => (d ? { ...d, ink: i } : d)); }} />
           <span className="pu-sep" />
           {QUICK_BUTTONS.map(({ kind, label, missing }) => {
             const value = quickValue(kind);
@@ -646,6 +886,17 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
           <span className="pu-zoom">{Math.round(scale * 100)} %</span>
           <button type="button" className="pu-btn" onClick={() => zoom(1.15)} aria-label="Zoom inn">+</button>
           <span className="pu-sep" />
+          <button
+            type="button"
+            className="pu-btn"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={undo}
+            disabled={status !== "ready" || undoRef.current.length === 0}
+            title="Angre siste endring (Ctrl+Z / Cmd+Z)"
+            aria-label="Angre"
+          >
+            ↶ Angre
+          </button>
           <button type="button" className="pu-btn" onClick={handleReset} disabled={status !== "ready"}>Nullstill</button>
           <button type="button" className="pu-btn" onClick={handleDownload} disabled={status !== "ready" || busy !== ""}>
             {busy === "download" ? "Lager …" : "Last ned"}
@@ -661,6 +912,10 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
           <span>
             {isQuick(tool)
               ? `Klikk der ${QUICK_BUTTONS.find((q) => q.kind === tool)!.noun} skal stå.`
+              : tool === "sign"
+                ? "Klikk der signaturen skal stå. Dra i ◢ for å gjøre den større eller mindre."
+                : tool === "stamp"
+                  ? "Klikk der stempelet skal stå. Dra i ◢ for å gjøre det større eller mindre."
                 : hasForm && tool === "none"
                   ? "Klikk i feltene for å fylle ut. Hurtigvalgene settes inn i feltet du står i."
                   : tool === "none"
@@ -695,6 +950,41 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         )}
       </div>
 
+      {padOpen && (
+        <div className="pu-sigpop" role="dialog" aria-label="Håndskrevet signatur">
+          <SignaturePad value={padDrawing} ink={ink} onChange={setPadDrawing} />
+          <div className="pu-sigpop-row">
+            <InkPicker value={ink} inks={INKS} onChange={(i) => { setInk(i); setPadDrawing((d) => (d ? { ...d, ink: i } : d)); }} />
+            {userId && (
+              <label className="pu-sigpop-save">
+                <input type="checkbox" checked={padSave} onChange={(e) => setPadSave(e.target.checked)} /> Lagre i profilen
+              </label>
+            )}
+            <span className="pu-sigpop-spacer" />
+            <button type="button" className="pu-btn" onClick={() => setPadDrawing(null)} disabled={!padDrawing}>Tøm</button>
+            <button type="button" className="pu-btn" onClick={() => setPadOpen(false)}>Avbryt</button>
+            <button
+              type="button"
+              className="pu-btn pu-primary"
+              disabled={!padDrawing}
+              onClick={async () => {
+                if (!padDrawing) return;
+                pendingDrawingRef.current = { ...padDrawing, ink };
+                setPadOpen(false);
+                setTool("sign");
+                if (padSave && userId) {
+                  const err = await saveDrawnSignature(userId, { ...padDrawing, ink });
+                  if (err) setError(`Signaturen ble ikke lagret i profilen: ${err}`);
+                  else setSavedDrawing({ ...padDrawing, ink });
+                }
+              }}
+            >
+              Legg på arket
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && <p className="pu-error" role="alert">{error}</p>}
       {status === "loading" && <p className="pu-info">Åpner PDF …</p>}
       {status === "error" && (
@@ -717,22 +1007,31 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
             {marks
               .filter((m) => m.page === p)
               .map((m) =>
-                m.shape === "ring" ? (
-                  <RingBox
+                m.shape ? (
+                  <ShapeBox
                     key={m.id}
                     mark={m}
-                    lineWidthPx={RING_LINE_PT * pxPerPt}
+                    label={m.shape === "ring" ? "Runding" : m.shape === "sign" ? "Håndskrevet signatur" : "Stempel"}
                     onRemove={() => removeMark(m.id)}
                     onDrag={(e) => startDrag(m, e)}
                     onResize={(e) => startResize(m, e)}
-                  />
+                  >
+                    {m.shape === "ring" ? (
+                      <span className="pu-ring-line" style={{ borderWidth: `${Math.max(1, RING_LINE_PT * pxPerPt)}px` }} aria-hidden="true" />
+                    ) : m.shape === "sign" && m.drawing ? (
+                      <SignShape drawing={m.drawing} ink={m.ink} />
+                    ) : (
+                      <StampView text={m.text} ink={m.ink ?? "blaa"} pxPerPt={pxPerPt} scale={m.size / STAMP.size} />
+                    )}
+                  </ShapeBox>
                 ) : (
                 <MarkBox
                   key={m.id}
                   mark={m}
                   pxPerPt={pxPerPt}
                   autoFocus={m.id === focusId}
-                  onText={(text) => updateMark(m.id, { text })}
+                  onText={(text) => updateMark(m.id, { text }, `text:${m.id}`)}
+                  onBlurEmpty={() => dropIfEmpty(m.id)}
                   onRemove={() => removeMark(m.id)}
                   onDrag={(e) => startDrag(m, e)}
                   onResize={(e) => startResize(m, e)}
@@ -824,29 +1123,33 @@ async function findAutoMarks(doc: any, pdfjs: any, today: string, name: string, 
   return auto.filter((m) => m.auto !== "date" || m === firstDate);
 }
 
-/** A circle drawn around something on the page. Drag to move, corner to resize, Delete to remove. */
-function RingBox({
+/** A circle, signature or stamp on the page. Drag to move, corner to resize, Delete to remove. */
+function ShapeBox({
   mark: m,
-  lineWidthPx,
+  label,
+  children,
   onRemove,
   onDrag,
   onResize
 }: {
   mark: Mark;
-  lineWidthPx: number;
+  label: string;
+  children: React.ReactNode;
   onRemove: () => void;
   onDrag: (e: React.PointerEvent<HTMLElement>) => void;
   onResize: (e: React.PointerEvent<HTMLElement>) => void;
 }) {
   return (
     <div
-      className="pu-ring"
+      className={`pu-shape pu-shape-${m.shape}`}
       tabIndex={0}
       role="img"
-      aria-label="Runding. Trykk Delete for å fjerne."
+      aria-label={`${label}. Trykk Delete for å fjerne.`}
       style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%`, width: `${m.w! * 100}%`, height: `${m.h! * 100}%` }}
       onPointerDown={(e) => {
-        if (e.target === e.currentTarget) onDrag(e);
+        const t = e.target as HTMLElement;
+        if (t.closest(".pu-ctrl") || t.classList.contains("pu-grip")) return;
+        onDrag(e);
       }}
       onKeyDown={(e) => {
         if (e.key === "Delete" || e.key === "Backspace") {
@@ -855,12 +1158,29 @@ function RingBox({
         }
       }}
     >
-      <span className="pu-ring-line" style={{ borderWidth: `${Math.max(1, lineWidthPx)}px` }} aria-hidden="true" />
+      {children}
       <span className="pu-ctrl">
         <button type="button" onClick={onRemove} aria-label="Fjern" title="Fjern">×</button>
       </span>
       <span className="pu-grip" onPointerDown={onResize} title="Dra for å endre størrelse" aria-hidden="true" />
     </div>
+  );
+}
+
+/** A hand-drawn signature, scaled to fill its box. */
+function SignShape({ drawing, ink }: { drawing: Drawing; ink?: Ink }) {
+  const b = drawingBounds(drawing);
+  return (
+    <svg className="pu-sign-svg" viewBox={`0 0 ${b.w} ${b.h}`} preserveAspectRatio="none" aria-hidden="true">
+      <path
+        d={drawingPath(drawing, b.x, b.y)}
+        fill="none"
+        stroke={inkHex(ink)}
+        strokeWidth={PEN_WIDTH}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -871,6 +1191,7 @@ function MarkBox({
   autoFocus,
   onText,
   onRemove,
+  onBlurEmpty,
   onDrag,
   onResize,
   onSize
@@ -880,6 +1201,7 @@ function MarkBox({
   autoFocus: boolean;
   onText: (text: string) => void;
   onRemove: () => void;
+  onBlurEmpty: () => void;
   onDrag: (e: React.PointerEvent<HTMLElement>) => void;
   onResize: (e: React.PointerEvent<HTMLElement>) => void;
   onSize: (step: number) => void;
@@ -928,7 +1250,7 @@ function MarkBox({
           }
         }}
         onBlur={() => {
-          if (!m.text.trim()) onRemove();
+          if (!m.text.trim()) onBlurEmpty();
         }}
         style={{
           fontSize: `${fontPx}px`,
@@ -948,7 +1270,7 @@ function MarkBox({
 }
 
 const CSS = `
-.pu{display:flex;flex-direction:column;background:var(--bg);color:#2b2b2b;font-family:inherit}
+.pu{position:relative;display:flex;flex-direction:column;background:var(--bg);color:#2b2b2b;font-family:inherit}
 .pu-bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border-soft)}
 .pu-title{display:flex;flex-direction:column;min-width:0}
 .pu-title strong{font-size:16px}
@@ -976,10 +1298,19 @@ const CSS = `
 .pu-marks{position:absolute;inset:0}
 .pu-tool-text .pu-marks{pointer-events:auto;cursor:text}
 .pu-tool-kryss .pu-marks,.pu-tool-ring .pu-marks{pointer-events:auto;cursor:crosshair}
-.pu-ring{position:absolute;pointer-events:auto;cursor:move;touch-action:none;outline:none;border-radius:50%}
+.pu-tool-sign .pu-marks,.pu-tool-stamp .pu-marks{pointer-events:auto;cursor:copy}
+.pu-shape{position:absolute;pointer-events:auto;cursor:move;touch-action:none;outline:none}
+.pu-shape-ring{border-radius:50%}
+.pu-sign-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.pu-shape-stamp .stamp-view{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;pointer-events:none}
+.pu-sigpop{position:absolute;z-index:60;right:14px;top:96px;width:min(560px,calc(100vw - 28px));padding:12px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-strong);display:flex;flex-direction:column;gap:10px}
+.pu-sigpop .sigpad{max-width:none}
+.pu-sigpop-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pu-sigpop-save{display:flex;align-items:center;gap:6px;font-size:13px}
+.pu-sigpop-spacer{flex:1}
 .pu-ring-line{position:absolute;inset:0;border-style:solid;border-color:#000;border-radius:50%;pointer-events:none;box-sizing:border-box}
-.pu-ring:hover,.pu-ring:focus-visible{background:rgba(var(--primary-rgb),.08);box-shadow:0 0 0 1px var(--primary)}
-.pu-ring:hover .pu-ctrl,.pu-ring:hover .pu-grip,.pu-ring:focus-within .pu-ctrl,.pu-ring:focus-within .pu-grip,.pu-ring:focus .pu-ctrl,.pu-ring:focus .pu-grip{opacity:1;pointer-events:auto}
+.pu-shape:hover,.pu-shape:focus-visible{background:rgba(var(--primary-rgb),.08);box-shadow:0 0 0 1px var(--primary)}
+.pu-shape:hover .pu-ctrl,.pu-shape:hover .pu-grip,.pu-shape:focus-within .pu-ctrl,.pu-shape:focus-within .pu-grip,.pu-shape:focus .pu-ctrl,.pu-shape:focus .pu-grip{opacity:1;pointer-events:auto}
 .pu-tool-quick .pu-marks{pointer-events:auto;cursor:copy}
 .pu-mark{position:absolute;pointer-events:auto;display:flex}
 .pu-mark textarea{display:block;box-sizing:border-box;border:1px dashed transparent;background:rgba(255,255,255,.01);padding:0 1px;margin:0;font-family:Helvetica,Arial,sans-serif;color:#000;outline:none;border-radius:2px;resize:none;overflow:hidden;white-space:pre;min-width:1ch}
