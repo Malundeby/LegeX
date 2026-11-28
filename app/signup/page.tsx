@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MIN_PASSWORD_LENGTH, authErrorMessage } from "@/lib/auth";
 
 export default function SignupPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -34,6 +35,8 @@ export default function SignupPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // Used to fill in the doctor's name on PDF forms (/skjema).
+        data: name.trim() ? { full_name: name.trim() } : undefined,
       },
     });
 
@@ -60,6 +63,17 @@ export default function SignupPage() {
           </p>
         ) : (
           <form onSubmit={handleSubmit}>
+            <label className="auth-field">
+              <span>Navn (fylles inn på skjemaer)</span>
+              <input
+                type="text"
+                name="name"
+                autoComplete="name"
+                placeholder="Fornavn Etternavn"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
             <label className="auth-field">
               <span>E-post</span>
               <input

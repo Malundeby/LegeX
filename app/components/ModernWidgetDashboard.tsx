@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { skjemaHref } from "@/app/utils/pdfSkjema";
 import "./ModernWidgetDashboard.css";
 import {
   loadDashboardWidgets,
@@ -495,7 +496,7 @@ export default function ModernWidgetDashboard() {
                             <span className="bookmark-fallback-icon" style={{ display: faviconUrl ? 'none' : 'inline', fontSize: '14px', flexShrink: 0 }}>
                               {getFallbackIcon(link.url)}
                             </span>
-                            <a href={link.url} target="_blank" rel="noreferrer">
+                            <a href={skjemaHref(link.url, link.label)} target="_blank" rel="noreferrer">
                               {link.label}
                             </a>
                           </li>
