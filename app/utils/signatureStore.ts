@@ -1,18 +1,18 @@
 import { createClient } from "@/lib/supabase/client";
-import { cleanDrawing, type Drawing } from "@/lib/drawing";
+import { cleanSaved, type SavedSignature } from "@/lib/drawing";
 
 /**
- * The signed-in user's hand-drawn signature, in public.user_signatures
+ * The signed-in user's handwritten signature (drawn, or cleaned from a photo), in public.user_signatures
  * (sql/0012). Row level security limits every query to the user's own row.
  */
 
-export async function loadDrawnSignature(userId: string): Promise<Drawing | null> {
+export async function loadDrawnSignature(userId: string): Promise<SavedSignature | null> {
   const { data, error } = await createClient().from("user_signatures").select("drawing").eq("user_id", userId).maybeSingle();
   if (error || !data) return null;
-  return cleanDrawing(data.drawing);
+  return cleanSaved(data.drawing);
 }
 
-export async function saveDrawnSignature(userId: string, drawing: Drawing): Promise<string | null> {
+export async function saveDrawnSignature(userId: string, drawing: SavedSignature): Promise<string | null> {
   const { error } = await createClient()
     .from("user_signatures")
     .upsert({ user_id: userId, drawing, updated_at: new Date().toISOString() }, { onConflict: "user_id" });

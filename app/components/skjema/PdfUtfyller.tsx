@@ -5,7 +5,22 @@ import { createPortal } from "react-dom";
 import "pdfjs-dist/web/pdf_viewer.css";
 import { createClient } from "@/lib/supabase/client";
 import { profileName, profilePhone, profileSignature, profileStamp } from "@/lib/profile";
-import { INKS, PEN_WIDTH, drawingBounds, drawingPath, inkHex, inkRgb, isInk, type Drawing, type Ink } from "@/lib/drawing";
+import {
+  INKS,
+  PEN_WIDTH,
+  drawingBounds,
+  drawingPath,
+  inkHex,
+  inkRgb,
+  isImageSignature,
+  isInk,
+  signatureAspect,
+  type Drawing,
+  type Ink,
+  type SavedSignature,
+  type SignatureImage
+} from "@/lib/drawing";
+import SignatureUpload, { SIGUP_CSS, SignatureImageView, coloredSignaturePng } from "@/app/components/SignatureUpload";
 import SignaturePad, { InkPicker, SIGPAD_CSS } from "@/app/components/SignaturePad";
 import StampView, { STAMP, STAMP_CSS } from "@/app/components/StampView";
 import { loadDrawnSignature, saveDrawnSignature } from "@/app/utils/signatureStore";
@@ -38,6 +53,8 @@ interface Mark {
   /** Not text: a circle, a hand-drawn signature or a stamp. These use x, y, w and h. */
   shape?: "ring" | "sign" | "stamp";
   drawing?: Drawing;
+  /** A signature from a photo (instead of drawn strokes). */
+  image?: SignatureImage;
   ink?: Ink;
   /** Box width as a fraction of the page, once the user has resized it. Text then wraps inside. */
   w?: number;
@@ -151,11 +168,12 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
   const [userPhone, setUserPhone] = useState("");
   const [userStamp, setUserStamp] = useState("");
   const [ink, setInk] = useState<Ink>("blaa");
-  const [savedDrawing, setSavedDrawing] = useState<Drawing | null>(null);
+  const [savedDrawing, setSavedDrawing] = useState<SavedSignature | null>(null);
   const [padOpen, setPadOpen] = useState(false);
-  const [padDrawing, setPadDrawing] = useState<Drawing | null>(null);
+  const [padDrawing, setPadDrawing] = useState<SavedSignature | null>(null);
+  const [padUpload, setPadUpload] = useState(false);
   const [padSave, setPadSave] = useState(true);
-  const pendingDrawingRef = useRef<Drawing | null>(null);
+  const pendingDrawingRef = useRef<SavedSignature | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [nameSaved, setNameSaved] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
@@ -454,9 +472,8 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
     const pxPerPt = scale * PT_TO_PX;
     if (tool === "sign" && pendingDrawingRef.current) {
       const d = pendingDrawingRef.current;
-      const b = drawingBounds(d);
       let wPt = SIGN_WIDTH_PT;
-      let hPt = (wPt * b.h) / b.w;
+      let hPt = wPt / signatureAspect(d);
       if (hPt > SIGN_MAX_HEIGHT_PT) {
         wPt *= SIGN_MAX_HEIGHT_PT / hPt;
         hPt = SIGN_MAX_HEIGHT_PT;
@@ -473,7 +490,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         size: 12,
         text: "",
         shape: "sign",
-        drawing: d,
+        ...(isImageSignature(d) ? { image: d } : { drawing: d }),
         ink
       };
       change((ms) => [...ms, mark]);
@@ -692,6 +709,12 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
       const wPt = m.w! * vp.width;
       const hPt = m.h! * vp.height;
       const color = rgb(...inkRgb(m.ink));
+      if (m.shape === "sign" && m.image) {
+        const png = await out.embedPng(await coloredSignaturePng(m.image, m.ink));
+        const [lx, ly] = vp.convertToPdfPoint(m.x * vp.width, (m.y + m.h!) * vp.height);
+        target.drawImage(png, { x: lx, y: ly, width: wPt, height: hPt });
+        continue;
+      }
       if (m.shape === "sign" && m.drawing) {
         const b = drawingBounds(m.drawing);
         const [px, py] = vp.convertToPdfPoint(m.x * vp.width, m.y * vp.height);
@@ -820,7 +843,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
 
   return (
     <div className="pu" ref={rootRef} style={{ height: `calc(100dvh - ${top}px)` }}>
-      <style dangerouslySetInnerHTML={{ __html: CSS + SIGPAD_CSS + STAMP_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: CSS + SIGPAD_CSS + STAMP_CSS + SIGUP_CSS }} />
       <div className="pu-bar">
         <div className="pu-title">
           <strong>{title || "Skjema"}</strong>
@@ -844,6 +867,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
               if (tool === "sign") return setTool("none");
               setPadDrawing(savedDrawing ? { ...savedDrawing, ink } : null);
               setPadSave(!savedDrawing && Boolean(userId));
+              setPadUpload(false);
               setPadOpen((o) => !o);
             }}
             aria-pressed={tool === "sign" || padOpen}
@@ -952,8 +976,25 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
 
       {padOpen && (
         <div className="pu-sigpop" role="dialog" aria-label="Håndskrevet signatur">
-          <SignaturePad value={padDrawing} ink={ink} onChange={setPadDrawing} />
-          <div className="pu-sigpop-row">
+          {padUpload ? (
+            <SignatureUpload
+              ink={ink}
+              onCancel={() => setPadUpload(false)}
+              onUse={(img) => {
+                setPadDrawing(img);
+                setPadUpload(false);
+              }}
+            />
+          ) : isImageSignature(padDrawing) ? (
+            <div className="pu-sigpop-image">
+              <span style={{ display: "block", width: `min(100%, ${Math.round((130 * padDrawing.w) / padDrawing.h)}px)` }}>
+                <SignatureImageView sig={padDrawing} ink={ink} />
+              </span>
+            </div>
+          ) : (
+            <SignaturePad value={padDrawing} ink={ink} onChange={setPadDrawing} />
+          )}
+          {!padUpload && <div className="pu-sigpop-row">
             <InkPicker value={ink} inks={INKS} onChange={(i) => { setInk(i); setPadDrawing((d) => (d ? { ...d, ink: i } : d)); }} />
             {userId && (
               <label className="pu-sigpop-save">
@@ -961,7 +1002,10 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
               </label>
             )}
             <span className="pu-sigpop-spacer" />
-            <button type="button" className="pu-btn" onClick={() => setPadDrawing(null)} disabled={!padDrawing}>Tøm</button>
+            <button type="button" className="pu-btn" onClick={() => setPadUpload(true)}>Last opp bilde</button>
+            <button type="button" className="pu-btn" onClick={() => setPadDrawing(null)} disabled={!padDrawing}>
+              {isImageSignature(padDrawing) ? "Tegn i stedet" : "Tøm"}
+            </button>
             <button type="button" className="pu-btn" onClick={() => setPadOpen(false)}>Avbryt</button>
             <button
               type="button"
@@ -981,7 +1025,7 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
             >
               Legg på arket
             </button>
-          </div>
+          </div>}
         </div>
       )}
 
@@ -1018,6 +1062,8 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
                   >
                     {m.shape === "ring" ? (
                       <span className="pu-ring-line" style={{ borderWidth: `${Math.max(1, RING_LINE_PT * pxPerPt)}px` }} aria-hidden="true" />
+                    ) : m.shape === "sign" && m.image ? (
+                      <SignatureImageView sig={m.image} ink={m.ink} className="pu-sign-img" />
                     ) : m.shape === "sign" && m.drawing ? (
                       <SignShape drawing={m.drawing} ink={m.ink} />
                     ) : (
@@ -1301,6 +1347,8 @@ const CSS = `
 .pu-tool-sign .pu-marks,.pu-tool-stamp .pu-marks{pointer-events:auto;cursor:copy}
 .pu-shape{position:absolute;pointer-events:auto;cursor:move;touch-action:none;outline:none}
 .pu-shape-ring{border-radius:50%}
+.pu-sign-img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.pu-sigpop-image{display:flex;align-items:center;justify-content:center;min-height:110px;padding:10px;border:1px solid var(--border);border-radius:10px;background:#fff}
 .pu-sign-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 .pu-shape-stamp .stamp-view{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;pointer-events:none}
 .pu-sigpop{position:absolute;z-index:60;right:14px;top:96px;width:min(560px,calc(100vw - 28px));padding:12px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-strong);display:flex;flex-direction:column;gap:10px}

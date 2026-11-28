@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DRAW_H, DRAW_W, cleanDrawing, drawingBounds, drawingPath, inkHex } from "./drawing";
+import { DRAW_H, DRAW_W, cleanDrawing, cleanSaved, cleanSignatureImage, drawingBounds, drawingPath, inkHex, isImageSignature, signatureAspect } from "./drawing";
 
 describe("drawing", () => {
   it("cleans strokes and drops what is not a drawing", () => {
@@ -27,5 +27,18 @@ describe("drawing", () => {
     expect(b.x).toBeLessThan(10);
     expect(b.w).toBeGreaterThan(40);
     expect(inkHex("blaa")).toBe("#1a3fb0");
+  });
+
+  it("accepts only clean PNG images", () => {
+    const ok = { kind: "image", ink: "blaa", src: "data:image/png;base64,iVBORw0KGgo=", w: 400, h: 100 };
+    expect(cleanSignatureImage(ok)).toEqual({ v: 1, ...ok });
+    expect(cleanSignatureImage({ ...ok, src: "data:image/svg+xml;base64,PHN2Zz4=" })).toBeNull();
+    expect(cleanSignatureImage({ ...ok, src: "data:image/png;base64,abc<script>" })).toBeNull();
+    expect(cleanSignatureImage({ ...ok, w: 0 })).toBeNull();
+    expect(cleanSignatureImage({ ...ok, src: "data:image/png;base64," + "A".repeat(400_000) })).toBeNull();
+    const saved = cleanSaved(ok)!;
+    expect(isImageSignature(saved)).toBe(true);
+    expect(signatureAspect(saved)).toBe(4);
+    expect(isImageSignature(cleanSaved({ strokes: [[1, 2, 3, 4]] }))).toBe(false);
   });
 });
