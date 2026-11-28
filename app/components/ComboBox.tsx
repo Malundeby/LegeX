@@ -90,8 +90,8 @@ export default function ComboBox({
     setFilteredOptions(options);
     setIsOpen(true);
     setHighlightedIndex(getInitialHighlightIndex(options));
-    e.currentTarget.style.borderColor = '#0891b2';
-    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(8, 145, 178, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1)';
+    e.currentTarget.style.borderColor = 'var(--primary)';
+    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(var(--primary-rgb), 0.1), 0 1px 3px rgba(0, 0, 0, 0.1)';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -217,8 +217,8 @@ export default function ComboBox({
             pointerEvents: 'auto'
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.color = '#0891b2';
-            e.currentTarget.style.backgroundColor = '#ecfeff';
+            e.currentTarget.style.color = 'var(--primary)';
+            e.currentTarget.style.backgroundColor = 'var(--primary-bg)';
           }}
           onMouseOut={(e) => {
             e.currentTarget.style.color = '#6b7280';
@@ -304,10 +304,10 @@ export default function ComboBox({
                   padding: '11px 16px',
                   cursor: 'pointer',
                   fontSize: '14px',
-                  color: isSelected ? '#0891b2' : '#111827',
-                  backgroundColor: isHighlighted ? '#f0fdfa' : (isSelected ? '#ecfeff' : '#ffffff'),
+                  color: isSelected ? 'var(--primary)' : '#111827',
+                  backgroundColor: isHighlighted ? 'var(--surface-3)' : (isSelected ? 'var(--primary-bg)' : '#ffffff'),
                   fontWeight: isSelected ? 600 : 400,
-                  borderLeft: isSelected ? '3px solid #0891b2' : '3px solid transparent',
+                  borderLeft: isSelected ? '3px solid var(--primary)' : '3px solid transparent',
                   transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
                   display: 'flex',
                   alignItems: 'center',

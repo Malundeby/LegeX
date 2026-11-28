@@ -624,7 +624,7 @@ export default function Takstkartotek() {
           background: var(--tk-surface);
           border: 1px solid var(--tk-line-strong);
           border-radius: 999px;
-          box-shadow: 0 1px 2px rgba(74, 53, 39, 0.08);
+          box-shadow: 0 1px 2px rgba(var(--shade-rgb), 0.08);
         }
         .switch-group.setting-switch {
           flex-wrap: wrap;
@@ -697,7 +697,7 @@ export default function Takstkartotek() {
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 6px rgba(74, 53, 39, 0.3);
+          box-shadow: 0 2px 6px rgba(var(--shade-rgb), 0.3);
         }
         .brand-mark :global(svg) {
           width: 20px;
@@ -742,7 +742,7 @@ export default function Takstkartotek() {
           border: 1px solid var(--tk-line-strong);
           border-radius: 999px;
           color: var(--tk-ink);
-          box-shadow: 0 1px 2px rgba(74, 53, 39, 0.08);
+          box-shadow: 0 1px 2px rgba(var(--shade-rgb), 0.08);
         }
         .search-field input::placeholder {
           color: var(--tk-ink-soft);

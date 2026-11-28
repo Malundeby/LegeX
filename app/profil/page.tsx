@@ -11,6 +11,7 @@ import {
   FONT_OPTIONS,
   MENU_OPTIONS,
   type Prefs,
+  cleanSignature,
   readLocalPrefs,
   storePrefs
 } from "@/lib/profile";
@@ -21,13 +22,17 @@ type Status = { kind: "ok" | "error"; text: string } | null;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, name } = useProfile();
+  const { user, name, signature } = useProfile();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsStatus, setPrefsStatus] = useState<Status>(null);
 
   const [nameDraft, setNameDraft] = useState("");
   const [nameStatus, setNameStatus] = useState<Status>(null);
   const [savingName, setSavingName] = useState(false);
+
+  const [sigDraft, setSigDraft] = useState("");
+  const [sigStatus, setSigStatus] = useState<Status>(null);
+  const [savingSig, setSavingSig] = useState(false);
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -41,6 +46,10 @@ export default function ProfilePage() {
   useEffect(() => {
     setNameDraft(name);
   }, [name]);
+
+  useEffect(() => {
+    setSigDraft(signature);
+  }, [signature]);
 
   useEffect(() => {
     setPrefs(readLocalPrefs());
@@ -71,6 +80,22 @@ export default function ProfilePage() {
     }
     if (data.user) announceProfile(data.user);
     setNameStatus({ kind: "ok", text: "Navnet er lagret." });
+  }
+
+  async function saveSignature(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingSig(true);
+    setSigStatus(null);
+    const clean = cleanSignature(sigDraft);
+    const { data, error } = await createClient().auth.updateUser({ data: { signature: clean } });
+    setSavingSig(false);
+    if (error) {
+      setSigStatus({ kind: "error", text: authErrorMessage(error.message) });
+      return;
+    }
+    setSigDraft(clean);
+    if (data.user) announceProfile(data.user);
+    setSigStatus({ kind: "ok", text: "Signaturen er lagret." });
   }
 
   async function savePassword(e: React.FormEvent) {
@@ -136,6 +161,41 @@ export default function ProfilePage() {
           </button>
         </form>
         {nameStatus && <p className={`profile-status ${nameStatus.kind}`} role="status">{nameStatus.text}</p>}
+      </section>
+
+      <section className="profile-card" aria-labelledby="signatur-h">
+        <h2 id="signatur-h">Signatur</h2>
+        <p>
+          Brukes der det står {"{signatur}"} i fraser, i Helsenorge-meldingen og som hurtigvalg når du fyller ut PDF-skjemaer.
+          Uten signatur brukes navnet.
+        </p>
+        <form className="profile-form" onSubmit={saveSignature}>
+          <label>
+            Signatur (inntil 6 linjer)
+            <textarea
+              className="profile-textarea"
+              value={sigDraft}
+              onChange={(e) => setSigDraft(e.target.value)}
+              rows={4}
+              placeholder={"Legefornavn Legeetternavn\nLege\nLegesenter A"}
+            />
+          </label>
+          <div className="profile-row">
+            {!sigDraft.trim() && name && (
+              <button
+                type="button"
+                className="profile-button secondary"
+                onClick={() => setSigDraft(`${name}\nLege\n`)}
+              >
+                Start med navnet
+              </button>
+            )}
+            <button type="submit" className="profile-button" disabled={savingSig || cleanSignature(sigDraft) === signature}>
+              {savingSig ? "Lagrer …" : "Lagre signatur"}
+            </button>
+          </div>
+        </form>
+        {sigStatus && <p className={`profile-status ${sigStatus.kind}`} role="status">{sigStatus.text}</p>}
       </section>
 
       <section className="profile-card" aria-labelledby="visning-h">

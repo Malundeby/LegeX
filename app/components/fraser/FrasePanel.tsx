@@ -34,7 +34,7 @@ interface Props {
 }
 
 export default function FrasePanel({ store, mode, collapsed, onCollapse, onExpand }: Props) {
-  const { name: signerName } = useProfile();
+  const { name: signerName, signature: signerSignature } = useProfile();
   const { index, isAdmin, userId, favorites, userPhrases } = store;
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -100,7 +100,7 @@ export default function FrasePanel({ store, mode, collapsed, onCollapse, onExpan
   }
 
   async function copy(title: string, rawText: string) {
-    const text = fillSignature(rawText, signerName);
+    const text = fillSignature(rawText, signerName, signerSignature);
     const w = win();
     let ok = false;
     try {

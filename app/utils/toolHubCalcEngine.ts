@@ -345,7 +345,7 @@ export function calculateToolHubCalcResult(
     return {
       value: dosing || "Velg alle parametere",
       label: "Atrieflimmer",
-      color: "#0891b2",
+      color: "var(--primary)",
       text: `${doakType} (atrieflimmer): ${dosing}`,
       score: 0,
       maxScore: 1,

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "pdfjs-dist/web/pdf_viewer.css";
 import { createClient } from "@/lib/supabase/client";
+import { profileName, profileSignature } from "@/lib/profile";
 import {
   findLabels,
   formatNorwegianDate,
@@ -11,6 +12,7 @@ import {
   isSignerFieldName,
   pdfFetchUrl,
   standaloneLabel,
+  wrapLines,
   type LabelKind
 } from "@/app/utils/pdfSkjema";
 
@@ -28,9 +30,25 @@ interface Mark {
   size: number;
   text: string;
   auto?: LabelKind;
+  /** Box width as a fraction of the page, once the user has resized it. Text then wraps inside. */
+  w?: number;
+  /** Minimum box height as a fraction of the page. */
+  h?: number;
 }
 
-type Tool = "none" | "text" | "kryss";
+type Tool = "none" | "text" | "kryss" | "navn" | "signatur";
+
+const LINE_HEIGHT = 1.15;
+const MARK_FONT = "Helvetica, Arial, sans-serif";
+let measureCtx: CanvasRenderingContext2D | null = null;
+/** Width in CSS pixels of one line of mark text at the given font size. */
+function textWidthPx(text: string, fontPx: number): number {
+  if (typeof document === "undefined") return text.length * fontPx * 0.55;
+  measureCtx ??= document.createElement("canvas").getContext("2d");
+  if (!measureCtx) return text.length * fontPx * 0.55;
+  measureCtx.font = `${fontPx}px ${MARK_FONT}`;
+  return measureCtx.measureText(text).width;
+}
 
 const WORKER_SRC = "https://unpkg.com/pdfjs-dist@6.2.108/legacy/build/pdf.worker.min.mjs";
 const PT_TO_PX = 96 / 72;
@@ -64,6 +82,7 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
   const [hasForm, setHasForm] = useState(false);
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
   const [userName, setUserName] = useState("");
+  const [userSignature, setUserSignature] = useState("");
   const [nameDraft, setNameDraft] = useState("");
   const [nameSaved, setNameSaved] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
@@ -85,8 +104,9 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
     supabase.auth.getUser().then(({ data }) => {
       const user = data.user;
       setUserId(user?.id ?? null);
-      const name = String(user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? "").trim();
+      const name = profileName(user);
       setUserName(name);
+      setUserSignature(profileSignature(user));
       setNameDraft(name);
     });
   }, []);
@@ -326,10 +346,13 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
     const size = tool === "kryss" ? 12 : 11;
     const x = (e.clientX - rect.left - (tool === "kryss" ? size * 0.33 * pxPerPt : 0)) / rect.width;
     const y = (e.clientY - rect.top - size * 0.55 * pxPerPt) / rect.height;
-    const mark: Mark = { id: newId(), page, x, y, size, text: tool === "kryss" ? "X" : "" };
+    const text = tool === "kryss" ? "X" : tool === "navn" ? userName : tool === "signatur" ? userSignature : "";
+    const mark: Mark = { id: newId(), page, x, y, size, text };
     dirtyRef.current = true;
     setMarks((ms) => [...ms, mark]);
     if (tool === "text") setFocusId(mark.id);
+    // Name and signature are placed once per click on the button.
+    if (tool === "navn" || tool === "signatur") setTool("none");
   };
 
   const startDrag = (mark: Mark, e: React.PointerEvent<HTMLElement>) => {
@@ -351,6 +374,66 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+  };
+
+  /** Drag the corner to make a text box wider (text wraps) or taller. */
+  const startResize = (mark: Mark, e: React.PointerEvent<HTMLElement>) => {
+    const layer = layersRef.current.get(mark.page);
+    const box = (e.currentTarget as HTMLElement).parentElement;
+    if (!layer || !box) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = layer.getBoundingClientRect();
+    const start = box.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const move = (ev: PointerEvent) => {
+      updateMark(mark.id, {
+        w: Math.max(24, start.width + ev.clientX - startX) / rect.width,
+        h: Math.max(8, start.height + ev.clientY - startY) / rect.height
+      });
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const resizeText = (mark: Mark, step: number) => {
+    updateMark(mark.id, { size: Math.min(28, Math.max(6, mark.size + step)) });
+  };
+
+  /**
+   * Name or signature button: typed into the field that has focus (a form field
+   * in the PDF or one of our text boxes), otherwise placed where the user clicks next.
+   */
+  const quickInsert = (kind: "navn" | "signatur") => {
+    const value = kind === "navn" ? userName : userSignature;
+    if (!value) return;
+    const el = document.activeElement;
+    const inViewer = el instanceof HTMLElement && containerRef.current?.contains(el);
+    const markId = el instanceof HTMLTextAreaElement ? el.dataset.mark : undefined;
+    if (inViewer && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && !el.readOnly && el.type !== "checkbox" && el.type !== "radio") {
+      const text = el instanceof HTMLInputElement ? value.replace(/\n+/g, ", ") : value;
+      const startPos = el.selectionStart ?? el.value.length;
+      const endPos = el.selectionEnd ?? el.value.length;
+      const next = el.value.slice(0, startPos) + text + el.value.slice(endPos);
+      if (markId) {
+        updateMark(markId, { text: next });
+      } else {
+        // A pdf.js form field: setting the value and firing "input" stores it in the form.
+        el.value = next;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        dirtyRef.current = true;
+      }
+      const caret = startPos + text.length;
+      requestAnimationFrame(() => el.setSelectionRange?.(caret, caret));
+      return;
+    }
+    setTool(tool === kind ? "none" : kind);
   };
 
   /** Builds the filled-in PDF in memory. */
@@ -376,8 +459,14 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
     for (const m of live) {
       const page = await doc.getPage(m.page);
       const vp = page.getViewport({ scale: 1 });
-      const [px, py] = vp.convertToPdfPoint(m.x * vp.width, m.y * vp.height + m.size * 0.85);
-      out.getPage(m.page - 1).drawText(safe(m.text), { x: px, y: py, size: m.size, font, color: rgb(0, 0, 0) });
+      // Same inner width as the box on screen (border and padding are 2 px on each side).
+      const maxWidth = m.w ? m.w * vp.width - 4 / PT_TO_PX : undefined;
+      const lines = wrapLines(m.text, maxWidth, (t) => font.widthOfTextAtSize(safe(t), m.size)).map(safe);
+      lines.forEach((line, i) => {
+        if (!line) return;
+        const [px, py] = vp.convertToPdfPoint(m.x * vp.width, m.y * vp.height + m.size * 0.85 + i * m.size * LINE_HEIGHT);
+        out.getPage(m.page - 1).drawText(line, { x: px, y: py, size: m.size, font, color: rgb(0, 0, 0) });
+      });
     }
     return out.save();
   };
@@ -480,6 +569,29 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
             ✕ Kryss
           </button>
           <span className="pu-sep" />
+          <button
+            type="button"
+            className={`pu-btn${tool === "navn" ? " on" : ""}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => quickInsert("navn")}
+            disabled={!userName}
+            aria-pressed={tool === "navn"}
+            title={userName ? `Sett inn «${userName}» i feltet du står i, eller klikk der det skal stå` : "Legg inn navnet ditt først"}
+          >
+            Navn
+          </button>
+          <button
+            type="button"
+            className={`pu-btn${tool === "signatur" ? " on" : ""}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => quickInsert("signatur")}
+            disabled={!userSignature}
+            aria-pressed={tool === "signatur"}
+            title={userSignature ? "Sett inn signaturen i feltet du står i, eller klikk der den skal stå" : "Legg inn signatur på profilsiden"}
+          >
+            Signatur
+          </button>
+          <span className="pu-sep" />
           <button type="button" className="pu-btn" onClick={() => zoom(1 / 1.15)} aria-label="Zoom ut">−</button>
           <span className="pu-zoom">{Math.round(scale * 100)} %</span>
           <button type="button" className="pu-btn" onClick={() => zoom(1.15)} aria-label="Zoom inn">+</button>
@@ -497,13 +609,17 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
       <div className="pu-sub">
         {status === "ready" && (
           <span>
-            {hasForm
-              ? "Klikk i feltene for å fylle ut. Bruk Tekst eller Kryss for steder uten felt."
-              : tool === "none"
-                ? "Velg Tekst eller Kryss og klikk der du vil skrive. Dra i ⠿ for å flytte."
-                : tool === "text"
-                  ? "Klikk der du vil skrive."
-                  : "Klikk i boksen du vil krysse av."}
+            {tool === "navn"
+              ? "Klikk der navnet skal stå."
+              : tool === "signatur"
+                ? "Klikk der signaturen skal stå."
+                : hasForm && tool === "none"
+                  ? "Klikk i feltene for å fylle ut. Navn og Signatur settes inn i feltet du står i."
+                  : tool === "none"
+                    ? "Velg Tekst eller Kryss og klikk der du vil skrive. Dra i ⠿ for å flytte og i ◢ for å gjøre boksen større."
+                    : tool === "text"
+                      ? "Klikk der du vil skrive. Shift+Enter gir ny linje."
+                      : "Klikk i boksen du vil krysse av."}
           </span>
         )}
         {userId ? (
@@ -522,6 +638,11 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
             <a href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/skjema")}`}>Logg inn</a> for å få navnet ditt fylt inn.
           </span>
         ) : null}
+        {userId && !userSignature && (
+          <span className="pu-muted">
+            <a href="/profil">Legg inn signatur</a> for hurtigvalg.
+          </span>
+        )}
       </div>
 
       {error && <p className="pu-error" role="alert">{error}</p>}
@@ -546,25 +667,17 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
             {marks
               .filter((m) => m.page === p)
               .map((m) => (
-                <div key={m.id} className="pu-mark" style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%` }}>
-                  <span className="pu-handle" onPointerDown={(e) => startDrag(m, e)} title="Dra for å flytte" aria-hidden="true">⠿</span>
-                  <input
-                    data-mark={m.id}
-                    autoFocus={m.id === focusId}
-                    value={m.text}
-                    size={Math.max(2, m.text.length + 1)}
-                    onChange={(e) => updateMark(m.id, { text: e.target.value })}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === "Escape") (e.target as HTMLInputElement).blur();
-                    }}
-                    onBlur={() => {
-                      if (!m.text.trim()) removeMark(m.id);
-                    }}
-                    style={{ fontSize: `${m.size * pxPerPt}px`, height: `${m.size * 1.15 * pxPerPt}px` }}
-                    aria-label={m.auto === "date" ? "Dato" : m.auto === "signer" ? "Navn" : "Tekst"}
-                  />
-                  <button type="button" className="pu-x" onClick={() => removeMark(m.id)} aria-label="Fjern">×</button>
-                </div>
+                <MarkBox
+                  key={m.id}
+                  mark={m}
+                  pxPerPt={pxPerPt}
+                  autoFocus={m.id === focusId}
+                  onText={(text) => updateMark(m.id, { text })}
+                  onRemove={() => removeMark(m.id)}
+                  onDrag={(e) => startDrag(m, e)}
+                  onResize={(e) => startResize(m, e)}
+                  onSize={(step) => resizeText(m, step)}
+                />
               ))}
           </div>,
           layer,
@@ -575,26 +688,109 @@ export default function PdfUtfyller({ url, title }: { url: string; title?: strin
   );
 }
 
+/** One text box on the page. Without a set width it grows with the text; once resized, text wraps. */
+function MarkBox({
+  mark: m,
+  pxPerPt,
+  autoFocus,
+  onText,
+  onRemove,
+  onDrag,
+  onResize,
+  onSize
+}: {
+  mark: Mark;
+  pxPerPt: number;
+  autoFocus: boolean;
+  onText: (text: string) => void;
+  onRemove: () => void;
+  onDrag: (e: React.PointerEvent<HTMLElement>) => void;
+  onResize: (e: React.PointerEvent<HTMLElement>) => void;
+  onSize: (step: number) => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+  const fontPx = m.size * pxPerPt;
+  const linePx = fontPx * LINE_HEIGHT;
+  const fixed = m.w !== undefined;
+  const lines = m.text.split("\n");
+  const autoWidth = Math.max(fontPx * 0.8, ...lines.map((l) => textWidthPx(l, fontPx))) + 6;
+
+  // Grow the box to fit all lines, never smaller than the height the user dragged to.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const pageHeight = el.closest(".pu-layer")?.clientHeight ?? 0;
+    const minPx = m.h !== undefined ? m.h * pageHeight : 0;
+    el.style.height = "0px";
+    el.style.height = `${Math.max(linePx + 2, el.scrollHeight, minPx)}px`;
+  });
+
+  const label = m.auto === "date" ? "Dato" : m.auto === "signer" ? "Navn" : "Tekst";
+  return (
+    <div
+      className={`pu-mark${fixed ? " fixed" : ""}`}
+      style={{
+        left: `${m.x * 100}%`,
+        top: `${m.y * 100}%`,
+        width: fixed ? `${m.w! * 100}%` : undefined
+      }}
+    >
+      <span className="pu-handle" onPointerDown={onDrag} title="Dra for å flytte" aria-hidden="true">⠿</span>
+      <textarea
+        ref={ref}
+        data-mark={m.id}
+        autoFocus={autoFocus}
+        value={m.text}
+        rows={1}
+        wrap={fixed ? "soft" : "off"}
+        spellCheck={false}
+        onChange={(e) => onText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" || (e.key === "Enter" && !e.shiftKey)) {
+            e.preventDefault();
+            (e.target as HTMLTextAreaElement).blur();
+          }
+        }}
+        onBlur={() => {
+          if (!m.text.trim()) onRemove();
+        }}
+        style={{
+          fontSize: `${fontPx}px`,
+          lineHeight: `${linePx}px`,
+          width: fixed ? "100%" : `${autoWidth}px`
+        }}
+        aria-label={label}
+      />
+      <span className="pu-ctrl">
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => onSize(-1)} aria-label="Mindre skrift" title="Mindre skrift">A−</button>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => onSize(1)} aria-label="Større skrift" title="Større skrift">A+</button>
+        <button type="button" onClick={onRemove} aria-label="Fjern" title="Fjern">×</button>
+      </span>
+      <span className="pu-grip" onPointerDown={onResize} title="Dra for å endre størrelse" aria-hidden="true" />
+    </div>
+  );
+}
+
 const CSS = `
-.pu{display:flex;flex-direction:column;background:#ece7df;color:#2b2b2b;font-family:inherit}
-.pu-bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border-bottom:1px solid #e2d8c8}
+.pu{display:flex;flex-direction:column;background:var(--bg);color:#2b2b2b;font-family:inherit}
+.pu-bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border-soft)}
 .pu-title{display:flex;flex-direction:column;min-width:0}
 .pu-title strong{font-size:16px}
-.pu-title span{font-size:12px;color:#6b5b4b}
+.pu-title span{font-size:12px;color:var(--muted)}
 .pu-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.pu-btn{height:32px;min-width:32px;padding:0 10px;border:1px solid #d8c9b3;border-radius:8px;background:#fff;cursor:pointer;font:inherit;font-size:13px;color:inherit}
-.pu-btn:hover:not(:disabled){background:#f6efe4}
+.pu-btn{height:32px;min-width:32px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font:inherit;font-size:13px;color:inherit}
+.pu-btn:hover:not(:disabled){background:var(--surface-3)}
 .pu-btn:disabled{opacity:.5;cursor:default}
-.pu-btn.on{background:#f2e2da;border-color:#b5573f;color:#9a4630}
-.pu-primary{background:#b5573f;border-color:#b5573f;color:#fff}
-.pu-primary:hover:not(:disabled){background:#9a4630}
-.pu-sep{width:1px;height:22px;background:#e2d8c8;margin:0 2px}
-.pu-zoom{font-size:12px;min-width:44px;text-align:center;color:#6b5b4b}
-.pu-sub{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;padding:6px 14px;font-size:12.5px;color:#5c4d3f;background:#faf6f0;border-bottom:1px solid #e2d8c8}
+.pu-btn.on{background:var(--primary-bg);border-color:var(--primary);color:var(--primary-dark)}
+.pu-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.pu-primary:hover:not(:disabled){background:var(--primary-dark)}
+.pu-sep{width:1px;height:22px;background:var(--border-soft);margin:0 2px}
+.pu-zoom{font-size:12px;min-width:44px;text-align:center;color:var(--muted)}
+.pu-sub{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;padding:6px 14px;font-size:12.5px;color:var(--text);background:var(--surface-3);border-bottom:1px solid var(--border-soft)}
 .pu-name{display:flex;align-items:center;gap:6px}
-.pu-name input{height:28px;border:1px solid #d8c9b3;border-radius:6px;padding:0 8px;font:inherit;width:190px}
+.pu-name input{height:28px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font:inherit;width:190px}
 .pu-ok{color:#2f7d32}
-.pu-muted a,.pu-info a{color:#9a4630}
+.pu-muted a,.pu-info a{color:var(--primary-dark)}
 .pu-error{margin:8px 14px 0;color:#b42318}
 .pu-info{margin:8px 14px 0}
 .pu-stage{position:relative;flex:1;min-height:0}
@@ -604,11 +800,16 @@ const CSS = `
 .pu-marks{position:absolute;inset:0}
 .pu-tool-text .pu-marks{pointer-events:auto;cursor:text}
 .pu-tool-kryss .pu-marks{pointer-events:auto;cursor:crosshair}
-.pu-mark{position:absolute;display:flex;align-items:center;pointer-events:auto;transform:translateX(-14px)}
-.pu-mark input{border:1px dashed transparent;background:rgba(255,255,255,.01);padding:0 1px;margin:0;line-height:1;font-family:Helvetica,Arial,sans-serif;color:#000;outline:none;min-width:1ch;border-radius:2px}
-.pu-mark:hover input,.pu-mark input:focus{border-color:#b5573f;background:rgba(255,248,230,.9)}
-.pu-handle,.pu-x{width:14px;font-size:11px;line-height:1;color:#9a4630;opacity:0;cursor:grab;user-select:none;text-align:center;touch-action:none}
-.pu-x{border:0;background:none;padding:0;cursor:pointer;font-size:14px}
-.pu-mark:hover .pu-handle,.pu-mark:hover .pu-x,.pu-mark:focus-within .pu-handle,.pu-mark:focus-within .pu-x{opacity:1}
-@media (hover:none){.pu-handle,.pu-x{opacity:.7}}
+.pu-tool-navn .pu-marks,.pu-tool-signatur .pu-marks{pointer-events:auto;cursor:copy}
+.pu-mark{position:absolute;pointer-events:auto;display:flex}
+.pu-mark textarea{display:block;box-sizing:border-box;border:1px dashed transparent;background:rgba(255,255,255,.01);padding:0 1px;margin:0;font-family:Helvetica,Arial,sans-serif;color:#000;outline:none;border-radius:2px;resize:none;overflow:hidden;white-space:pre;min-width:1ch}
+.pu-mark.fixed textarea{white-space:pre-wrap;overflow-wrap:anywhere}
+.pu-mark:hover textarea,.pu-mark textarea:focus{border-color:var(--primary);background:rgba(255,255,255,.85)}
+.pu-handle{position:absolute;left:-15px;top:0;width:14px;font-size:11px;line-height:1.2;color:var(--primary-dark);opacity:0;cursor:grab;user-select:none;text-align:center;touch-action:none}
+.pu-ctrl{position:absolute;right:0;bottom:100%;display:flex;gap:2px;padding-bottom:2px;opacity:0;pointer-events:none}
+.pu-ctrl button{height:18px;min-width:20px;padding:0 4px;border:1px solid var(--border);border-radius:4px;background:#fff;color:var(--primary-dark);font:600 11px/1 system-ui,sans-serif;cursor:pointer}
+.pu-ctrl button:hover{background:var(--primary-bg)}
+.pu-grip{position:absolute;right:-5px;bottom:-5px;width:11px;height:11px;border-right:2px solid var(--primary);border-bottom:2px solid var(--primary);cursor:nwse-resize;opacity:0;touch-action:none}
+.pu-mark:hover .pu-handle,.pu-mark:hover .pu-ctrl,.pu-mark:hover .pu-grip,.pu-mark:focus-within .pu-handle,.pu-mark:focus-within .pu-ctrl,.pu-mark:focus-within .pu-grip{opacity:1;pointer-events:auto}
+@media (hover:none){.pu-handle,.pu-grip{opacity:.7}}
 `;
