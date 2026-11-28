@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createHash } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { clientKey, throttle } from "@/lib/email";
+import { MAX_USER_AGENT, cleanTrackInput, isCrossSite } from "@/lib/track";
 
 /**
  * Personvern (jf. 3.7): ingen cookies brukes til sporing. Ingen rå
@@ -23,27 +25,33 @@ function hashVisitor(ip: string, userAgent: string, period: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  let body: {
-    contentId?: string;
-    slug?: string;
-    path?: string;
-    eventType?: string;
-    referrer?: string;
-  };
+  // Statistics only come from our own pages, and in moderate amounts.
+  if (isCrossSite(request.headers, request.nextUrl.origin)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (Number(request.headers.get("content-length") ?? 0) > 4096) {
+    return NextResponse.json({ error: "Too large" }, { status: 413 });
+  }
+  if (!throttle(`tr:${clientKey(request)}`, 60, 60 * 1000)) {
+    return new NextResponse(null, { status: 204 });
+  }
 
+  let raw: Record<string, unknown>;
   try {
-    body = await request.json();
+    const parsed = await request.json();
+    raw = parsed && typeof parsed === "object" ? parsed : {};
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+  const body = cleanTrackInput(raw);
 
-  const eventType = body.eventType ?? "open";
+  const eventType = typeof raw.eventType === "string" ? raw.eventType : "open";
   if (!VALID_EVENT_TYPES.has(eventType)) {
     return NextResponse.json({ error: "Invalid eventType" }, { status: 400 });
   }
 
   const ip = getClientIp(request);
-  const userAgent = request.headers.get("user-agent") ?? "unknown";
+  const userAgent = (request.headers.get("user-agent") ?? "unknown").slice(0, MAX_USER_AGENT);
   const now = new Date();
   const dailyPeriod = now.toISOString().slice(0, 10);
   const monthlyPeriod = now.toISOString().slice(0, 7);
@@ -65,11 +73,11 @@ export async function POST(request: NextRequest) {
 
   const { error } = await admin.from("content_events").insert({
     content_id: contentId,
-    path: body.path ?? null,
+    path: body.path,
     event_type: eventType,
     visitor_hash_daily: visitorHashDaily,
     visitor_hash_monthly: visitorHashMonthly,
-    referrer: body.referrer ?? null,
+    referrer: body.referrer,
     user_agent: userAgent,
   });
 
