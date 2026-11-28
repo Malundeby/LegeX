@@ -85,7 +85,7 @@
 }
 
 .widget-cell:hover {
-  box-shadow: 0 8px 24px rgba(74, 53, 39, 0.12);
+  box-shadow: 0 8px 24px rgba(var(--shade-rgb), 0.12);
   transform: translateY(-2px);
 }
 
@@ -169,7 +169,7 @@
   position: fixed;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(74, 53, 39, 0.3);
+  box-shadow: 0 12px 32px rgba(var(--shade-rgb), 0.3);
   padding: 8px;
   min-width: 200px;
   opacity: 0;
@@ -542,7 +542,7 @@
   position: fixed;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(74, 53, 39, 0.25);
+  box-shadow: 0 12px 32px rgba(var(--shade-rgb), 0.25);
   padding: 8px;
   min-width: 220px;
   max-height: 80vh;

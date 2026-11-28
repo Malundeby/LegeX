@@ -118,7 +118,7 @@ const fib4TierStyles: Record<"low" | "indeterminate" | "high", { border: string;
 };
 
 const fib4BranchAccent = { border: "var(--primary)", bg: "var(--primary-bg)" };
-const fib4Neutral = { border: "var(--border-soft)", bg: "#f5efe4" };
+const fib4Neutral = { border: "var(--border-soft)", bg: "var(--surface-3)" };
 
 function Fib4FlowchartBox({
   active,
@@ -263,7 +263,7 @@ function HomaIrFields({
           Fastende insulin ({insulinUnit === "miu" ? "mIU/L" : "pmol/L"})
         </label>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "inline-flex", backgroundColor: "#e7d9c6", borderRadius: 9, padding: 2 }}>
+          <div style={{ display: "inline-flex", backgroundColor: "var(--panel-2)", borderRadius: 9, padding: 2 }}>
             {(["pmol", "miu"] as const).map(unit => {
               const isActive = insulinUnit === unit;
               return (
@@ -467,7 +467,7 @@ function HeadingInfoBox({ children }: { children: React.ReactNode }) {
       marginBottom: 12,
       fontSize: 13,
       lineHeight: 1.5,
-      color: '#3c2a1f',
+      color: 'var(--heading)',
       borderLeft: '3px solid var(--primary)',
       whiteSpace: 'pre-line'
     }}>
@@ -490,7 +490,7 @@ function CPeptideGlucoseFields({
       <div className="calc-field-row">
         <label style={{ fontWeight: 500, fontSize: 13 }}>Målingstilstand</label>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "inline-flex", backgroundColor: "#e7d9c6", borderRadius: 9, padding: 2 }}>
+          <div style={{ display: "inline-flex", backgroundColor: "var(--panel-2)", borderRadius: 9, padding: 2 }}>
             {(["Fastende", "Postprandial"] as const).map(opt => {
               const isActive = state === opt;
               return (
@@ -654,7 +654,7 @@ export default function ToolHub(
     noSectionBackground?: boolean;
   } = {}
 ) {
-  const { name: profileName } = useProfile();
+  const { name: profileName, signature: profileSig } = useProfile();
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? "guides");
   // Keep the phrase catalog mounted once opened, so its floating window survives tab switches.
   const [fraserMounted, setFraserMounted] = useState(initialTab === "fraser");
@@ -1351,7 +1351,7 @@ export default function ToolHub(
   const handleCopy = async (t: string) => { try { await navigator.clipboard.writeText(t); setCopyState("Kopiert!"); setTimeout(() => setCopyState(""), 2000); } catch { setCopyState("Feilet"); } };
   const handlePrint = (url: string) => { const w = window.open(url, "_blank"); if (w) w.onload = () => { w.focus(); w.print(); }; };
   const handleCopyHelsenorgeMessage = () => {
-    const signature = profileName ? `${profileName}\nLegesenteret` : "Legesenteret";
+    const signature = profileSig || (profileName ? `${profileName}\nLegesenteret` : "Legesenteret");
     const absolutePdfUrl = activePatientPdfUrl
       ? (activePatientPdfUrl.startsWith("http") ? activePatientPdfUrl : `${window.location.origin}${activePatientPdfUrl}`)
       : "";
@@ -1736,7 +1736,7 @@ export default function ToolHub(
                     border: '1px solid var(--border-soft)',
                     borderRadius: 12,
                     padding: 12,
-                    background: '#f2e9db',
+                    background: 'var(--surface-2)',
                     minHeight: 180
                   }}
                 >
@@ -1748,7 +1748,7 @@ export default function ToolHub(
                         display: 'block',
                         textAlign: 'left',
                         width: '100%',
-                        border: '1px solid #d9c6ab',
+                        border: '1px solid var(--border)',
                         borderRadius: 10,
                         background: 'var(--panel)',
                         padding: '10px 14px',
@@ -1815,7 +1815,7 @@ export default function ToolHub(
                           rel="noreferrer"
                           style={{
                             padding: '5px 10px',
-                            background: '#0891b2',
+                            background: 'var(--primary)',
                             color: 'white',
                             borderRadius: 6,
                             fontSize: 12,
@@ -1827,8 +1827,8 @@ export default function ToolHub(
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                             transition: 'all 0.2s ease'
                           }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#06b6d4'}
-                          onMouseOut={(e) => e.currentTarget.style.background = '#0891b2'}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-light)'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'var(--primary)'}
                         >
                           📄 {option.label}
                         </a>
@@ -1895,7 +1895,7 @@ export default function ToolHub(
                           paddingBottom: 6,
                           borderBottom: '2px solid var(--border-soft)'
                         }}>
-                          <h3 style={{ fontSize: 15, fontWeight: 600, color: '#0891b2', margin: 0 }}>
+                          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--primary)', margin: 0 }}>
                             Del {q.part!.toUpperCase()}
                           </h3>
                         </div>
@@ -1926,16 +1926,16 @@ export default function ToolHub(
                               onClick={() => handleAnswerChange(q.id, o.score, oi)}
                               style={{
                                 padding: '8px 12px',
-                                border: isActive ? '2px solid #0891b2' : '1px solid #d9c6ab',
-                                background: isActive ? '#0891b2' : 'var(--panel)',
-                                color: isActive ? 'var(--primary-text)' : '#4a3527',
+                                border: isActive ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                background: isActive ? 'var(--primary)' : 'var(--panel)',
+                                color: isActive ? 'var(--primary-text)' : 'var(--text)',
                                 fontWeight: isActive ? 600 : 400,
                                 borderRadius: 6,
                                 cursor: 'pointer',
                                 fontSize: 12,
                                 textAlign: 'center',
                                 transition: 'all 0.2s ease',
-                                boxShadow: isActive ? '0 2px 8px rgba(8, 145, 178, 0.25)' : 'none',
+                                boxShadow: isActive ? '0 2px 8px rgba(var(--primary-rgb), 0.25)' : 'none',
                                 flex: activeTool.id === 'ciwa-ar' ? '0 1 auto' : '1 1 auto',
                                 minWidth: 'fit-content',
                                 whiteSpace: 'nowrap'
@@ -2129,7 +2129,7 @@ export default function ToolHub(
                                       {group.table.rows.map((row, ri) => (
                                         <tr key={ri}>
                                           {row.map((cell, ci) => (
-                                            <td key={ci} style={{ padding: '4px 16px 4px 0', borderBottom: '1px solid #efe0cd', color: 'var(--text)' }}>{cell}</td>
+                                            <td key={ci} style={{ padding: '4px 16px 4px 0', borderBottom: '1px solid var(--surface-4)', color: 'var(--text)' }}>{cell}</td>
                                           ))}
                                         </tr>
                                       ))}
@@ -2368,14 +2368,14 @@ export default function ToolHub(
                                   ▾
                                 </button>
                                 {showMedUnitsPicker && (
-                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "var(--panel)", boxShadow: "0 10px 20px rgba(74, 53, 39, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
+                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "var(--panel)", boxShadow: "0 10px 20px rgba(var(--shade-rgb), 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
                                     {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
                                       <button
                                         key={option}
                                         type="button"
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => { setMedUnits(option); setShowMedUnitsPicker(false); }}
-                                        style={{ border: "none", background: medUnits === option ? "#efe0cd" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "var(--heading)" }}
+                                        style={{ border: "none", background: medUnits === option ? "var(--surface-4)" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "var(--heading)" }}
                                       >
                                         {option}
                                       </button>
@@ -2459,14 +2459,14 @@ export default function ToolHub(
                                   ▾
                                 </button>
                                 {showAvgUnitsPicker && (
-                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "var(--panel)", boxShadow: "0 10px 20px rgba(74, 53, 39, 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
+                                  <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, border: "1px solid rgba(221, 227, 238, 0.9)", borderRadius: 10, background: "var(--panel)", boxShadow: "0 10px 20px rgba(var(--shade-rgb), 0.12)", padding: 6, display: "grid", gap: 4, zIndex: 15 }}>
                                     {["5", "10", "15", "20", "25", "50", "100"].map((option) => (
                                       <button
                                         key={option}
                                         type="button"
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => { setAvgPrevUnits(option); setShowAvgUnitsPicker(false); }}
-                                        style={{ border: "none", background: avgPrevUnits === option ? "#efe0cd" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "var(--heading)" }}
+                                        style={{ border: "none", background: avgPrevUnits === option ? "var(--surface-4)" : "transparent", borderRadius: 8, padding: "8px 10px", textAlign: "left", cursor: "pointer", fontSize: 14, color: "var(--heading)" }}
                                       >
                                         {option}
                                       </button>
@@ -2791,7 +2791,7 @@ export default function ToolHub(
                           rel="noreferrer"
                           style={{
                             padding: '5px 10px',
-                            background: '#0891b2',
+                            background: 'var(--primary)',
                             color: 'white',
                             borderRadius: 6,
                             fontSize: 12,
@@ -2803,8 +2803,8 @@ export default function ToolHub(
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                             transition: 'all 0.2s ease'
                           }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#06b6d4'}
-                          onMouseOut={(e) => e.currentTarget.style.background = '#0891b2'}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-light)'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'var(--primary)'}
                         >
                           📄 {option.label}
                         </a>
@@ -2865,7 +2865,7 @@ export default function ToolHub(
                     borderRadius: 6,
                     marginBottom: 12,
                     fontSize: 13,
-                    color: '#3c2a1f',
+                    color: 'var(--heading)',
                     borderLeft: '3px solid var(--primary)'
                   }}>
                     <strong>Klinisk tips:</strong> Apixaban og Dabigatran doseres to ganger daglig og har lavere blødningsrisiko enn Edoxaban og Rivaroxaban som doseres en gang daglig.
@@ -2879,7 +2879,7 @@ export default function ToolHub(
                     marginBottom: 12,
                     fontSize: 13,
                     lineHeight: 1.5,
-                    color: '#3c2a1f',
+                    color: 'var(--heading)',
                     borderLeft: '3px solid var(--primary)'
                   }}>
                     <strong>Type 1 diabetes:</strong> lav C-peptid (ofte tross normal/høy glukose), fordi autoimmun betacelledestruksjon gir manglende egenproduksjon.
@@ -2917,7 +2917,7 @@ export default function ToolHub(
                           <h3 style={{ 
                             fontSize: 16, 
                             fontWeight: 600, 
-                            color: '#0891b2',
+                            color: 'var(--primary)',
                             margin: 0
                           }}>{f.part}</h3>
                         </div>
@@ -2937,16 +2937,16 @@ export default function ToolHub(
                                 onClick={() => handleInputChange(f.id, option)}
                                 style={{
                                   padding: '10px 14px',
-                                  border: isActive ? '2px solid #0891b2' : '1px solid #d9c6ab',
-                                  background: isActive ? '#ecfeff' : 'var(--panel)',
-                                  color: '#3c2a1f',
+                                  border: isActive ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                  background: isActive ? 'var(--primary-bg)' : 'var(--panel)',
+                                  color: 'var(--heading)',
                                   fontWeight: isActive ? 600 : 400,
                                   borderRadius: 8,
                                   cursor: 'pointer',
                                   fontSize: 13,
                                   textAlign: 'left',
                                   transition: 'all 0.2s ease',
-                                  boxShadow: isActive ? '0 2px 8px rgba(8, 145, 178, 0.15)' : 'none'
+                                  boxShadow: isActive ? '0 2px 8px rgba(var(--primary-rgb), 0.15)' : 'none'
                                 }}
                               >
                                 {option}
@@ -2972,16 +2972,16 @@ export default function ToolHub(
                                 onClick={() => handleInputChange(f.id, option)}
                                 style={{
                                   padding: '8px 12px',
-                                  border: isActive ? '2px solid #0891b2' : '1px solid #d9c6ab',
-                                  background: isActive ? '#0891b2' : 'var(--panel)',
-                                  color: isActive ? 'var(--primary-text)' : '#4a3527',
+                                  border: isActive ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                  background: isActive ? 'var(--primary)' : 'var(--panel)',
+                                  color: isActive ? 'var(--primary-text)' : 'var(--text)',
                                   fontWeight: isActive ? 600 : 400,
                                   borderRadius: 6,
                                   cursor: 'pointer',
                                   fontSize: 12,
                                   textAlign: 'center',
                                   transition: 'all 0.2s ease',
-                                  boxShadow: isActive ? '0 2px 8px rgba(8, 145, 178, 0.25)' : 'none',
+                                  boxShadow: isActive ? '0 2px 8px rgba(var(--primary-rgb), 0.25)' : 'none',
                                   flex: '1 1 auto',
                                   minWidth: 'fit-content',
                                   whiteSpace: 'nowrap'
@@ -2996,7 +2996,7 @@ export default function ToolHub(
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                           <div style={{
                             display: 'inline-flex',
-                            backgroundColor: '#e7d9c6',
+                            backgroundColor: 'var(--panel-2)',
                             borderRadius: 9,
                             padding: 2,
                             position: 'relative'
@@ -3074,7 +3074,7 @@ export default function ToolHub(
                         transition: 'all 0.2s ease',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#7a5f4a'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'var(--muted)'}
                     >
                       Nullstill
@@ -3493,8 +3493,8 @@ export default function ToolHub(
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div>
-              <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Verktøy</h2>
-              <p style={{ marginBottom: 22, color: '#7a5f4a' }}>Utredningsverktøy og skjemaressurser.</p>
+              <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: 'var(--heading)' }}>Verktøy</h2>
+              <p style={{ marginBottom: 22, color: 'var(--muted)' }}>Utredningsverktøy og skjemaressurser.</p>
             </div>
             <button
               type="button"
@@ -3624,7 +3624,7 @@ export default function ToolHub(
           justify-content: space-between;
           gap: 16px;
           padding: 13px 2px 12px 0;
-          border-bottom: 1px solid #e6d7bf;
+          border-bottom: 1px solid var(--border-soft);
         }
 
         .resource-row:last-child {
@@ -3651,7 +3651,7 @@ export default function ToolHub(
 
         .resource-description {
           margin: 2px 0 0;
-          color: #7a5f4a;
+          color: var(--muted);
           font-size: clamp(0.58rem, 0.9vw, 0.76rem);
           line-height: 1.28;
         }
@@ -3665,7 +3665,7 @@ export default function ToolHub(
         }
 
         .resource-pdf-badge {
-          color: #a08a6f;
+          color: var(--faint);
           font-size: clamp(0.82rem, 1.05vw, 0.98rem);
           font-weight: 800;
           letter-spacing: 0.07em;
@@ -3706,8 +3706,8 @@ export default function ToolHub(
 
         .resource-variant-button {
           padding: 5px 12px;
-          border: 1px solid rgba(181, 87, 63, 0.3);
-          background: #e7d9c6;
+          border: 1px solid rgba(var(--primary-rgb), 0.3);
+          background: var(--panel-2);
           color: var(--primary);
           font-size: 0.78rem;
           font-weight: 700;
@@ -3725,9 +3725,9 @@ export default function ToolHub(
         }
 
         .resource-variant-button.unavailable {
-          color: #a08a6f;
+          color: var(--faint);
           cursor: not-allowed;
-          background: #f2e9db;
+          background: var(--surface-2);
         }
 
         .specialty-chipbar {
@@ -3739,8 +3739,8 @@ export default function ToolHub(
 
         .specialty-chip {
           padding: 5px 12px;
-          border: 1px solid rgba(181, 87, 63, 0.25);
-          background: #e7d9c6;
+          border: 1px solid rgba(var(--primary-rgb), 0.25);
+          background: var(--panel-2);
           color: var(--primary);
           font-size: 0.78rem;
           font-weight: 600;
@@ -3751,7 +3751,7 @@ export default function ToolHub(
 
         .specialty-chip:hover {
           background: #fff;
-          border-color: rgba(181, 87, 63, 0.5);
+          border-color: rgba(var(--primary-rgb), 0.5);
         }
 
         .specialty-chip.active {
@@ -3785,7 +3785,7 @@ export default function ToolHub(
 
         .resource-title.unavailable,
         .resource-pdf-badge.unavailable {
-          color: #a08a6f;
+          color: var(--faint);
           cursor: not-allowed;
           text-decoration: none;
         }
@@ -3803,7 +3803,7 @@ export default function ToolHub(
           border: 1px solid var(--border);
           border-radius: 12px;
           background: var(--panel);
-          box-shadow: 0 6px 12px rgba(74, 53, 39, 0.06);
+          box-shadow: 0 6px 12px rgba(var(--shade-rgb), 0.06);
         }
 
         .resource-pdf-group-list {
@@ -3827,7 +3827,7 @@ export default function ToolHub(
         }
 
         .resource-pdf-group-link.unavailable {
-          color: #a08a6f;
+          color: var(--faint);
           cursor: not-allowed;
         }
 
@@ -3940,8 +3940,8 @@ export default function ToolHub(
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div>
-              <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Pasientinformasjon</h2>
-              <p style={{ marginBottom: 22, color: '#7a5f4a' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
+              <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: 'var(--heading)' }}>Pasientinformasjon</h2>
+              <p style={{ marginBottom: 22, color: 'var(--muted)' }}>PDF-ark til utdeling og gjennomgang med pasienten.</p>
             </div>
             <button
               type="button"
@@ -4036,8 +4036,8 @@ export default function ToolHub(
 
       {activeTab === "overviews" && (
         <div className="resource-index" style={{ marginTop: 20, padding: 24 }}>
-          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: '#3c2a1f' }}>Oversikter</h2>
-          <p style={{ marginBottom: 22, color: '#7a5f4a' }}>Håndkort og andre oversikter.</p>
+          <h2 style={{ marginBottom: 6, fontSize: 24, fontWeight: 700, color: 'var(--heading)' }}>Oversikter</h2>
+          <p style={{ marginBottom: 22, color: 'var(--muted)' }}>Håndkort og andre oversikter.</p>
 
           {overviewCategories.map((category) => (
             <section key={category.title} className="resource-chapter">
@@ -4109,7 +4109,7 @@ export default function ToolHub(
             background: 'var(--panel)',
             border: '1px solid var(--border)',
             borderRadius: 14,
-            boxShadow: '0 20px 40px rgba(74, 53, 39, 0.18)',
+            boxShadow: '0 20px 40px rgba(var(--shade-rgb), 0.18)',
             overflow: 'hidden',
             zIndex: 50,
             opacity: 1,
@@ -4124,9 +4124,9 @@ export default function ToolHub(
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 12,
-            background: '#f2e9db'
+            background: 'var(--surface-2)'
           }}>
-            <strong style={{ fontSize: 14, color: '#3c2a1f' }}>{previewResource.title}</strong>
+            <strong style={{ fontSize: 14, color: 'var(--heading)' }}>{previewResource.title}</strong>
             <button
               type="button"
               onClick={hidePdfPreview}

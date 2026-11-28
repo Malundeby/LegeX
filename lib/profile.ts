@@ -82,8 +82,37 @@ export function profileName(user: { user_metadata?: Record<string, unknown> } | 
   return String(m.full_name ?? m.name ?? "").trim();
 }
 
-/** Replaces signature placeholders such as {signatur} or [navn] in a ready-made text. */
-export function fillSignature(text: string, name: string): string {
-  if (!name) return text;
-  return text.replace(/\{\s*(signatur|navn|lege)\s*\}|\[\s*(signatur|legens navn|lege)\s*\]/gi, name);
+/** The signature block from the profile, e.g. name, title and clinic on separate lines. */
+export function profileSignature(user: { user_metadata?: Record<string, unknown> } | null | undefined): string {
+  const raw = user?.user_metadata?.signature;
+  return typeof raw === "string" ? cleanSignature(raw) : "";
+}
+
+/** Trims each line and drops empty lines at the start and end. At most 6 lines. */
+export function cleanSignature(text: string): string {
+  return text
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((l) => l.trim())
+    .join("\n")
+    .replace(/^\n+|\n+$/g, "")
+    .split("\n")
+    .slice(0, 6)
+    .join("\n");
+}
+
+/**
+ * Replaces placeholders in a ready-made text. {signatur} gets the signature block
+ * (or the name if there is none); {navn}, [Legens navn] and similar get the name.
+ */
+export function fillSignature(text: string, name: string, signature = ""): string {
+  const block = signature || name;
+  return text.replace(
+    /\{\s*(signatur|navn|lege)\s*\}|\[\s*(signatur|legens navn|lege)\s*\]/gi,
+    (match, a?: string, b?: string) => {
+      const key = (a || b || "").toLowerCase();
+      const value = key === "signatur" ? block : name;
+      return value || match;
+    }
+  );
 }

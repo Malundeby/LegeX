@@ -14,6 +14,16 @@ interface DocumentPiP {
 const getPiP = (): DocumentPiP | undefined =>
   typeof window !== "undefined" ? (window as unknown as { documentPictureInPicture?: DocumentPiP }).documentPictureInPicture : undefined;
 
+/** Theme variables copied into the floating window, which has no access to the page CSS. */
+const THEME_VARS = ["--card", "--result-bg", "--panel-2", "--text", "--heading", "--muted", "--result-border", "--primary", "--primary-dark", "--primary-bg", "--primary-text"];
+function syncTheme(target: Document) {
+  const cs = getComputedStyle(document.documentElement);
+  for (const name of THEME_VARS) {
+    const v = cs.getPropertyValue(name).trim();
+    if (v) target.documentElement.style.setProperty(name, v);
+  }
+}
+
 const COLLAPSED_SIZE = { width: 170, height: 90 };
 const DEFAULT_SIZE = { width: 420, height: 580 };
 
@@ -43,8 +53,9 @@ export default function Frasekatalog() {
       font.rel = "stylesheet";
       font.href = "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap";
       const style = doc.createElement("style");
-      style.textContent = `html,body{margin:0;height:100%;background:#faf5ec}#fk-root{height:100%}${FRASER_CSS}`;
+      style.textContent = `html,body{margin:0;height:100%;background:var(--card,#faf5ec)}#fk-root{height:100%}${FRASER_CSS}`;
       doc.head.append(font, style);
+      syncTheme(doc);
       const root = doc.createElement("div");
       root.id = "fk-root";
       doc.body.append(root);
@@ -71,6 +82,14 @@ export default function Frasekatalog() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [supported, openPip]);
+
+  // Keep the floating window in step when the colour theme changes.
+  useEffect(() => {
+    if (!pip) return;
+    const obs = new MutationObserver(() => syncTheme(pip.win.document));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-farge"] });
+    return () => obs.disconnect();
+  }, [pip]);
 
   // Close the floating window when leaving the page/tab.
   useEffect(() => () => pip?.win.close(), [pip]);

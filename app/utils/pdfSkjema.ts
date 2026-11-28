@@ -115,3 +115,47 @@ export function standaloneLabel(text: string): LabelKind | null {
   if (/^(legens (underskrift|signatur|navn)( og stempel)?|(underskrift|signatur) lege|lege)$/.test(t)) return "signer";
   return null;
 }
+
+/**
+ * Splits text into the lines drawn on the PDF: on line breaks, and, when a box
+ * width is given, between words so each line fits. A single word wider than the
+ * box is broken by character. `measure` gives the width of a string in points.
+ */
+export function wrapLines(text: string, maxWidth: number | undefined, measure: (s: string) => number): string[] {
+  const out: string[] = [];
+  for (const para of text.replace(/\r\n?/g, "\n").split("\n")) {
+    if (!maxWidth || maxWidth <= 0 || measure(para) <= maxWidth) {
+      out.push(para);
+      continue;
+    }
+    let line = "";
+    for (const word of para.split(/(\s+)/)) {
+      if (!word) continue;
+      if (measure(line + word) <= maxWidth) {
+        line += word;
+        continue;
+      }
+      if (/^\s+$/.test(word)) {
+        out.push(line.trimEnd());
+        line = "";
+        continue;
+      }
+      if (line.trim()) out.push(line.trimEnd());
+      line = "";
+      if (measure(word) <= maxWidth) {
+        line = word;
+        continue;
+      }
+      // The word alone is too wide: break it by character.
+      for (const ch of Array.from(word)) {
+        if (line && measure(line + ch) > maxWidth) {
+          out.push(line);
+          line = "";
+        }
+        line += ch;
+      }
+    }
+    out.push(line.trimEnd());
+  }
+  return out;
+}

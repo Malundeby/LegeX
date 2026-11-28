@@ -4,7 +4,7 @@
  * not inherit the page's stylesheets. Everything is scoped under .fk.
  */
 export const FRASER_CSS = `
-.fk{--fk-bg:#faf5ec;--fk-bg2:#f3e9da;--fk-bg3:#e7d9c6;--fk-fg:#4a3527;--fk-head:#3c2a1f;--fk-muted:#7a5f4a;--fk-bd:#e2cdb0;--fk-acc:#b5573f;--fk-accbg:#f2e2da;--fk-fav:#c98a00;--fk-danger:#b42318;
+.fk{--fk-bg:var(--card,#faf5ec);--fk-bg2:var(--result-bg,#f3e9da);--fk-bg3:var(--panel-2,#e7d9c6);--fk-fg:var(--text,#4a3527);--fk-head:var(--heading,#3c2a1f);--fk-muted:var(--muted,#7a5f4a);--fk-bd:var(--result-border,#e2cdb0);--fk-acc:var(--primary,#b5573f);--fk-accbg:var(--primary-bg,#f2e2da);--fk-fav:#c98a00;--fk-danger:#b42318;
   position:relative;display:flex;flex-direction:column;height:100%;min-height:0;background:var(--fk-bg);color:var(--fk-fg);
   font:13.5px/1.45 "Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;box-sizing:border-box}
 .fk *,.fk *::before,.fk *::after{box-sizing:border-box}
@@ -16,7 +16,7 @@ export const FRASER_CSS = `
 .fk-btn:hover{background:var(--fk-bg2)}
 .fk-btn:disabled{opacity:.6;cursor:default}
 .fk-primary{background:var(--fk-acc);border-color:var(--fk-acc);color:#fff!important}
-.fk-primary:hover{background:#9a4630}
+.fk-primary:hover{background:var(--primary-dark,#9a4630)}
 .fk-danger{color:var(--fk-danger)!important;border-color:var(--fk-danger)}
 .fk-crumb{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:5px 10px;font-size:12px;color:var(--fk-muted);border-bottom:1px solid var(--fk-bd);min-height:30px;flex:none}
 .fk-crumb button{border:0;background:none;padding:0;cursor:pointer;color:var(--fk-muted)}

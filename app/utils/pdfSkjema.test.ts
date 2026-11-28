@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findLabels, formatNorwegianDate, isDateFieldName, isPdfUrl, isSignerFieldName, pdfFetchUrl, skjemaHref } from "./pdfSkjema";
+import { findLabels, formatNorwegianDate, isDateFieldName, isPdfUrl, isSignerFieldName, pdfFetchUrl, skjemaHref, wrapLines } from "./pdfSkjema";
 
 describe("pdfSkjema", () => {
   it("recognises pdf links", () => {
@@ -66,5 +66,15 @@ describe("standalone labels", () => {
     expect(standaloneLabel("Legens underskrift og stempel ")).toBe("signer");
     expect(standaloneLabel("Telefon")).toBeNull();
     expect(standaloneLabel("Dato for neste kontroll")).toBeNull();
+  });
+});
+
+describe("wrapLines", () => {
+  const m = (t: string) => t.length; // one point per character
+  it("keeps line breaks and wraps between words", () => {
+    expect(wrapLines("Kari Lege\nLege\nLegesenter A", undefined, m)).toEqual(["Kari Lege", "Lege", "Legesenter A"]);
+    expect(wrapLines("en to tre fire", 7, m)).toEqual(["en to", "tre", "fire"]);
+    expect(wrapLines("abcdefghij", 4, m)).toEqual(["abcd", "efgh", "ij"]);
+    expect(wrapLines("a\n\nb", 10, m)).toEqual(["a", "", "b"]);
   });
 });

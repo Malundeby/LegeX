@@ -3,6 +3,7 @@
 import { useParams, notFound } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import ToolHub from "../components/ToolHub";
+import Logo from "../components/Logo";
 import { resolveToolSlug, toolAliasExists } from "@/app/utils/toolRegistry";
 import { trackOpen } from "@/app/utils/trackEvent";
 
@@ -29,8 +30,11 @@ export default function ToolPage() {
   return (
     <main>
       <header>
-        <h1>ToppenLS</h1>
-        <p>Rask tilgang til skåringsverktøy og PDF-er – uten ekstra klikk.</p>
+        <div className="header-title-row">
+          <Logo size={36} />
+          <h1>Legeassistent</h1>
+          <span className="beta-badge">Under utvikling</span>
+        </div>
       </header>
       <ToolHub
         initialTool={toolInfo.type === "score" ? toolInfo.id : undefined}
