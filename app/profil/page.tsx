@@ -11,6 +11,7 @@ import {
   FONT_OPTIONS,
   MENU_OPTIONS,
   type Prefs,
+  cleanPhone,
   cleanSignature,
   readLocalPrefs,
   storePrefs
@@ -22,13 +23,17 @@ type Status = { kind: "ok" | "error"; text: string } | null;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, name, signature } = useProfile();
+  const { user, name, signature, phone } = useProfile();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsStatus, setPrefsStatus] = useState<Status>(null);
 
   const [nameDraft, setNameDraft] = useState("");
   const [nameStatus, setNameStatus] = useState<Status>(null);
   const [savingName, setSavingName] = useState(false);
+
+  const [phoneDraft, setPhoneDraft] = useState("");
+  const [phoneStatus, setPhoneStatus] = useState<Status>(null);
+  const [savingPhone, setSavingPhone] = useState(false);
 
   const [sigDraft, setSigDraft] = useState("");
   const [sigStatus, setSigStatus] = useState<Status>(null);
@@ -46,6 +51,10 @@ export default function ProfilePage() {
   useEffect(() => {
     setNameDraft(name);
   }, [name]);
+
+  useEffect(() => {
+    setPhoneDraft(phone);
+  }, [phone]);
 
   useEffect(() => {
     setSigDraft(signature);
@@ -80,6 +89,22 @@ export default function ProfilePage() {
     }
     if (data.user) announceProfile(data.user);
     setNameStatus({ kind: "ok", text: "Navnet er lagret." });
+  }
+
+  async function savePhone(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingPhone(true);
+    setPhoneStatus(null);
+    const clean = cleanPhone(phoneDraft);
+    const { data, error } = await createClient().auth.updateUser({ data: { phone: clean } });
+    setSavingPhone(false);
+    if (error) {
+      setPhoneStatus({ kind: "error", text: authErrorMessage(error.message) });
+      return;
+    }
+    setPhoneDraft(clean);
+    if (data.user) announceProfile(data.user);
+    setPhoneStatus({ kind: "ok", text: "Telefonnummeret er lagret." });
   }
 
   async function saveSignature(e: React.FormEvent) {
@@ -161,6 +186,29 @@ export default function ProfilePage() {
           </button>
         </form>
         {nameStatus && <p className={`profile-status ${nameStatus.kind}`} role="status">{nameStatus.text}</p>}
+      </section>
+
+      <section className="profile-card" aria-labelledby="telefon-h">
+        <h2 id="telefon-h">Telefon</h2>
+        <p>Brukes som hurtigvalg når du fyller ut PDF-skjemaer.</p>
+        <form className="profile-form" onSubmit={savePhone}>
+          <label>
+            Telefonnummer
+            <input
+              type="tel"
+              value={phoneDraft}
+              onChange={(e) => setPhoneDraft(e.target.value)}
+              autoComplete="tel"
+              inputMode="tel"
+              maxLength={30}
+              placeholder="F.eks. 22 33 44 55"
+            />
+          </label>
+          <button type="submit" className="profile-button" disabled={savingPhone || cleanPhone(phoneDraft) === phone}>
+            {savingPhone ? "Lagrer …" : "Lagre telefon"}
+          </button>
+        </form>
+        {phoneStatus && <p className={`profile-status ${phoneStatus.kind}`} role="status">{phoneStatus.text}</p>}
       </section>
 
       <section className="profile-card" aria-labelledby="signatur-h">
