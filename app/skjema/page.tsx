@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { preload } from "react-dom";
+import { version as pdfjsVersion } from "pdfjs-dist/package.json";
 import PdfUtfyller from "@/app/components/skjema/PdfUtfyller";
+import { pdfFetchUrl, pdfWorkerSrc } from "@/app/utils/pdfSkjema";
 
 export const metadata: Metadata = {
   title: "Fyll ut skjema · Legeassistent",
@@ -23,5 +26,9 @@ export default async function SkjemaPage({
     );
   }
 
-  return <PdfUtfyller key={url} url={url} title={title} />;
+  // Start fetching the PDF while the page's JavaScript is still loading.
+  const source = pdfFetchUrl(url, "");
+  if (source) preload(source, { as: "fetch", crossOrigin: "anonymous" });
+
+  return <PdfUtfyller key={url} url={url} title={title} workerSrc={pdfWorkerSrc(pdfjsVersion)} />;
 }
