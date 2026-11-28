@@ -34,7 +34,7 @@
   background: var(--primary);
   color: white;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(181, 87, 63, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 /* Base grid container */
@@ -97,7 +97,7 @@
 .widget-cell.is-pinned {
   border-width: 3px;
   border-color: var(--primary);
-  box-shadow: 0 4px 16px rgba(181, 87, 63, 0.2);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 .widget-cell.is-minimized {
@@ -132,7 +132,7 @@
 
 .widget-cell-empty:hover {
   border-color: var(--primary);
-  background: rgba(181, 87, 63, 0.02);
+  background: color-mix(in srgb, var(--primary) 2%, transparent);
   transform: none;
   box-shadow: none;
 }
@@ -149,12 +149,12 @@
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(181, 87, 63, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .widget-add-trigger:hover {
   transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 8px 24px rgba(181, 87, 63, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 .add-icon {
@@ -305,7 +305,7 @@
 }
 
 .bookmark-item:hover {
-  background: rgba(181, 87, 63, 0.08);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
 }
 
 .bookmark-icon {

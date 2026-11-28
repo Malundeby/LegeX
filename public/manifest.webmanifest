@@ -4,8 +4,8 @@
   "description": "Kliniske verktøy for rask bruk i konsultasjon.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f7f8fa",
-  "theme_color": "#0f62fe",
+  "background_color": "#efe6da",
+  "theme_color": "#b5573f",
   "icons": [
     {
       "src": "/icons/icon-192.svg",

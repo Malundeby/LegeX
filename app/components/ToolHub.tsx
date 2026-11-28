@@ -49,6 +49,7 @@ import { getSectionContent, groupByCategory } from "@/app/utils/contentItems";
 import { trackOpen } from "@/app/utils/trackEvent";
 import { TELEFONRAD } from "@/app/utils/telefonrad";
 import { skjemaHref } from "@/app/utils/pdfSkjema";
+import { useProfile } from "./useProfile";
 import { KASUISTIKKER, KASUISTIKK_SECTIONS } from "@/app/utils/kasuistikker";
 
 type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster" | "helsesekretaer" | "kasuistikker" | "fraser";
@@ -653,6 +654,7 @@ export default function ToolHub(
     noSectionBackground?: boolean;
   } = {}
 ) {
+  const { name: profileName } = useProfile();
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? "guides");
   // Keep the phrase catalog mounted once opened, so its floating window survives tab switches.
   const [fraserMounted, setFraserMounted] = useState(initialTab === "fraser");
@@ -1349,13 +1351,14 @@ export default function ToolHub(
   const handleCopy = async (t: string) => { try { await navigator.clipboard.writeText(t); setCopyState("Kopiert!"); setTimeout(() => setCopyState(""), 2000); } catch { setCopyState("Feilet"); } };
   const handlePrint = (url: string) => { const w = window.open(url, "_blank"); if (w) w.onload = () => { w.focus(); w.print(); }; };
   const handleCopyHelsenorgeMessage = () => {
+    const signature = profileName ? `${profileName}\nLegesenteret` : "Legesenteret";
     const absolutePdfUrl = activePatientPdfUrl
       ? (activePatientPdfUrl.startsWith("http") ? activePatientPdfUrl : `${window.location.origin}${activePatientPdfUrl}`)
       : "";
 
     const message = absolutePdfUrl
-      ? `Hei,\n\nSom ledd i din utredning ønsker legen at du printer ut og fyller ut følgende skjema og har det med på neste legetime:\n\n${activeDisplayName}\n${absolutePdfUrl}\n\nDersom du ikke har tilgang til printer, går det an å komme litt før timen og henvende seg i skranken for å få det printet ut.\n\nHilsen,\n\nLegesenteret`
-      : "Hei,\n\nSom ledd i din utredning ønsker legen at du printer ut og fyller ut følgende skjema og har det med på neste legetime. Dersom du ikke har tilgang til printer, går det an å komme litt før timen og henvende seg i skranken for å få det printet ut.\n\nHilsen,\n\nLegesenteret";
+      ? `Hei,\n\nSom ledd i din utredning ønsker legen at du printer ut og fyller ut følgende skjema og har det med på neste legetime:\n\n${activeDisplayName}\n${absolutePdfUrl}\n\nDersom du ikke har tilgang til printer, går det an å komme litt før timen og henvende seg i skranken for å få det printet ut.\n\nHilsen,\n\n${signature}`
+      : `Hei,\n\nSom ledd i din utredning ønsker legen at du printer ut og fyller ut følgende skjema og har det med på neste legetime. Dersom du ikke har tilgang til printer, går det an å komme litt før timen og henvende seg i skranken for å få det printet ut.\n\nHilsen,\n\n${signature}`;
 
     handleCopy(message);
   };
