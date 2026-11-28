@@ -104,3 +104,48 @@ export function drawingPath(d: Drawing, ox = 0, oy = 0): string {
   }
   return parts.join("");
 }
+
+/**
+ * A signature from a photo: an ink mask as a PNG (black with transparency),
+ * coloured with the chosen ink when shown or printed.
+ */
+export interface SignatureImage {
+  v: 1;
+  kind: "image";
+  ink: Ink;
+  /** data:image/png;base64,… */
+  src: string;
+  w: number;
+  h: number;
+}
+
+/** What can be saved as the user's handwritten signature: drawn strokes or a cleaned photo. */
+export type SavedSignature = Drawing | SignatureImage;
+
+export const MAX_IMAGE_SRC = 380_000;
+
+export const isImageSignature = (s: SavedSignature | null | undefined): s is SignatureImage =>
+  Boolean(s && (s as SignatureImage).kind === "image");
+
+export function cleanSignatureImage(raw: unknown): SignatureImage | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (r.kind !== "image" || typeof r.src !== "string") return null;
+  if (!r.src.startsWith("data:image/png;base64,") || r.src.length > MAX_IMAGE_SRC) return null;
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(r.src)) return null;
+  const w = Math.round(Number(r.w));
+  const h = Math.round(Number(r.h));
+  if (!(w >= 1 && w <= 2000 && h >= 1 && h <= 2000)) return null;
+  return { v: 1, kind: "image", ink: isInk(r.ink) ? r.ink : "sort", src: r.src, w, h };
+}
+
+export function cleanSaved(raw: unknown): SavedSignature | null {
+  return cleanSignatureImage(raw) ?? cleanDrawing(raw);
+}
+
+/** Width / height of a saved signature, for placing it on the page. */
+export function signatureAspect(s: SavedSignature): number {
+  if (isImageSignature(s)) return s.w / s.h;
+  const b = drawingBounds(s);
+  return b.w / b.h;
+}

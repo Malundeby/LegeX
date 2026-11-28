@@ -22,7 +22,8 @@ import { announceProfile, useProfile } from "@/app/components/useProfile";
 import Logo from "@/app/components/Logo";
 import SignaturePad, { InkPicker, SIGPAD_CSS } from "@/app/components/SignaturePad";
 import StampView, { STAMP_CSS } from "@/app/components/StampView";
-import { INKS, isInk, type Drawing, type Ink } from "@/lib/drawing";
+import { INKS, isImageSignature, isInk, type Ink, type SavedSignature } from "@/lib/drawing";
+import SignatureUpload, { SIGUP_CSS, SignatureImageView } from "@/app/components/SignatureUpload";
 import { deleteDrawnSignature, loadDrawnSignature, saveDrawnSignature } from "@/app/utils/signatureStore";
 
 type Status = { kind: "ok" | "error"; text: string } | null;
@@ -45,8 +46,9 @@ export default function ProfilePage() {
   const [sigStatus, setSigStatus] = useState<Status>(null);
   const [savingSig, setSavingSig] = useState(false);
 
-  const [drawing, setDrawing] = useState<Drawing | null>(null);
-  const [savedDrawing, setSavedDrawing] = useState<Drawing | null>(null);
+  const [drawing, setDrawing] = useState<SavedSignature | null>(null);
+  const [savedDrawing, setSavedDrawing] = useState<SavedSignature | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [drawInk, setDrawInk] = useState<Ink>("blaa");
   const [drawStatus, setDrawStatus] = useState<Status>(null);
   const [savingDraw, setSavingDraw] = useState(false);
@@ -246,7 +248,7 @@ export default function ProfilePage() {
 
   return (
     <main className="profile-page">
-      <style dangerouslySetInnerHTML={{ __html: SIGPAD_CSS + STAMP_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: SIGPAD_CSS + STAMP_CSS + SIGUP_CSS }} />
       <div className="profile-head">
         <Logo size={34} />
         <h1>Profil</h1>
@@ -336,19 +338,39 @@ export default function ProfilePage() {
       <section className="profile-card" aria-labelledby="handskrift-h">
         <h2 id="handskrift-h">Håndskrevet signatur</h2>
         <p>
-          Tegn med mus, styreflate, penn eller finger. Signaturen kan legges på PDF-skjemaer. Den lagres bare på kontoen din,
-          og bare du kan se den.
+          Tegn med mus, styreflate, penn eller finger, eller last opp et bilde av signaturen din på papir. Signaturen kan
+          legges på PDF-skjemaer. Den lagres bare på kontoen din, og bare du kan se den. Bildet du laster opp, lagres ikke;
+          bare den rensede signaturen.
         </p>
-        <SignaturePad
-          value={drawing}
-          ink={drawInk}
-          onChange={(d) => {
-            drawTouchedRef.current = true;
-            setDrawing(d);
-            setDrawStatus(null);
-          }}
-        />
-        <div className="profile-row sig-actions">
+        {uploading ? (
+          <SignatureUpload
+            ink={drawInk}
+            onCancel={() => setUploading(false)}
+            onUse={(img) => {
+              drawTouchedRef.current = true;
+              setDrawing(img);
+              setDrawStatus(null);
+              setUploading(false);
+            }}
+          />
+        ) : isImageSignature(drawing) ? (
+          <div className="sig-image-box">
+            <span style={{ display: "block", width: `min(100%, ${Math.round((150 * drawing.w) / drawing.h)}px)` }}>
+              <SignatureImageView sig={drawing} ink={drawInk} />
+            </span>
+          </div>
+        ) : (
+          <SignaturePad
+            value={drawing}
+            ink={drawInk}
+            onChange={(d) => {
+              drawTouchedRef.current = true;
+              setDrawing(d);
+              setDrawStatus(null);
+            }}
+          />
+        )}
+        {!uploading && <div className="profile-row sig-actions">
           <InkPicker
             value={drawInk}
             inks={INKS}
@@ -357,8 +379,11 @@ export default function ProfilePage() {
               setDrawing((d) => (d ? { ...d, ink: i } : d));
             }}
           />
+          <button type="button" className="profile-button secondary" onClick={() => setUploading(true)}>
+            Last opp bilde
+          </button>
           <button type="button" className="profile-button secondary" onClick={() => setDrawing(null)} disabled={!drawing}>
-            Tøm
+            {isImageSignature(drawing) ? "Tegn i stedet" : "Tøm"}
           </button>
           <button
             type="button"
@@ -373,7 +398,7 @@ export default function ProfilePage() {
               Slett lagret
             </button>
           )}
-        </div>
+        </div>}
         {drawStatus && <p className={`profile-status ${drawStatus.kind}`} role="status">{drawStatus.text}</p>}
       </section>
 
