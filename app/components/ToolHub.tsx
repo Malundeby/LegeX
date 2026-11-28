@@ -48,6 +48,7 @@ import { defaultLinkBoxes } from "@/app/utils/toolHubLinks";
 import { getSectionContent, groupByCategory } from "@/app/utils/contentItems";
 import { trackOpen } from "@/app/utils/trackEvent";
 import { TELEFONRAD } from "@/app/utils/telefonrad";
+import { skjemaHref } from "@/app/utils/pdfSkjema";
 import { KASUISTIKKER, KASUISTIKK_SECTIONS } from "@/app/utils/kasuistikker";
 
 type TabKey = "tools" | "guides" | "resources" | "patientinfo" | "overviews" | "takster" | "helsesekretaer" | "kasuistikker" | "fraser";
@@ -972,7 +973,7 @@ export default function ToolHub(
               return variantCanOpen ? (
                 <a
                   key={variant.label}
-                  href={variant.url}
+                  href={skjemaHref(variant.url, `${resource.title} – ${variant.label}`)}
                   target="_blank"
                   rel="noreferrer"
                   className="resource-variant-button"
@@ -1012,7 +1013,7 @@ export default function ToolHub(
       <article key={key} className="resource-row">
         <div className="resource-row-main">
           {canOpen ? (
-            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-title" onClick={handleOpenClick} {...previewHandlers}>
+            <a href={skjemaHref(resource.url, resource.title)} target="_blank" rel="noreferrer" className="resource-title" onClick={handleOpenClick} {...previewHandlers}>
               {resource.title}
             </a>
           ) : (
@@ -1022,7 +1023,7 @@ export default function ToolHub(
         </div>
         <div className="resource-row-badge">
           {canOpen ? (
-            <a href={resource.url} target="_blank" rel="noreferrer" className="resource-pdf-badge" onClick={handleOpenClick} {...previewHandlers}>
+            <a href={skjemaHref(resource.url, resource.title)} target="_blank" rel="noreferrer" className="resource-pdf-badge" onClick={handleOpenClick} {...previewHandlers}>
               {!resource.url.startsWith("http") || /\.pdf($|\?)/i.test(resource.url) ? "PDF" : "Lenke"}
             </a>
           ) : (
@@ -1430,7 +1431,7 @@ export default function ToolHub(
           tags: [box.title],
           action: () => {
             handleTabChange("guides");
-            window.open(item.url, "_blank", "noopener,noreferrer");
+            window.open(skjemaHref(item.url), "_blank", "noopener,noreferrer");
           }
         });
       });
@@ -1449,7 +1450,7 @@ export default function ToolHub(
               action: () => {
                 handleTabChange("resources");
                 setActiveSpecialty(subcategory.title);
-                window.open(variant.url, "_blank", "noopener,noreferrer");
+                window.open(skjemaHref(variant.url), "_blank", "noopener,noreferrer");
               }
             });
           });
@@ -1465,7 +1466,7 @@ export default function ToolHub(
             handleTabChange("resources");
             setActiveSpecialty(subcategory.title);
             if (item.url !== "#") {
-              window.open(item.url, "_blank", "noopener,noreferrer");
+              window.open(skjemaHref(item.url), "_blank", "noopener,noreferrer");
             }
           }
         });
@@ -1485,7 +1486,7 @@ export default function ToolHub(
               action: () => {
                 handleTabChange("patientinfo");
                 setActivePatientInfoSpecialty(subcategory.title);
-                window.open(variant.url, "_blank", "noopener,noreferrer");
+                window.open(skjemaHref(variant.url), "_blank", "noopener,noreferrer");
               }
             });
           });
@@ -1501,7 +1502,7 @@ export default function ToolHub(
             handleTabChange("patientinfo");
             setActivePatientInfoSpecialty(subcategory.title);
             if (item.url !== "#") {
-              window.open(item.url, "_blank", "noopener,noreferrer");
+              window.open(skjemaHref(item.url), "_blank", "noopener,noreferrer");
             }
           }
         });
@@ -1519,7 +1520,7 @@ export default function ToolHub(
           action: () => {
             handleTabChange("overviews");
             if (item.url !== "#") {
-              window.open(item.url, "_blank", "noopener,noreferrer");
+              window.open(skjemaHref(item.url), "_blank", "noopener,noreferrer");
             }
           }
         });
@@ -1759,7 +1760,7 @@ export default function ToolHub(
                         <div key={item.contentId}>
                           {isExternal ? (
                             <a
-                              href={item.url}
+                              href={skjemaHref(item.url, item.label)}
                               target="_blank"
                               rel="noreferrer"
                               onClick={handleClick}
@@ -1806,7 +1807,7 @@ export default function ToolHub(
                       {activePdfOptions.map((option) => (
                         <a
                           key={`${activeTool.id}-${option.url}`}
-                          href={option.url}
+                          href={skjemaHref(option.url, `${activeDisplayName} – ${option.label}`)}
                           target="_blank"
                           rel="noreferrer"
                           style={{
@@ -2145,7 +2146,7 @@ export default function ToolHub(
                                   {group.links.map((link, li) => (
                                     <li key={li} style={{ fontSize: 13.5, lineHeight: 1.5 }}>
                                       {link.url ? (
-                                        <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                                        <a href={skjemaHref(link.url, link.label)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600 }}>
                                           {link.label}
                                         </a>
                                       ) : link.calcId ? (
@@ -2782,7 +2783,7 @@ export default function ToolHub(
                       {activePdfOptions.map((option) => (
                         <a
                           key={`${activeCalc.id}-${option.url}`}
-                          href={option.url}
+                          href={skjemaHref(option.url, `${activeDisplayName} – ${option.label}`)}
                           target="_blank"
                           rel="noreferrer"
                           style={{
@@ -3546,7 +3547,7 @@ export default function ToolHub(
                                     return canOpen ? (
                                       <a
                                         key={item.key}
-                                        href={item.resource.url}
+                                        href={skjemaHref(item.resource.url, item.resource.title)}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="resource-pdf-group-link"
@@ -3989,7 +3990,7 @@ export default function ToolHub(
                               return canOpen ? (
                                 <a
                                   key={item.key}
-                                  href={item.resource.url}
+                                  href={skjemaHref(item.resource.url, item.resource.title)}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="resource-pdf-group-link"
