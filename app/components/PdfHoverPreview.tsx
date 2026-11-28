@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { pdfWorkerSrc } from "@/app/utils/pdfSkjema";
 
 export default function PdfHoverPreview({ url, maxPages = 1 }: { url: string; maxPages?: number }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -20,7 +21,8 @@ export default function PdfHoverPreview({ url, maxPages = 1 }: { url: string; ma
 
       try {
         const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        pdfjs.GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs";
+        // Same self-hosted worker as /skjema, so hovering also warms the cache for opening the form.
+        if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc(pdfjs.version);
 
         const loadingTask = pdfjs.getDocument({ url });
 

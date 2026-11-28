@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { lookup } from "dns/promises";
+import { lookup, type LookupAddress } from "dns";
+import { request as httpsRequest } from "https";
 import { isIP } from "net";
+import type { IncomingMessage } from "http";
+import { isPrivateAddress } from "@/lib/netGuard";
 
 /**
  * Fetches a public PDF from another site so the form filler (/skjema) can
@@ -13,36 +16,50 @@ export const runtime = "nodejs";
 const MAX_BYTES = 20 * 1024 * 1024;
 const MAX_REDIRECTS = 3;
 
-function isPrivateAddress(address: string): boolean {
-  if (isIP(address) === 6) {
-    const a = address.toLowerCase();
-    if (a === "::1" || a === "::") return true;
-    if (a.startsWith("fc") || a.startsWith("fd") || a.startsWith("fe80")) return true;
-    const mapped = a.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    return mapped ? isPrivateAddress(mapped[1]) : false;
-  }
-  const [a, b] = address.split(".").map(Number);
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    a >= 224
-  );
-}
-
-async function assertPublicHttps(url: URL) {
+function assertPublicHttps(url: URL) {
   if (url.protocol !== "https:") throw new Error("Bare https-lenker kan åpnes.");
   if (url.username || url.password) throw new Error("Ugyldig lenke.");
   if (url.port && url.port !== "443") throw new Error("Ugyldig lenke.");
   const host = url.hostname.replace(/^\[|\]$/g, "");
-  const addresses = isIP(host) ? [{ address: host }] : await lookup(host, { all: true });
-  if (addresses.length === 0 || addresses.some((a) => isPrivateAddress(a.address))) {
-    throw new Error("Lenken peker ikke til en offentlig nettside.");
-  }
+  if (isIP(host) && isPrivateAddress(host)) throw new Error("Lenken peker ikke til en offentlig nettside.");
+}
+
+/**
+ * DNS lookup used for the connection itself. Checking the addresses here, rather
+ * than in a separate lookup first, means the name cannot point somewhere else
+ * between the check and the download (DNS rebinding).
+ */
+function publicLookup(
+  hostname: string,
+  options: { all?: boolean } | number,
+  callback: (err: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void
+) {
+  lookup(hostname, { all: true }, (err, addresses) => {
+    if (err) return callback(err, "");
+    if (addresses.length === 0 || addresses.some((a) => isPrivateAddress(a.address))) {
+      return callback(Object.assign(new Error("Lenken peker ikke til en offentlig nettside."), { code: "EPRIVATE" }), "");
+    }
+    if (typeof options === "object" && options.all) return callback(null, addresses);
+    callback(null, addresses[0].address, addresses[0].family);
+  });
+}
+
+function get(url: URL): Promise<IncomingMessage> {
+  return new Promise((resolve, reject) => {
+    const req = httpsRequest(
+      url,
+      {
+        method: "GET",
+        lookup: publicLookup as never,
+        headers: { Accept: "application/pdf,*/*;q=0.5", "User-Agent": "Legeassistent PDF" },
+        timeout: 15000
+      },
+      resolve
+    );
+    req.on("timeout", () => req.destroy(new Error("Tidsavbrudd ved henting av PDF.")));
+    req.on("error", reject);
+    req.end();
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -57,47 +74,42 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let response: Response | null = null;
+    let response: IncomingMessage | null = null;
     for (let i = 0; i <= MAX_REDIRECTS; i++) {
-      await assertPublicHttps(url);
-      response = await fetch(url, {
-        redirect: "manual",
-        headers: { Accept: "application/pdf,*/*;q=0.5", "User-Agent": "Legeassistent PDF" },
-        signal: AbortSignal.timeout(15000),
-        cache: "no-store"
-      });
-      const location = response.headers.get("location");
-      if (response.status >= 300 && response.status < 400 && location) {
+      assertPublicHttps(url);
+      response = await get(url);
+      const location = response.headers.location;
+      const status = response.statusCode ?? 0;
+      if (status >= 300 && status < 400 && location) {
+        response.resume();
         url = new URL(location, url);
         continue;
       }
       break;
     }
-    if (!response || !response.ok || !response.body) {
-      return NextResponse.json({ error: `Kunne ikke hente PDF (${response?.status ?? "ukjent"})` }, { status: 502 });
+    const status = response?.statusCode ?? 0;
+    if (!response || status < 200 || status >= 300) {
+      response?.resume();
+      return NextResponse.json({ error: `Kunne ikke hente PDF (${status || "ukjent"})` }, { status: 502 });
     }
-    const length = Number(response.headers.get("content-length") ?? 0);
-    if (length > MAX_BYTES) return NextResponse.json({ error: "PDF-en er for stor" }, { status: 413 });
+    const length = Number(response.headers["content-length"] ?? 0);
+    if (length > MAX_BYTES) {
+      response.destroy();
+      return NextResponse.json({ error: "PDF-en er for stor" }, { status: 413 });
+    }
 
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
+    const chunks: Buffer[] = [];
     let total = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > MAX_BYTES) {
-        await reader.cancel();
-        return NextResponse.json({ error: "PDF-en er for stor" }, { status: 413 });
+    const deadline = AbortSignal.timeout(30000);
+    for await (const chunk of response as AsyncIterable<Buffer>) {
+      total += chunk.byteLength;
+      if (total > MAX_BYTES || deadline.aborted) {
+        response.destroy();
+        return NextResponse.json({ error: deadline.aborted ? "Tidsavbrudd ved henting av PDF." : "PDF-en er for stor" }, { status: 413 });
       }
-      chunks.push(value);
+      chunks.push(chunk);
     }
-    const bytes = new Uint8Array(total);
-    let offset = 0;
-    for (const c of chunks) {
-      bytes.set(c, offset);
-      offset += c.byteLength;
-    }
+    const bytes = new Uint8Array(Buffer.concat(chunks));
     const head = new TextDecoder("latin1").decode(bytes.subarray(0, 1024));
     if (!head.includes("%PDF-")) {
       return NextResponse.json({ error: "Lenken er ikke en PDF" }, { status: 415 });
@@ -112,7 +124,15 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Ukjent feil";
+    const code = (e as NodeJS.ErrnoException)?.code;
+    const message =
+      code === "ENOTFOUND" || code === "EAI_AGAIN"
+        ? "Fant ikke nettstedet."
+        : code === "ECONNREFUSED" || code === "ECONNRESET" || code === "CERT_HAS_EXPIRED" || code?.startsWith("ERR_TLS")
+          ? "Kunne ikke koble til nettstedet."
+          : e instanceof Error
+            ? e.message
+            : "Ukjent feil";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

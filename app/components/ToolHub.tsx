@@ -675,9 +675,9 @@ export default function ToolHub(
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [activeSpecialty, setActiveSpecialty] = useState<string | null>(null);
-  const [resourceViewMode, setResourceViewMode] = useState<"list" | "grid">("list");
+  const [resourceViewMode, setResourceViewMode] = useState<"list" | "grid">("grid");
   const [activePatientInfoSpecialty, setActivePatientInfoSpecialty] = useState<string | null>(null);
-  const [patientInfoViewMode, setPatientInfoViewMode] = useState<"list" | "grid">("list");
+  const [patientInfoViewMode, setPatientInfoViewMode] = useState<"list" | "grid">("grid");
   const [showClinicalTip, setShowClinicalTip] = useState(false);
   const [showCPeptideExamples, setShowCPeptideExamples] = useState(false);
   const [showChadsvascMore, setShowChadsvascMore] = useState(false);
@@ -1117,7 +1117,7 @@ export default function ToolHub(
   // Load/persist the Verktøy view mode (rutevisning/rulletabell) per browser
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("toolhub-resource-view-mode");
+      const stored = localStorage.getItem("toolhub-resource-view-mode-v2");
       if (stored === "grid" || stored === "list") {
         setResourceViewMode(stored);
       }
@@ -1128,7 +1128,7 @@ export default function ToolHub(
 
   useEffect(() => {
     try {
-      localStorage.setItem("toolhub-resource-view-mode", resourceViewMode);
+      localStorage.setItem("toolhub-resource-view-mode-v2", resourceViewMode);
     } catch {
       // localStorage unavailable — ignore
     }
@@ -1137,7 +1137,7 @@ export default function ToolHub(
   // Load/persist the Pasientinfo view mode (rutevisning/rulletabell) per browser
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("toolhub-patientinfo-view-mode");
+      const stored = localStorage.getItem("toolhub-patientinfo-view-mode-v2");
       if (stored === "grid" || stored === "list") {
         setPatientInfoViewMode(stored);
       }
@@ -1148,7 +1148,7 @@ export default function ToolHub(
 
   useEffect(() => {
     try {
-      localStorage.setItem("toolhub-patientinfo-view-mode", patientInfoViewMode);
+      localStorage.setItem("toolhub-patientinfo-view-mode-v2", patientInfoViewMode);
     } catch {
       // localStorage unavailable — ignore
     }
