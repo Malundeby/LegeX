@@ -31,6 +31,8 @@ interface Mark {
   size: number;
   text: string;
   auto?: LabelKind;
+  /** A drawn circle around something on the page instead of text. Uses x, y, w and h. */
+  shape?: "ring";
   /** Box width as a fraction of the page, once the user has resized it. Text then wraps inside. */
   w?: number;
   /** Minimum box height as a fraction of the page. */
@@ -44,7 +46,11 @@ const QUICK_BUTTONS: { kind: Quick; label: string; noun: string; missing: string
   { kind: "dato", label: "Dato", noun: "datoen", missing: "" },
   { kind: "telefon", label: "Telefon", noun: "telefonnummeret", missing: "Legg inn telefonnummer på profilsiden" }
 ];
-type Tool = "none" | "text" | "kryss" | Quick;
+type Tool = "none" | "text" | "kryss" | "ring" | Quick;
+
+/** Default circle: about the size of a short word or a number in a form. */
+const RING_PT = { w: 34, h: 20 };
+const RING_LINE_PT = 1.2;
 const isQuick = (t: Tool): t is Quick => t === "navn" || t === "signatur" || t === "dato" || t === "telefon";
 
 const LINE_HEIGHT = 1.15;
@@ -349,6 +355,25 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
     if (tool === "none" || e.target !== e.currentTarget) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pxPerPt = scale * PT_TO_PX;
+    if (tool === "ring") {
+      // Centred on the click, so you click on what you want to circle.
+      const wPx = RING_PT.w * pxPerPt;
+      const hPx = RING_PT.h * pxPerPt;
+      const ring: Mark = {
+        id: newId(),
+        page,
+        x: (e.clientX - rect.left - wPx / 2) / rect.width,
+        y: (e.clientY - rect.top - hPx / 2) / rect.height,
+        w: wPx / rect.width,
+        h: hPx / rect.height,
+        size: 12,
+        text: "",
+        shape: "ring"
+      };
+      dirtyRef.current = true;
+      setMarks((ms) => [...ms, ring]);
+      return;
+    }
     const size = tool === "kryss" ? 12 : 11;
     const x = (e.clientX - rect.left - (tool === "kryss" ? size * 0.33 * pxPerPt : 0)) / rect.width;
     const y = (e.clientY - rect.top - size * 0.55 * pxPerPt) / rect.height;
@@ -449,8 +474,9 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
   const buildPdf = async (): Promise<Uint8Array> => {
     const doc = docRef.current;
     const bytes: Uint8Array = hasFormRef.current ? await doc.saveDocument() : await doc.getData();
-    const live = marks.filter((m) => m.text.trim());
-    if (live.length === 0) return bytes;
+    const live = marks.filter((m) => m.shape !== "ring" && m.text.trim());
+    const rings = marks.filter((m) => m.shape === "ring" && m.w && m.h);
+    if (live.length === 0 && rings.length === 0) return bytes;
     const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
     const out = await PDFDocument.load(bytes, { ignoreEncryption: true });
     const font = await out.embedFont(StandardFonts.Helvetica);
@@ -475,6 +501,22 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
         if (!line) return;
         const [px, py] = vp.convertToPdfPoint(m.x * vp.width, m.y * vp.height + m.size * 0.85 + i * m.size * LINE_HEIGHT);
         out.getPage(m.page - 1).drawText(line, { x: px, y: py, size: m.size, font, color: rgb(0, 0, 0) });
+      });
+    }
+    for (const m of rings) {
+      const page = await doc.getPage(m.page);
+      const vp = page.getViewport({ scale: 1 });
+      const wPt = m.w! * vp.width;
+      const hPt = m.h! * vp.height;
+      const [cx, cy] = vp.convertToPdfPoint((m.x + m.w! / 2) * vp.width, (m.y + m.h! / 2) * vp.height);
+      const quarterTurn = (((vp.rotation ?? 0) % 180) + 180) % 180 === 90;
+      out.getPage(m.page - 1).drawEllipse({
+        x: cx,
+        y: cy,
+        xScale: Math.max(1, (quarterTurn ? hPt : wPt) / 2 - RING_LINE_PT / 2),
+        yScale: Math.max(1, (quarterTurn ? wPt : hPt) / 2 - RING_LINE_PT / 2),
+        borderColor: rgb(0, 0, 0),
+        borderWidth: RING_LINE_PT
       });
     }
     return out.save();
@@ -578,6 +620,9 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
           <button type="button" className={`pu-btn${tool === "kryss" ? " on" : ""}`} onClick={() => setTool(tool === "kryss" ? "none" : "kryss")} aria-pressed={tool === "kryss"} title="Klikk i en boks for å sette kryss">
             ✕ Kryss
           </button>
+          <button type="button" className={`pu-btn${tool === "ring" ? " on" : ""}`} onClick={() => setTool(tool === "ring" ? "none" : "ring")} aria-pressed={tool === "ring"} title="Klikk på det du vil sette ring rundt">
+            ◯ Runding
+          </button>
           <span className="pu-sep" />
           {QUICK_BUTTONS.map(({ kind, label, missing }) => {
             const value = quickValue(kind);
@@ -619,10 +664,12 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
                 : hasForm && tool === "none"
                   ? "Klikk i feltene for å fylle ut. Hurtigvalgene settes inn i feltet du står i."
                   : tool === "none"
-                    ? "Velg Tekst eller Kryss og klikk der du vil skrive. Dra i ⠿ for å flytte og i ◢ for å gjøre boksen større."
+                    ? "Velg Tekst, Kryss eller Runding og klikk på skjemaet. Dra i ⠿ for å flytte og i ◢ for å endre størrelsen."
                     : tool === "text"
                       ? "Klikk der du vil skrive. Shift+Enter gir ny linje."
-                      : "Klikk i boksen du vil krysse av."}
+                      : tool === "ring"
+                        ? "Klikk midt på det du vil sette ring rundt. Dra i ◢ for å gjøre ringen større eller mindre."
+                        : "Klikk i boksen du vil krysse av."}
           </span>
         )}
         {userId ? (
@@ -669,7 +716,17 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
           <div className="pu-marks" onClick={(e) => onLayerClick(p, e)}>
             {marks
               .filter((m) => m.page === p)
-              .map((m) => (
+              .map((m) =>
+                m.shape === "ring" ? (
+                  <RingBox
+                    key={m.id}
+                    mark={m}
+                    lineWidthPx={RING_LINE_PT * pxPerPt}
+                    onRemove={() => removeMark(m.id)}
+                    onDrag={(e) => startDrag(m, e)}
+                    onResize={(e) => startResize(m, e)}
+                  />
+                ) : (
                 <MarkBox
                   key={m.id}
                   mark={m}
@@ -681,7 +738,8 @@ export default function PdfUtfyller({ url, title, workerSrc }: { url: string; ti
                   onResize={(e) => startResize(m, e)}
                   onSize={(step) => resizeText(m, step)}
                 />
-              ))}
+                )
+              )}
           </div>,
           layer,
           `layer-${p}`
@@ -764,6 +822,46 @@ async function findAutoMarks(doc: any, pdfjs: any, today: string, name: string, 
   // Later "Dato" blanks are usually for something else (e.g. an earlier test); fill only the first.
   const firstDate = auto.find((m) => m.auto === "date");
   return auto.filter((m) => m.auto !== "date" || m === firstDate);
+}
+
+/** A circle drawn around something on the page. Drag to move, corner to resize, Delete to remove. */
+function RingBox({
+  mark: m,
+  lineWidthPx,
+  onRemove,
+  onDrag,
+  onResize
+}: {
+  mark: Mark;
+  lineWidthPx: number;
+  onRemove: () => void;
+  onDrag: (e: React.PointerEvent<HTMLElement>) => void;
+  onResize: (e: React.PointerEvent<HTMLElement>) => void;
+}) {
+  return (
+    <div
+      className="pu-ring"
+      tabIndex={0}
+      role="img"
+      aria-label="Runding. Trykk Delete for å fjerne."
+      style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%`, width: `${m.w! * 100}%`, height: `${m.h! * 100}%` }}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onDrag(e);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault();
+          onRemove();
+        }
+      }}
+    >
+      <span className="pu-ring-line" style={{ borderWidth: `${Math.max(1, lineWidthPx)}px` }} aria-hidden="true" />
+      <span className="pu-ctrl">
+        <button type="button" onClick={onRemove} aria-label="Fjern" title="Fjern">×</button>
+      </span>
+      <span className="pu-grip" onPointerDown={onResize} title="Dra for å endre størrelse" aria-hidden="true" />
+    </div>
+  );
 }
 
 /** One text box on the page. Without a set width it grows with the text; once resized, text wraps. */
@@ -877,7 +975,11 @@ const CSS = `
 .pu-layer{position:absolute;inset:0;z-index:30;pointer-events:none}
 .pu-marks{position:absolute;inset:0}
 .pu-tool-text .pu-marks{pointer-events:auto;cursor:text}
-.pu-tool-kryss .pu-marks{pointer-events:auto;cursor:crosshair}
+.pu-tool-kryss .pu-marks,.pu-tool-ring .pu-marks{pointer-events:auto;cursor:crosshair}
+.pu-ring{position:absolute;pointer-events:auto;cursor:move;touch-action:none;outline:none;border-radius:50%}
+.pu-ring-line{position:absolute;inset:0;border-style:solid;border-color:#000;border-radius:50%;pointer-events:none;box-sizing:border-box}
+.pu-ring:hover,.pu-ring:focus-visible{background:rgba(var(--primary-rgb),.08);box-shadow:0 0 0 1px var(--primary)}
+.pu-ring:hover .pu-ctrl,.pu-ring:hover .pu-grip,.pu-ring:focus-within .pu-ctrl,.pu-ring:focus-within .pu-grip,.pu-ring:focus .pu-ctrl,.pu-ring:focus .pu-grip{opacity:1;pointer-events:auto}
 .pu-tool-quick .pu-marks{pointer-events:auto;cursor:copy}
 .pu-mark{position:absolute;pointer-events:auto;display:flex}
 .pu-mark textarea{display:block;box-sizing:border-box;border:1px dashed transparent;background:rgba(255,255,255,.01);padding:0 1px;margin:0;font-family:Helvetica,Arial,sans-serif;color:#000;outline:none;border-radius:2px;resize:none;overflow:hidden;white-space:pre;min-width:1ch}
