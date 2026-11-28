@@ -2818,6 +2818,18 @@ ul li::marker {
   flex-wrap: wrap;
   gap: 8px;
 }
+.sig-actions {
+  margin-top: 10px;
+  align-items: center;
+}
+.stamp-preview {
+  margin-top: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  display: inline-block;
+}
 .profile-button.secondary {
   background: var(--panel-2);
   color: var(--text);

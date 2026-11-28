@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PREFS, cleanPhone, cleanPrefs, cleanSignature, fillSignature, profileName, profilePhone, profileSignature } from "./profile";
+import { DEFAULT_PREFS, cleanPhone, cleanStamp, suggestStamp, cleanPrefs, cleanSignature, fillSignature, profileName, profilePhone, profileSignature } from "./profile";
 
 describe("profile", () => {
   it("keeps only known preference values", () => {
@@ -40,5 +40,11 @@ describe("profile", () => {
     expect(cleanPhone("tlf. 22-33-44-55")).toBe("22-33-44-55");
     expect(profilePhone({ user_metadata: { phone: "22 33 44 55" } })).toBe("22 33 44 55");
     expect(profilePhone(null)).toBe("");
+  });
+
+  it("suggests and cleans a stamp", () => {
+    expect(suggestStamp("Kari Lege", "Kari Lege\nLege\nLegesenter A", "22 33 44 55")).toBe("Kari Lege\nLege\nHPR-nr.\nLegesenter A\nTlf. 22 33 44 55");
+    expect(suggestStamp("Kari Lege", "", "")).toBe("Kari Lege\nHPR-nr.");
+    expect(cleanStamp("a".repeat(80))).toHaveLength(60);
   });
 });
