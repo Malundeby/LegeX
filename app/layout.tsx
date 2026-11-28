@@ -3,6 +3,7 @@ import "./globals.css";
 import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 import PageViewTracker from "./components/PageViewTracker";
 import AccountBar from "./components/AccountBar";
+import { PREFS_INIT_SCRIPT } from "@/lib/profile";
 
 export const metadata: Metadata = {
   title: "Legeassistent",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0f62fe"
+  themeColor: "#b5573f"
 };
 
 export default function RootLayout({
@@ -20,8 +21,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="no">
+    <html lang="no" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: PREFS_INIT_SCRIPT }} />
         <meta name="application-name" content="Legeassistent" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />

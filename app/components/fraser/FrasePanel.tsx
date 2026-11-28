@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useProfile } from "../useProfile";
+import { fillSignature } from "@/lib/profile";
 import {
   categoryPath,
   descendantIds,
@@ -32,6 +34,7 @@ interface Props {
 }
 
 export default function FrasePanel({ store, mode, collapsed, onCollapse, onExpand }: Props) {
+  const { name: signerName } = useProfile();
   const { index, isAdmin, userId, favorites, userPhrases } = store;
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -96,7 +99,8 @@ export default function FrasePanel({ store, mode, collapsed, onCollapse, onExpan
     toastTimer.current = setTimeout(() => setToast(null), 1500);
   }
 
-  async function copy(title: string, text: string) {
+  async function copy(title: string, rawText: string) {
+    const text = fillSignature(rawText, signerName);
     const w = win();
     let ok = false;
     try {
